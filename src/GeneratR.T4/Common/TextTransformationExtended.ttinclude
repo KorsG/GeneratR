@@ -1,0 +1,22 @@
+﻿<#@ import namespace="System" #>
+<#@ import namespace="Microsoft.VisualStudio.TextTemplating" #>
+<#+
+
+public class TextTransformationExtended : TextTransformation
+{
+    public TextTransformationExtended()
+    {
+    }
+
+    protected void PushTabIndent()
+    {
+        PushIndent("\t");
+    }
+
+	public override string TransformText()
+    {
+		return GenerationEnvironment.ToString();
+    }
+}
+
+#>

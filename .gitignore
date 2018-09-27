@@ -345,5 +345,4 @@ ASALocalRun/
 # Tools
 [Tt]ools/*
 ![Tt]ools/nuget.exe
-![Tt]ools/nuget.config
 ![Tt]ools/packages.config

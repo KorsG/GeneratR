@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net452</TargetFramework>
+    <!-- Set this to copy .dll's to output directory on build - otherwise the T4 template cannot reference them (required for netcoreapp) -->
+    <!--<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>-->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="SchemaGenerator.cs" />
+    <Compile Remove="SqlServerSchemaGenerator.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SqlServerSchemaGenerator.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SqlServerSchemaGenerator.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="SqlServerSchemaGenerator.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>SqlServerSchemaGenerator.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

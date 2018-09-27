@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- Do not include .dll files in nuget package, since this is a "template" package -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageType>Template</PackageType>
+    <ContentTargetFolders>template</ContentTargetFolders>
+  </PropertyGroup>
+
+  <!-- https://docs.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
+  <ItemGroup>
+    <Content Include=".template.config\template.json" Pack="true" PackagePath=".template.config" />
+    <None Include="Database\SqlServerSchemaGenerator.tttemplate" BuildAction="None" Pack="true" />
+  </ItemGroup>
+</Project>

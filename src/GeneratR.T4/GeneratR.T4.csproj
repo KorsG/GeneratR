@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <!-- Do not include .dll files in nuget package, since this is a "content-only" package -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GeneratR.Database.Templates\GeneratR.Database.Templates.csproj" />
+    <ProjectReference Include="..\GeneratR\GeneratR.csproj" />
+  </ItemGroup>
+
+  <!-- NuGet content files -->
+  <!-- https://docs.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
+  <ItemGroup>
+    <None Include="Common\FileManager.ttinclude" BuildAction="None" Pack="true" PackageCopyToOutput="true" 
+          PackagePath="contentFiles\any\any\GeneratR.T4\Common;content\GeneratR.T4\Common;" />
+
+    <None Include="Database\SqlServerSchemaGenerator.tttemplate" BuildAction="None" Pack="true" PackageCopyToOutput="false" 
+          PackagePath="contentFiles\any\any\GeneratR.T4\Database;content\GeneratR.T4\Database;" />
+  </ItemGroup>
+</Project>
