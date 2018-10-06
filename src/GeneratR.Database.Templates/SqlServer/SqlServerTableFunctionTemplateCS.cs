@@ -87,7 +87,8 @@ namespace GeneratR.Database.SqlServer.Templates
                             string columnAttributeTypeName = null;
                             if (_ansiStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                columnAttributeTypeName = col.DbObject.DataType.ToLower();
+                                var colLength = col.DbObject.Length == -1 ? "max" : col.DbObject.Length.ToString();
+                                columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({colLength})";
                             }
                             else if (col.DbObject.DataType.Equals("decimal", StringComparison.OrdinalIgnoreCase))
                             {

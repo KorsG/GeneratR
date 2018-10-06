@@ -90,9 +90,10 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
                             string columnAttributeTypeName = null;
-                            if ((new[] { "char", "varchar" }).Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            if (_ansiStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                columnAttributeTypeName = col.DbObject.DataType.ToLower();
+                                var colLength = col.DbObject.Length == -1 ? "max" : col.DbObject.Length.ToString();
+                                columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({colLength})";
                             }
                             else if (col.DbObject.DataType.Equals("decimal", StringComparison.OrdinalIgnoreCase))
                             {
@@ -146,7 +147,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase) && !col.DbObject.IsNullable)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.Create("Required");
+                                var attr = _dotNetGenerator.AttributeFactory.CreateRequiredAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 

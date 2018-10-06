@@ -88,7 +88,8 @@ namespace GeneratR.Database.SqlServer.Templates
                             string columnAttributeTypeName = null;
                             if (_ansiStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                columnAttributeTypeName = col.DbObject.DataType.ToLower();
+                                var colLength = col.DbObject.Length == -1 ? "max" : col.DbObject.Length.ToString();
+                                columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({colLength})";
                             }
                             else if (col.DbObject.DataType.Equals("decimal", StringComparison.OrdinalIgnoreCase))
                             {
@@ -137,8 +138,8 @@ namespace GeneratR.Database.SqlServer.Templates
                                     attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length);
                                 }
                                 attributes.AddIfNotExists(attr);
-                            }    
-                            
+                            }
+
                             if (_fixedStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
                                 var attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
@@ -147,7 +148,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase) && !col.DbObject.IsNullable)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.Create("Required");
+                                var attr = _dotNetGenerator.AttributeFactory.CreateRequiredAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 

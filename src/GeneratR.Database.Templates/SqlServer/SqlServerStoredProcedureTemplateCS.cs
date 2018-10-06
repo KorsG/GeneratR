@@ -123,9 +123,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                         Write(attrColllection.ToMultilineString());
                                     }
                                 }
-                                var propType = p.PropertyType;
-                                var propName = p.PropertyName;
-                                WriteLine("public {0} {1} {{ get; set; }}", propType, propName);
+                                WriteLine($"public {p.PropertyType} {p.PropertyName} {{ get; set; }}");
                             }
                         }
                         WriteLine(_dotNetGenerator.CreateClassEnd());
@@ -163,9 +161,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                         Write(attrCollection.ToMultilineString());
                                     }
                                 }
-                                var propType = col.PropertyType;
-                                var propName = col.PropertyName;
-                                WriteLine("public {0} {1} {{ get; set; }}", propType, propName);
+                                WriteLine($"public {col.PropertyType} {col.PropertyName} {{ get; set; }}");
                             }
                         }
                         WriteLine(_dotNetGenerator.CreateClassEnd());
