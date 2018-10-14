@@ -16,6 +16,7 @@ namespace GeneratR.Database.SqlServer.Templates
         private static readonly HashSet<string> _ansiStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "varchar", };
         private static readonly HashSet<string> _unicodeStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nchar", "nvarchar", };
         private static readonly HashSet<string> _allStringTypes = new HashSet<string>(_ansiStringTypes.Union(_unicodeStringTypes), StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
         private readonly SqlServerTableConfiguration _obj;
         private readonly SqlServerSchemaGenerator _schemaGenerator;
@@ -95,7 +96,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             {
                                 columnAttributeTypeName = $"decimal({col.DbObject.Precision}, {col.DbObject.Scale})";
                             }
-                            else if (col.DbObject.DataType.Equals("timestamp", StringComparison.OrdinalIgnoreCase))
+                            else if (_rowVersionTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
                                 columnAttributeTypeName = "rowversion";
                             }
@@ -121,7 +122,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                 attributes.AddIfNotExists(attr);
                             }
 
-                            if (col.DbObject.IsComputed || new[] { "timestamp", "rowversion" }.Contains(col.DbObject.DataType))
+                            if (col.DbObject.IsComputed || _rowVersionTypes.Contains(col.DbObject.DataType))
                             {
                                 attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Computed));
                             }
