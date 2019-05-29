@@ -187,9 +187,13 @@ namespace GeneratR.Database.SqlServer.Templates
                         foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                         {
                             var sqlDataType = _schemaGenerator.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
-                            if ((new[] { "char", "nchar", "varchar", "nvarchar" }).Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
                                 WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");
+                            }
+                            else if (col.DbObject.DataType.Equals("decimal", StringComparison.OrdinalIgnoreCase))
+                            {
+                                WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Precision}, {col.DbObject.Scale}),");
                             }
                             else
                             {
