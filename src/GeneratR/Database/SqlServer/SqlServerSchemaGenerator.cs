@@ -280,14 +280,14 @@ namespace GeneratR.Database.SqlServer
                 var nonExistingReferencingFkRelations = new List<SqlServerForeignKeyConfiguration>();
                 foreach (var fk in tbl.ForeignKeys)
                 {
-                    if (!tables.Where(x => x.DbObject.TableID == fk.DbObject.ToObjectID).Any())
+                    if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Any())
                     {
                         nonExistingFkRelations.Add(fk);
                     }
                 }
                 foreach (var fk in tbl.ReferencingForeignKeys)
                 {
-                    if (!tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Any())
+                    if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Any())
                     {
                         nonExistingReferencingFkRelations.Add(fk);
                     }
@@ -300,12 +300,12 @@ namespace GeneratR.Database.SqlServer
                     foreach (var fk in tbl.ForeignKeys)
                     {
                         fk.PropertyName = fk.DbObject.ForeignKeyName;
-                        fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.ToObjectID).Single().ClassName;
+                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                     }
                     foreach (var fk in tbl.ReferencingForeignKeys)
                     {
                         fk.PropertyName = fk.DbObject.ForeignKeyName;
-                        fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName;
+                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
                     }
                 }
                 else if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.ReferencingTableName)
@@ -317,7 +317,7 @@ namespace GeneratR.Database.SqlServer
                         {
                             fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(ParseSelfReferencingForeignKeyName(fk.DbObject));
                         }
-                        fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.ToObjectID).Single().ClassName;
+                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                     }
 
                     foreach (var fk in tbl.ReferencingForeignKeys)
@@ -325,12 +325,12 @@ namespace GeneratR.Database.SqlServer
                         if (fk.DbObject.RelationshipType == Schema.ForeignKeyRelationshipType.OneToOne)
                         {
                             fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(fk.DbObject.FromName));
-                            fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName;
+                            fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
                         }
                         else
                         {
                             fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(fk.DbObject.FromName));
-                            fk.PropertyType = CreateForeignKeyCollectionTypeDotNetString(foreignKeyCollectionType, tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName);
+                            fk.PropertyType = CreateForeignKeyCollectionTypeDotNetString(foreignKeyCollectionType, tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName);
                         }
                     }
 
@@ -363,7 +363,7 @@ namespace GeneratR.Database.SqlServer
                             {
                                 fk.PropertyName = ParseSelfReferencingForeignKeyName(fk.DbObject);
                             }
-                            fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.ToObjectID).Single().ClassName;
+                            fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                         }
 
                         // Handle scenarios where this table have multiple fk's to a table.
@@ -379,7 +379,7 @@ namespace GeneratR.Database.SqlServer
                                 propName += nm;
                             }
                             fk.PropertyName = propName;
-                            fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.ToObjectID).Single().ClassName;
+                            fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                         }
 
                         // Clean names.
@@ -399,7 +399,7 @@ namespace GeneratR.Database.SqlServer
                         foreach (var fk in singleRelations)
                         {
                             fk.PropertyName = fk.DbObject.FromName;
-                            fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName;
+                            fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
                         }
 
                         // Handle scenarios where this table have multiple fk's to a table.
@@ -414,7 +414,7 @@ namespace GeneratR.Database.SqlServer
                                 propName += nm;
                             }
                             fk.PropertyName = propName;
-                            fk.PropertyType = tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName;
+                            fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
                         }
 
                         // Handle PropertyName/Type depending on type of relationship + clean names.
@@ -427,7 +427,7 @@ namespace GeneratR.Database.SqlServer
                             else
                             {
                                 fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(fk.PropertyName));
-                                fk.PropertyType = CreateForeignKeyCollectionTypeDotNetString(foreignKeyCollectionType, tables.Where(x => x.DbObject.TableID == fk.DbObject.FromObjectID).Single().ClassName);
+                                fk.PropertyType = CreateForeignKeyCollectionTypeDotNetString(foreignKeyCollectionType, tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName);
                             }
                         }
                     }
@@ -649,6 +649,11 @@ namespace GeneratR.Database.SqlServer
                     dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.String";
                     sqlDbType = "SqlDbType.NVarChar";
+                    break;
+                case "xml":
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
+                    dbType = "DbType.Xml";
+                    sqlDbType = "SqlDbType.Xml";
                     break;
                 default:
                     throw new InvalidOperationException(string.Format("Unknown SqlServerDataType: '{0}'", sqlDataType));

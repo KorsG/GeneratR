@@ -102,8 +102,9 @@ namespace GeneratR.DotNet
             return value;
         }
 
-        public override string[] ReservedDotNetNames { get; } =
-            new string[] {
+        public override HashSet<string> ReservedDotNetNames { get; } =
+           new HashSet<string>()
+           {
                 "addhandler","addressof","alias","and","andalso","ansi","append","as","assembly",
                 "auto","binary","boolean","byref","byte","byval","call","case","catch","cbool",
                 "cbyte","cchar","cdate","cdec","cdbl","char","cint","class","clng","cobj","compare",

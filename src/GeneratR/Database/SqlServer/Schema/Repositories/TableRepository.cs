@@ -16,7 +16,7 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<Table> GetAll()
         {
-            return GetWhere("", null);
+            return GetWhere(string.Empty, null);
         }
 
         private IEnumerable<Table> GetWhere(string whereSql, object whereParams)
@@ -27,53 +27,35 @@ namespace GeneratR.Database.SqlServer.Schema
             }
 
             var tables = new List<Table>();
+            var sqlText = $"SELECT * FROM ({SqlQueries.SelectTables}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
 
             using (var conn = _schemaContext.GetConnection())
             {
-                var sqlText = $"SELECT * FROM ({SqlQueries.SelectTables}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
-                var result = conn.Query(sqlText, whereParams).ToList();
-                if (result.Any())
+                var dbTables = conn.Query(sqlText, whereParams).ToList();
+                if (dbTables.Any())
                 {
-                    var columns = _schemaContext.Columns.GetAllForTables().ToList();
+                    // Load relations.
+                    var indexLookup = _schemaContext.Indexes.GetAllForTables().ToLookup(x => x.ParentObjectID);
+                    var columnLookup = _schemaContext.Columns.GetAllForTables().ToLookup(x => x.ParentObjectID);
                     var foreignKeys = _schemaContext.ForeignKeys.GetAll().ToList();
-                    var indexes = _schemaContext.Indexes.GetAllForTables().ToList();
-                    foreach (var q in result)
-                    {
-                        var tbl = new Table
+                    var foreignKeyToLookup = foreignKeys.ToLookup(x => x.ToObjectID);
+                    var foreignKeyFromLookup = foreignKeys.ToLookup(x => x.FromObjectID);
+
+                    // Map.
+                    tables = dbTables
+                        .Select(x => new Table()
                         {
-                            TableID = q.TableID,
-                            Schema = q.Schema,
-                            Name = q.Name,
-                        };
-
-                        tbl.Columns = (
-                            from c in columns
-                            where c.ParentName.Equals(tbl.Name, StringComparison.OrdinalIgnoreCase)
-                            && c.ParentSchema.Equals(tbl.Schema, StringComparison.OrdinalIgnoreCase)
-                            select c).ToList();
-
-                        tbl.Indexes = (
-                            from i in indexes
-                            where i.ParentSchema.Equals(tbl.Schema, StringComparison.OrdinalIgnoreCase)
-                            && i.ParentName.Equals(tbl.Name, StringComparison.OrdinalIgnoreCase)
-                            select i).ToList();
-
-                        tbl.ForeignKeys = (
-                            from f in foreignKeys
-                            where (f.FromSchema.Equals(tbl.Schema, StringComparison.OrdinalIgnoreCase)
-                            && f.FromName.Equals(tbl.Name, StringComparison.OrdinalIgnoreCase))
-                            select f).ToList();
-
-                        tbl.ReferencingForeignKeys = (
-                            from f in foreignKeys
-                            where (f.ToSchema.Equals(tbl.Schema, StringComparison.OrdinalIgnoreCase)
-                            && f.ToName.Equals(tbl.Name, StringComparison.OrdinalIgnoreCase))
-                            select f).ToList();
-
-                        tables.Add(tbl);
-                    }
+                            ObjectID = x.ObjectID,
+                            Schema = x.Schema,
+                            Name = x.Name,
+                            Columns = columnLookup[(int)x.ObjectID].ToList(),
+                            Indexes = indexLookup[(int)x.ObjectID].ToList(),
+                            ForeignKeys = foreignKeyToLookup[(int)x.ObjectID].ToList(),
+                            ReferencingForeignKeys = foreignKeyFromLookup[(int)x.ObjectID].ToList(),
+                        }).ToList();
                 }
             }
+
             return tables;
         }
     }

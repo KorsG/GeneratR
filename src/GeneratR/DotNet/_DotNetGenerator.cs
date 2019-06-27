@@ -177,7 +177,7 @@ namespace GeneratR.DotNet
         /// <param name="value"></param>
         public abstract string GetAsValidDotNetName(string value);
 
-        public abstract string[] ReservedDotNetNames { get; }
+        public abstract HashSet<string> ReservedDotNetNames { get; }
 
         #endregion
 

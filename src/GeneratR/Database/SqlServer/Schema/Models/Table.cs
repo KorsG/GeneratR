@@ -16,10 +16,12 @@ namespace GeneratR.Database.SqlServer.Schema
             Indexes = new List<Index>();
         }
 
-        public int TableID { get; set; }
+        public int ObjectID { get; set; }
+
         public string Schema { get; set; }
         public string Name { get; set; }
-        public string FullName => Schema + "." + Name;
+        public string FullName => $"{Schema}.{Name}";
+
         public List<Column> Columns { get; set; }
         public List<ForeignKey> ForeignKeys { get; set; }
         public List<ForeignKey> ReferencingForeignKeys { get; set; }

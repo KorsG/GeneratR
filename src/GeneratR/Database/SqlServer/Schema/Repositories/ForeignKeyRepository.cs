@@ -16,7 +16,7 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<ForeignKey> GetAll()
         {
-            return (new SelectQueryBuilder(_schemaContext).Execute());
+            return new SelectQueryBuilder(_schemaContext).Execute();
         }
 
         private IEnumerable<ForeignKey> GetWhere(string whereSql, object whereParams)

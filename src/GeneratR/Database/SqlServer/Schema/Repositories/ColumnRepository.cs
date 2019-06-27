@@ -49,34 +49,36 @@ namespace GeneratR.Database.SqlServer.Schema
                 whereSql = "WHERE " + whereSql;
             }
 
+            var sqlText = $"SELECT * FROM ({SqlQueries.SelectColumns}) AS [t] {whereSql} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
+
             using (var conn = _schemaContext.GetConnection())
             {
-                var sqlText = $"SELECT * FROM ({SqlQueries.SelectColumns}) AS [t] {whereSql} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
-                var result = conn.Query(sqlText, whereParams);
+                var dbColumns = conn.Query(sqlText, whereParams);
 
-                var data = result.Select(q => new Column
+                var columns = dbColumns.Select(x => new Column
                 {
-                    ParentSchema = q.ParentSchema,
-                    ParentName = q.ParentName,
-                    Name = q.Name,
-                    DataType = q.DataType,
-                    Length = (short)q.Length,
-                    Precision = (byte)q.Precision,
-                    Scale = (byte)q.Scale,
-                    Position = (int)q.Position,
-                    IsNullable = q.IsNullable ?? false,
-                    IsComputed = q.IsComputed ?? false,
-                    IsPrimaryKey = q.IsPrimaryKey ?? false,
-                    PrimaryKeyPosition = (short)(q.PrimaryKeyPosition ?? 0),
-                    IsIdentity = q.IsIdentity ?? false,
-                    IdentitySeed = (long)q.IdentitySeed,
-                    IdentityIncrement = (long)q.IdentityIncrement,
-                    IsRowGuid = q.IsRowGuid ?? false,
-                    DefaultValueDefinition = q.DefaultValueDefinition ?? string.Empty,
-                    Description = q.Description ?? string.Empty,
+                    ParentObjectID = x.ParentObjectID,
+                    ParentSchema = x.ParentSchema,
+                    ParentName = x.ParentName,
+                    Name = x.Name,
+                    DataType = x.DataType,
+                    Length = (short)x.Length,
+                    Precision = (byte)x.Precision,
+                    Scale = (byte)x.Scale,
+                    Position = (int)x.Position,
+                    IsNullable = x.IsNullable ?? false,
+                    IsComputed = x.IsComputed ?? false,
+                    IsPrimaryKey = x.IsPrimaryKey ?? false,
+                    PrimaryKeyPosition = (short)(x.PrimaryKeyPosition ?? 0),
+                    IsIdentity = x.IsIdentity ?? false,
+                    IdentitySeed = (long)x.IdentitySeed,
+                    IdentityIncrement = (long)x.IdentityIncrement,
+                    IsRowGuid = x.IsRowGuid ?? false,
+                    DefaultValueDefinition = x.DefaultValueDefinition ?? string.Empty,
+                    Description = x.Description ?? string.Empty,
                 });
 
-                return data;
+                return columns;
             }
         }
     }

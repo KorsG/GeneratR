@@ -17,7 +17,7 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public List<View> GetAll()
         {
-            return GetWhere("", null);
+            return GetWhere(string.Empty, null);
         }
 
         private List<View> GetWhere(string whereSql, object whereParams)
@@ -27,32 +27,30 @@ namespace GeneratR.Database.SqlServer.Schema
                 whereSql = "WHERE " + whereSql;
             }
 
-            var data = new List<View>();
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectViews}) AS [t1] {whereSql} ORDER BY [t1].[Schema], [t1].[Name]";
+            var views = new List<View>();
+            var sqlText = $"SELECT * FROM ({SqlQueries.SelectViews}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
+
             using (var conn = _schemaContext.GetConnection())
             {
-                var queryResult = conn.Query(sqlText, whereParams);
-                if (queryResult.Any())
+                var dbViews = conn.Query(sqlText, whereParams).ToList();
+                if (dbViews.Any())
                 {
-                    var columns = _schemaContext.Columns.GetAllForViews();
-                    foreach (var q in queryResult)
-                    {
-                        var obj = new View()
-                        {
-                            Schema = q.Schema,
-                            Name = q.Name,
-                        };
-                        obj.Columns = (
-                            from c in columns
-                            where c.ParentName.Equals(obj.Name, StringComparison.OrdinalIgnoreCase)
-                            && c.ParentSchema.Equals(obj.Schema, StringComparison.OrdinalIgnoreCase)
-                            select c).ToList();
+                    // Load relations.
+                    var columnLookup = _schemaContext.Columns.GetAllForViews().ToLookup(x => x.ParentObjectID);
 
-                        data.Add(obj);
-                    }
+                    // Map.
+                    views = dbViews
+                        .Select(x => new View()
+                        {
+                            ObjectID = x.ObjectID,
+                            Schema = x.Schema,
+                            Name = x.Name,
+                            Columns = columnLookup[(int)x.ObjectID].ToList()
+                        }).ToList();
                 }
-                return data;
             }
+
+            return views;
         }
     }
 }

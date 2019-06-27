@@ -34,22 +34,24 @@ namespace GeneratR.Database.SqlServer.Schema
             return GetWhere("ParentType=@ParentType", new { ParentType = "P" });
         }
 
-        private IEnumerable<Parameter> GetWhere(string whereSQL, object parameters)
+        private IEnumerable<Parameter> GetWhere(string sqlWhere, object sqlParams)
         {
-            if (!string.IsNullOrWhiteSpace(whereSQL) && !whereSQL.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(sqlWhere) && !sqlWhere.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase))
             {
-                whereSQL = "WHERE " + whereSQL;
+                sqlWhere = "WHERE " + sqlWhere;
             }
 
-            var data = new List<Parameter>();
-            var sql = $"SELECT * FROM ({SqlQueries.SelectParameters}) AS [t] {whereSQL} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
+            var parameters = new List<Parameter>();
+            var sqlText = $"SELECT * FROM ({SqlQueries.SelectParameters}) AS [t] {sqlWhere} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
+
             using (var conn = _schemaContext.GetConnection())
             {
-                var queryResult = conn.Query(sql, parameters);
-                foreach (var q in queryResult)
+                var dbParameters = conn.Query(sqlText, sqlParams).ToList();
+                foreach (var q in dbParameters)
                 {
                     var param = new Parameter()
                     {
+                        ParentObjectID = q.ParentObjectID,
                         ParentSchema = q.ParentSchema,
                         ParentName = q.ParentName,
                         ParentType = q.ParentType,
@@ -66,10 +68,11 @@ namespace GeneratR.Database.SqlServer.Schema
                         Direction = ((bool)q.IsOutput) ? ParameterDirection.InAndOutDirection : ParameterDirection.InDirection, // SqlServer does not have OutputOnly parameters as of 2012.
                     };
 
-                    data.Add(param);
+                    parameters.Add(param);
                 }
             }
-            return data;
+
+            return parameters;
         }
     }
 }

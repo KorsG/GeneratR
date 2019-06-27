@@ -14,14 +14,13 @@ namespace GeneratR.Database.SqlServer.Schema
             Parameters = new List<Parameter>();
         }
 
+        public int ObjectID { get; set; }
+
         public string Name { get; set; }
-
         public string Schema { get; set; }
-
-        public string FullName => Schema + "." + Name;
+        public string FullName => $"{Schema}.{Name}";
 
         public List<Column> Columns { get; set; }
-
         public List<Parameter> Parameters { get; set; }
 
         public override string ToString() => $"{FullName}";

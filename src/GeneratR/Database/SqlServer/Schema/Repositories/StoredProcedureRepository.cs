@@ -28,21 +28,18 @@ namespace GeneratR.Database.SqlServer.Schema
                 var queryResult = conn.Query(sql, whereParams);
                 if (queryResult.Any())
                 {
-                    var param = _schemaContext.Parameters.GetAllForStoredProcedures();
+                    var paramLookup = _schemaContext.Parameters.GetAllForStoredProcedures().ToLookup(x => x.ParentObjectID);
                     var columns = includeResultColumns ? _schemaContext.StoredProcedureResultColumns.GetAll() : null;
                     foreach (var q in queryResult)
                     {
                         var obj = new StoredProcedure()
                         {
+                            ObjectID = q.ObjectID,
                             Schema = q.Schema,
                             Name = q.Name,
                         };
 
-                        obj.Parameters = (
-                            from p in param
-                            where p.ParentName.Equals(obj.Name, StringComparison.OrdinalIgnoreCase)
-                            && p.ParentSchema.Equals(obj.Schema, StringComparison.OrdinalIgnoreCase)
-                            select p).ToList();
+                        obj.Parameters = paramLookup[obj.ObjectID].ToList();
 
                         if (includeResultColumns)
                         {

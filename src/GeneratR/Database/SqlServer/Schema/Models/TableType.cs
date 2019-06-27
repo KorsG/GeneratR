@@ -13,11 +13,14 @@ namespace GeneratR.Database.SqlServer.Schema
             Columns = new List<Column>();
         }
 
+        public int ObjectID { get; set; }
+
         public string Schema { get; set; }
         public string Name { get; set; }
-        public string FullName => Schema + "." + Name;
-        public List<Column> Columns { get; set; }
+        public string FullName => $"{Schema}.{Name}";
         public bool IsNullable { get; set; }
+
+        public List<Column> Columns { get; set; }
 
         public override string ToString() => $"{FullName}";
     }

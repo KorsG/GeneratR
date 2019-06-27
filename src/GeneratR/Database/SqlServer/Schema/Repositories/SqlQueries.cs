@@ -10,7 +10,7 @@ namespace GeneratR.Database.SqlServer.Schema
     {
         public static string SelectTables => @"
 SELECT 
-    [TableID]=o.object_id,
+    [ObjectID]=o.object_id,
     [Schema]=s.name,
     [Name]=o.name
 FROM 
@@ -25,16 +25,17 @@ WHERE
 
         public static string SelectViews => @"
 SELECT 
-    [Schema]=s.name,
-    [Name]=o.name
+	[ObjectID]=o.object_id,
+	[Schema]=s.name,
+	[Name]=o.name
 FROM 
-    sys.objects AS [o] WITH (NOLOCK)
-    JOIN sys.schemas AS [s] WITH (NOLOCK) 
-        ON o.schema_id = s.schema_id
+	sys.objects AS [o] WITH (NOLOCK)
+	JOIN sys.schemas AS [s] WITH (NOLOCK) 
+		ON s.schema_id = o.schema_id
 WHERE 
-    o.type IN ('V') 
-    AND o.is_ms_shipped=0
-    AND o.name NOT IN ('sp_alterdiagram', 'sp_creatediagram', 'sp_dropdiagram', 'sp_helpdiagramdefinition', 'sp_helpdiagrams', 'sp_renamediagram', 'sp_upgraddiagrams', 'sysdiagrams')
+	o.type IN ('V') 
+	AND o.is_ms_shipped=0
+	AND o.name NOT IN ('sp_alterdiagram', 'sp_creatediagram', 'sp_dropdiagram', 'sp_helpdiagramdefinition', 'sp_helpdiagrams', 'sp_renamediagram', 'sp_upgraddiagrams', 'sysdiagrams')
 ";
 
         public static string SelectForeignKeys => @"
@@ -127,11 +128,12 @@ WHERE
 
         public static string SelectColumns => @"
 SELECT 
-    [t0].*,
-    [IdentitySeed]=CASE WHEN [t0].[IsIdentity]=1 THEN IDENT_SEED([t0].[ParentSchema]+'.'+[t0].ParentName) ELSE 0 END,
-    [IdentityIncrement]=CASE WHEN [t0].[IsIdentity]=1 THEN IDENT_INCR([t0].[ParentSchema]+'.'+[t0].ParentName) ELSE 0 END
+    [t].*,
+    [IdentitySeed]=CASE WHEN t.IsIdentity=1 THEN IDENT_SEED(t.ParentSchema+'.'+t.ParentName) ELSE 0 END,
+    [IdentityIncrement]=CASE WHEN t.IsIdentity=1 THEN IDENT_INCR(t.ParentSchema+'.'+t.ParentName) ELSE 0 END
 FROM (
     SELECT 
+	[ParentObjectID]=c.object_id,
     [ParentSchema]=CAST((CASE WHEN o.type='TT' THEN tt.[Schema] ELSE o.[Schema] END) AS nvarchar(255)),
     [ParentName]=CAST((CASE WHEN o.type='TT' THEN tt.[Name] ELSE o.[Name] END) AS nvarchar(255)),
     [ParentType]=o.type,
@@ -161,35 +163,50 @@ FROM
 		ON description.major_id = c.object_id
 		AND description.minor_id = c.column_id
 		AND description.name = 'MS_Description'
-    OUTER APPLY(
-        SELECT [Schema]=inners.name, innero.* 
-		FROM sys.objects AS [innero] WITH (NOLOCK)
-		JOIN sys.schemas AS [inners] WITH (NOLOCK) 
-            ON inners.schema_id = innero.schema_id 
-        WHERE innero.object_id = c.object_id
+    OUTER APPLY
+	(
+        SELECT 
+			[Schema]=inners.name, innero.* 
+		FROM 
+			sys.objects AS [innero] WITH (NOLOCK)
+			JOIN sys.schemas AS [inners] WITH (NOLOCK) 
+				ON inners.schema_id = innero.schema_id 
+        WHERE 
+			innero.object_id = c.object_id
     ) AS [o]
-    OUTER APPLY(
-        SELECT [Schema]=inners.name, innertt.* 
-		FROM sys.table_types AS [innertt] WITH (NOLOCK)
-		JOIN sys.schemas AS [inners] WITH (NOLOCK) 
-            ON inners.schema_id = innertt.schema_id 
-        WHERE innertt.type_table_object_id = c.object_id
+    OUTER APPLY
+	(
+        SELECT 
+			[Schema]=inners.name, innertt.* 
+		FROM 
+			sys.table_types AS [innertt] WITH (NOLOCK)
+			JOIN sys.schemas AS [inners] WITH (NOLOCK) 
+				ON inners.schema_id = innertt.schema_id 
+        WHERE 
+			innertt.type_table_object_id = c.object_id
     ) AS [tt]
-    OUTER APPLY (
-        SELECT k.name,k.type,k.unique_index_id,ic.index_id,ic.is_included_column,ic.key_ordinal 
-		FROM sys.key_constraints AS [k] WITH (NOLOCK) 
-		JOIN sys.index_columns AS [ic] WITH (NOLOCK) 
-            ON ic.object_id = c.object_id AND ic.index_id = k.unique_index_id
-		WHERE k.parent_object_id = c.object_id AND k.type='PK' AND ic.column_id = c.column_id
+    OUTER APPLY 
+	(
+        SELECT 
+			k.name, k.type, k.unique_index_id, ic.index_id, ic.is_included_column, ic.key_ordinal 
+		FROM 
+			sys.key_constraints AS [k] WITH (NOLOCK) 
+			JOIN sys.index_columns AS [ic] WITH (NOLOCK) 
+			    ON ic.object_id = c.object_id AND ic.index_id = k.unique_index_id
+		WHERE 
+			k.parent_object_id = c.object_id 
+			AND k.type='PK' 
+			AND ic.column_id = c.column_id
     ) AS [kinfo]
 WHERE 
     (o.is_ms_shipped=0 OR tt.is_table_type=1)
     AND o.name NOT IN ('sp_alterdiagram', 'sp_creatediagram', 'sp_dropdiagram', 'sp_helpdiagramdefinition', 'sp_helpdiagrams', 'sp_renamediagram', 'sp_upgraddiagrams', 'sysdiagrams')
-) AS [t0]
+) AS [t]
 ";
 
         public static string SelectParameters => @"
 SELECT 
+    [ParentObjectID]=p.object_id,
 	[ParentSchema]=s.name, 
 	[ParentName]=o.name, 
 	[ParentType]=o.type, 
@@ -226,6 +243,7 @@ WHERE
 
         public static string SelectTableFunctions => @"
 SELECT
+    [ObjectID]=o.object_id,
     [Schema]=s.name,
     [Name]=o.name
 FROM 
@@ -240,6 +258,7 @@ WHERE
 
         public static string SelectStoredProcedures => @"
 SELECT 
+    [ObjectID]=o.object_id,
     [Schema]=s.name,
     [Name]=o.name
 FROM 
@@ -282,6 +301,7 @@ WHERE
 
         public static string SelectTableTypes => @"
 SELECT 
+    [ObjectID]=t.type_table_object_id,
     [Schema]=s.name,
     [Name]=t.name, 
     [IsNullable]=t.is_nullable

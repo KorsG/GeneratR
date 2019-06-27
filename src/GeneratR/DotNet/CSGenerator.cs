@@ -163,8 +163,8 @@ namespace GeneratR.DotNet
             return value;
         }
 
-        public override string[] ReservedDotNetNames { get; } =
-            new string[] {
+        public override HashSet<string> ReservedDotNetNames { get; } =
+            new HashSet<string>() {
                 "abstract", "event", "new", "struct", "as", "explicit", "null",
                 "switch", "base", "extern", "object", "this", "bool", "false", "operator", "throw",
                 "break", "finally", "out", "true", "byte", "fixed", "override", "try", "case", "float",

@@ -13,8 +13,12 @@ namespace GeneratR.Database.SqlServer.Schema
         }
 
         public string Name { get; set; }
+
+        public int ParentObjectID { get; set; }
         public string ParentName { get; set; }
         public string ParentSchema { get; set; }
+        public string ParentFullName => $"{ParentSchema}.{ParentName}";
+
         public string DataType { get; set; }
         public short Length { get; set; }
         public byte Precision { get; set; }

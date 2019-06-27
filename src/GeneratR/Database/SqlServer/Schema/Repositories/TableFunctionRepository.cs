@@ -16,45 +16,37 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<TableFunction> GetAll()
         {
-            return GetWhere("", null);
+            return GetWhere(string.Empty, null);
         }
 
         private IEnumerable<TableFunction> GetWhere(string whereSql, object whereParams)
         {
-            var data = new List<TableFunction>();
+            var sqlText = $"SELECT * FROM ({SqlQueries.SelectTableFunctions}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
+            var tableFunctions = new List<TableFunction>();
+
             using (var conn = _schemaContext.GetConnection())
             {
-                var sqlText = $"SELECT * FROM ({SqlQueries.SelectTableFunctions}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
-                var queryResult = conn.Query(sqlText, whereParams);
-                if (queryResult.Any())
+                var dbTableFunctions = conn.Query(sqlText, whereParams).ToList();
+                if (dbTableFunctions.Any())
                 {
-                    var columns = _schemaContext.Columns.GetAllForTableFunctions();
-                    var param = _schemaContext.Parameters.GetAllForTableFunctions();
-                    foreach (var q in queryResult)
-                    {
-                        var obj = new TableFunction()
+                    // Load relations.
+                    var columnLookup = _schemaContext.Columns.GetAllForTableFunctions().ToLookup(x => x.ParentObjectID);
+                    var paramLookup = _schemaContext.Parameters.GetAllForTableFunctions().ToLookup(x => x.ParentObjectID);
+
+                    // Map.
+                    tableFunctions = dbTableFunctions
+                        .Select(x => new TableFunction()
                         {
-                            Schema = q.Schema,
-                            Name = q.Name,
-                        };
-                        
-                        obj.Columns = (
-                            from c in columns
-                            where c.ParentName.Equals(obj.Name, StringComparison.OrdinalIgnoreCase)
-                            && c.ParentSchema.Equals(obj.Schema, StringComparison.OrdinalIgnoreCase)
-                            select c).ToList();
-
-                        obj.Parameters = (
-                            from p in param
-                            where p.ParentName.Equals(obj.Name, StringComparison.OrdinalIgnoreCase)
-                            && p.ParentSchema.Equals(obj.Schema, StringComparison.OrdinalIgnoreCase)
-                            select p).ToList();
-
-                        data.Add(obj);
-                    }
+                            ObjectID = x.ObjectID,
+                            Schema = x.Schema,
+                            Name = x.Name,
+                            Columns = columnLookup[(int)x.ObjectID].ToList(),
+                            Parameters = paramLookup[(int)x.ObjectID].ToList(),
+                        }).ToList();
                 }
             }
-            return data;
+
+            return tableFunctions;
         }
     }
 }

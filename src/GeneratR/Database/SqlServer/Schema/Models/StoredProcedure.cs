@@ -14,11 +14,11 @@ namespace GeneratR.Database.SqlServer.Schema
             ResultColumns = new List<StoredProcedureResultColumn>();
         }
 
+        public int ObjectID { get; set; }
+
         public string Schema { get; set; }
-
         public string Name { get; set; }
-
-        public string FullName => Schema + "." + Name;
+        public string FullName => $"{Schema}.{Name}";
 
         public List<Parameter> Parameters { get; set; }
 
