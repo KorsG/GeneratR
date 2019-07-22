@@ -257,7 +257,7 @@ public class FileManager
 
         private void ProjectSync(EnvDTE.ProjectItem templateProjectItem, List<GeneratedFile> generatedFiles) 
 		{
-			IEnumerable<string> generatedFileNames = generatedFiles.Select(x => x.FileName);
+			var generatedFileNames = generatedFiles.Select(x => x.FileName);
 
 			var groupedFiles = 
 				(from f in generatedFiles
@@ -327,14 +327,17 @@ public class FileManager
 				{
 					startIndex += generatedFileLogStartName.Length;
 					var logContent = previousContent.Substring(startIndex, endIndex - startIndex - 1); 
-					var fileNames = logContent.Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-					var excessFiles = fileNames.Except(generatedFileNames);
-					foreach (var fileName in excessFiles)
+					var previousGeneratedFileNames = logContent.Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+					if (previousGeneratedFileNames.Any())
 					{
-						var projectItem = vsHelper.FindProjectItem(fileName);
-						if (projectItem != null)
+						var excessFiles = previousGeneratedFileNames.Except(generatedFileNames);
+						foreach (var fileName in excessFiles)
 						{
-							projectItem.Delete();
+							var projectItem = vsHelper.FindProjectItem(fileName);
+							if (projectItem != null)
+							{
+								projectItem.Delete();
+							}
 						}
 					}
 				}
@@ -345,7 +348,7 @@ public class FileManager
                 }
             }
 
-			// Write generated filenames log
+			// Write generated filenames log.
 			var logBuilder = new StringBuilder();
 			logBuilder.AppendLine(generatedFileLogStartName);
 			foreach (var fileName in generatedFileNames)

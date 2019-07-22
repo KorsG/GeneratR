@@ -50,8 +50,8 @@ namespace GeneratR.Database.SqlServer.Schema
                             Name = x.Name,
                             Columns = columnLookup[(int)x.ObjectID].ToList(),
                             Indexes = indexLookup[(int)x.ObjectID].ToList(),
-                            ForeignKeys = foreignKeyToLookup[(int)x.ObjectID].ToList(),
-                            ReferencingForeignKeys = foreignKeyFromLookup[(int)x.ObjectID].ToList(),
+                            ForeignKeys = foreignKeyFromLookup[(int)x.ObjectID].ToList(),
+                            ReferencingForeignKeys = foreignKeyToLookup[(int)x.ObjectID].ToList(),
                         }).ToList();
                 }
             }
