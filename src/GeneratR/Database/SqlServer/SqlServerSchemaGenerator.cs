@@ -355,7 +355,7 @@ namespace GeneratR.Database.SqlServer
                         var fks = tbl.ForeignKeys.Where(x => x.DbObject.FromName == tblName).ToList();
 
                         // Handle scenarios where this table only have one fk to a table.
-                        var singleRelations = fks.GroupBy(x => x.DbObject.ToName).Where(x => x.Count() == 1).SelectMany(x => x.ToList()).ToList();
+                        var singleRelations = fks.GroupBy(x => x.DbObject.ToName).Where(x => x.Count() == 1).SelectMany(x => x).ToList();
                         foreach (var fk in singleRelations)
                         {
                             fk.PropertyName = fk.DbObject.ToName;
@@ -367,7 +367,7 @@ namespace GeneratR.Database.SqlServer
                         }
 
                         // Handle scenarios where this table have multiple fk's to a table.
-                        var multiRelations = fks.GroupBy(x => x.DbObject.ToName).Where(x => x.Count() > 1).SelectMany(x => x.ToList()).ToList();
+                        var multiRelations = fks.GroupBy(x => x.DbObject.ToName).Where(x => x.Count() > 1).SelectMany(x => x).ToList();
                         foreach (var fk in multiRelations)
                         {
                             var propName = "";
