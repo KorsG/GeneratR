@@ -54,6 +54,16 @@ namespace GeneratR.DotNet
 
         public abstract string CommentOperator { get; }
 
+        /// <summary>
+        /// Get boolean "true" as string.
+        /// </summary>
+        public abstract string TrueValue { get; }
+
+        /// <summary>
+        /// Get boolean "false" as string.
+        /// </summary>
+        public abstract string FalseValue { get; }
+
         /// <summary> 
         /// This method creates the signature for the class in provided DotNet syntax.
         /// </summary>
@@ -80,8 +90,7 @@ namespace GeneratR.DotNet
         /// <param name="t"></param>
         public string GetTypeAsString(Type t)
         {
-            string typeString = "";
-            if (this.TypeStringMap.TryGetValue(t, out typeString))
+            if (TypeStringMap.TryGetValue(t, out string typeString))
             {
                 return typeString;
             }

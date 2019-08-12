@@ -5,8 +5,8 @@ namespace GeneratR.DotNet
 {
     public class DotNetAttribute
     {
-        private readonly DotNetLanguageType _DotNetLanguage;
-        private readonly List<string> args = new List<string>();
+        private readonly DotNetLanguageType _dotNetLanguage;
+        private readonly List<string> _args = new List<string>();
 
         public string Name { get; private set; }
 
@@ -15,6 +15,10 @@ namespace GeneratR.DotNet
         public string EndTag { get; }
 
         public string OptionalAssignmentTag { get; }
+
+        public string TrueValue { get; }
+
+        public string FalseValue { get; }
 
         /// <summary>
         /// Create a DotNetAttritbute.
@@ -26,18 +30,22 @@ namespace GeneratR.DotNet
         public DotNetAttribute(DotNetLanguageType dotNetLanguage, string name)
         {
             if (string.IsNullOrWhiteSpace(name)) { throw new ArgumentNullException(nameof(name)); }
-            _DotNetLanguage = dotNetLanguage;
-            if (_DotNetLanguage == DotNetLanguageType.CS)
+            _dotNetLanguage = dotNetLanguage;
+            if (_dotNetLanguage == DotNetLanguageType.CS)
             {
                 BeginTag = "[";
                 EndTag = "]";
                 OptionalAssignmentTag = " = ";
+                TrueValue = "true";
+                FalseValue = "false";
             }
-            else if (_DotNetLanguage == DotNetLanguageType.VB)
+            else if (_dotNetLanguage == DotNetLanguageType.VB)
             {
                 BeginTag = "<";
                 EndTag = ">";
                 OptionalAssignmentTag = "=:";
+                TrueValue = "True";
+                FalseValue = "False";
             }
             else
             {
@@ -61,22 +69,54 @@ namespace GeneratR.DotNet
         /// <summary>
         /// Must be provided in correct order.
         /// </summary>
-        public DotNetAttribute SetArg(object value)
+        public DotNetAttribute SetArg(object value, bool wrapValueInQuotes = false)
         {
-            args.Add($"{value.ToString()}");
-            return this;
-        }
-
-        public DotNetAttribute SetOptionalArg(string name, object value)
-        {
-            if (value is string)
+            if (wrapValueInQuotes)
             {
-                args.Add($"{name}{OptionalAssignmentTag}\"{value}\"");
+                _args.Add($"\"{value}\"");
+            }
+            else if (value is bool valueAsBool)
+            {
+                if (valueAsBool)
+                {
+                    _args.Add($"{TrueValue}");
+                }
+                else
+                {
+                    _args.Add($"{FalseValue}");
+                }
             }
             else
             {
-                args.Add($"{name}{OptionalAssignmentTag}{value}");
+                _args.Add(value.ToString());
             }
+
+            return this;
+        }
+
+        public DotNetAttribute SetOptionalArg(string name, object value, bool wrapValueInQuotes = false)
+        {
+            if (wrapValueInQuotes)
+            {
+                _args.Add($"{name}{OptionalAssignmentTag}\"{value}\"");
+            }
+            else if (value is bool valueAsBool)
+            {
+
+                if (valueAsBool)
+                {
+                    _args.Add($"{name}{OptionalAssignmentTag}{TrueValue}");
+                }
+                else
+                {
+                    _args.Add($"{name}{OptionalAssignmentTag}{FalseValue}");
+                }
+            }
+            else
+            {
+                _args.Add($"{name}{OptionalAssignmentTag}{value}");
+            }
+
             return this;
         }
 
@@ -89,11 +129,11 @@ namespace GeneratR.DotNet
         {
             if (includeBeginAndEndTags)
             {
-                return string.Format(@"{0}{1}({2}){3}", BeginTag, Name, string.Join(", ", args), EndTag);
+                return string.Format(@"{0}{1}({2}){3}", BeginTag, Name, string.Join(", ", _args), EndTag);
             }
             else
             {
-                return string.Format(@"{0}({1})", Name, string.Join(", ", args));
+                return string.Format(@"{0}({1})", Name, string.Join(", ", _args));
             }
         }
 

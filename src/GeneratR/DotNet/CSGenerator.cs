@@ -18,6 +18,10 @@ namespace GeneratR.DotNet
 
         public override string CommentOperator => "//";
 
+        public override string TrueValue => "true";
+
+        public override string FalseValue => "false";
+
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
         {
             var value = "public ";

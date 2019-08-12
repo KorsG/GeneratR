@@ -30,15 +30,15 @@ namespace GeneratR.DotNet
             var b = new DotNetAttribute(LanguageType, "Required");
             if (allowEmptyStrings)
             {
-                b = b.SetOptionalArg("AllowEmptyStrings", "true");
+                b = b.SetOptionalArg("AllowEmptyStrings", true);
             }
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                b = b.SetOptionalArg("ErrorMessage", errorMessage);
+                b = b.SetOptionalArg("ErrorMessage", errorMessage, wrapValueInQuotes: true);
             }
             if (!string.IsNullOrWhiteSpace(errorMessageResourceName))
             {
-                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName);
+                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName, wrapValueInQuotes: true);
             }
             if (errorMessageResourceType != null)
             {
@@ -56,11 +56,11 @@ namespace GeneratR.DotNet
             }
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                b = b.SetOptionalArg("ErrorMessage", errorMessage);
+                b = b.SetOptionalArg("ErrorMessage", errorMessage, wrapValueInQuotes: true);
             }
             if (!string.IsNullOrWhiteSpace(errorMessageResourceName))
             {
-                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName);
+                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName, wrapValueInQuotes: true);
             }
             if (errorMessageResourceType != null)
             {
@@ -78,11 +78,11 @@ namespace GeneratR.DotNet
             }
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                b = b.SetOptionalArg("ErrorMessage", errorMessage);
+                b = b.SetOptionalArg("ErrorMessage", errorMessage, wrapValueInQuotes: true);
             }
             if (!string.IsNullOrWhiteSpace(errorMessageResourceName))
             {
-                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName);
+                b = b.SetOptionalArg("ErrorMessageResourceName", errorMessageResourceName, wrapValueInQuotes: true);
             }
             if (errorMessageResourceType != null)
             {
@@ -93,10 +93,10 @@ namespace GeneratR.DotNet
 
         public DotNetAttribute CreateTableAttribute(string name, string schema = null)
         {
-            var b = new DotNetAttribute(LanguageType, "Table").SetArg("\"" + name + "\"");
+            var b = new DotNetAttribute(LanguageType, "Table").SetArg(name, wrapValueInQuotes: true);
             if (!string.IsNullOrWhiteSpace(schema))
             {
-                b.SetOptionalArg("Schema", schema);
+                b.SetOptionalArg("Schema", schema, wrapValueInQuotes: true);
             }
             return b;
         }
@@ -104,7 +104,7 @@ namespace GeneratR.DotNet
         public DotNetAttribute CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption option)
         {
             return new DotNetAttribute(LanguageType, "DatabaseGenerated")
-                .SetArg((nameof(DatabaseGeneratedOption) + "." + option.ToString()));
+                .SetArg(nameof(DatabaseGeneratedOption) + "." + option.ToString());
         }
 
         public DotNetAttribute CreateColumnAttribute(int? order = null, string typeName = null)
@@ -116,21 +116,21 @@ namespace GeneratR.DotNet
             }
             if (!string.IsNullOrWhiteSpace(typeName))
             {
-                b = b.SetOptionalArg("TypeName", typeName);
+                b = b.SetOptionalArg("TypeName", typeName, wrapValueInQuotes: true);
             }
             return b;
         }
 
         public DotNetAttribute CreateColumnAttribute(string name, int? order = null, string typeName = null)
         {
-            var b = new DotNetAttribute(LanguageType, "Column").SetArg("\"" + name + "\"");
+            var b = new DotNetAttribute(LanguageType, "Column").SetArg(name, wrapValueInQuotes: true);
             if (order != null)
             {
                 b = b.SetOptionalArg("Order", order);
             }
             if (!string.IsNullOrWhiteSpace(typeName))
             {
-                b = b.SetOptionalArg("TypeName", typeName);
+                b = b.SetOptionalArg("TypeName", typeName, wrapValueInQuotes: true);
             }
             return b;
         }
