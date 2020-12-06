@@ -24,9 +24,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.50.5" />
-    <PackageReference Include="Dapper.SqlBuilder" Version="1.50.5" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="4.5.0" />
+    <PackageReference Include="Dapper" Version="1.60.6" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
   <!-- Conditionally obtain references for the .NET Framework 4.5.2 target -->
@@ -35,10 +34,10 @@
 
   <!-- Conditionally obtain references for the .NET Standard 2.0 target -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <Folder Include="Database\" />
     <Folder Include="Templating\" />
   </ItemGroup>
   
