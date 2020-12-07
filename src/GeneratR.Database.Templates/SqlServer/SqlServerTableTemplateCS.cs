@@ -16,6 +16,9 @@ namespace GeneratR.Database.SqlServer.Templates
         private static readonly HashSet<string> _ansiStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "varchar", };
         private static readonly HashSet<string> _unicodeStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nchar", "nvarchar", };
         private static readonly HashSet<string> _allStringTypes = new HashSet<string>(_ansiStringTypes.Union(_unicodeStringTypes), StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> _decimalTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "decimal", "numeric", };
+        private static readonly HashSet<string> _dateTimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", "datetime2", "datetimeoffset", };
+        private static readonly HashSet<string> _dateTimeTypesWithoutScale = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", };
         private static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
         private readonly SqlServerTableConfiguration _obj;
@@ -72,9 +75,21 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
-                    foreach (var col in _obj.Columns)
+
+                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                     {
+                        // Column and class name must not be equal.
+                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            col.PropertyName += "Column";
+                        }
+
                         WriteLine();
+                        if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
+                        {
+                            WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
+                        }
+
                         if (_objSettings.AddAnnotations)
                         {
                             var attributes = new DotNetAttributeCollection();
@@ -92,9 +107,20 @@ namespace GeneratR.Database.SqlServer.Templates
                                 var colLength = col.DbObject.Length == -1 ? "max" : col.DbObject.Length.ToString();
                                 columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({colLength})";
                             }
-                            else if (col.DbObject.DataType.Equals("decimal", StringComparison.OrdinalIgnoreCase))
+                            else if (_decimalTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                columnAttributeTypeName = $"decimal({col.DbObject.Precision}, {col.DbObject.Scale})";
+                                columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({col.DbObject.Precision}, {col.DbObject.Scale})";
+                            }
+                            else if (_dateTimeTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            {
+                                if (_dateTimeTypesWithoutScale.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}";
+                                }
+                                else
+                                {
+                                    columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({col.DbObject.Scale})";
+                                }
                             }
                             else if (_rowVersionTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {

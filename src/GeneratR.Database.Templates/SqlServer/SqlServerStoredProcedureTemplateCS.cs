@@ -110,6 +110,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             {
                                 WriteLine("public {0}(){1}{{{1}}}{1}", outputParameterClassName, Environment.NewLine);
                             }
+
                             foreach (var p in _obj.Parameters.Where(x => x.DbObject.Direction == ParameterDirection.InAndOutDirection || x.DbObject.Direction == ParameterDirection.OutDirection))
                             {
                                 if (_settings.AddAnnotations)
@@ -141,6 +142,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             {
                                 WriteLine("public {0}(){1}{{{1}}}{1}", resultSetClassName, Environment.NewLine);
                             }
+
                             foreach (var col in _obj.ResultColumns)
                             {
                                 if (_settings.AddAnnotations)

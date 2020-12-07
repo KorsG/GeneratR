@@ -257,8 +257,50 @@ public class FileManager
 
         private void ProjectSync(EnvDTE.ProjectItem templateProjectItem, List<GeneratedFile> generatedFiles) 
 		{
-			var generatedFileNames = generatedFiles.Select(x => x.FileName);
+			// Load previously generated filenames from log, and delete any excess from project(s).
+			// NOTE: Converting from absolute filename paths to relative, so it will work on different machines.
+			var generatedFileNames = generatedFiles.Select(x => GetRelativePath(templateDirectoryName, x.FileName));
+			var generatedFileLogStartName = "--GENERATED FILE LOG START--";
+			var generatedFileLogEndName = "--GENERATED FILE LOG END--";
+			var logFileSuffix = ".generated.log";
+			var logFileName = Path.Combine(templateDirectoryName, templateFileNameWithoutExtension + logFileSuffix);
+			var previousLogProjectItem = templateProjectItem.ProjectItems.Cast<EnvDTE.ProjectItem>().Where(x => x.Name.EndsWith(logFileSuffix)).FirstOrDefault();
+			if (previousLogProjectItem != null)
+            {
+				var previousLogFileName = previousLogProjectItem.FileNames[0];
+				var previousContent = string.Empty;
+				if (File.Exists(previousLogFileName))
+                {
+					previousContent = File.ReadAllText(previousLogFileName);
+				}
+				var startIndex = previousContent.IndexOf(generatedFileLogStartName);
+				var endIndex = previousContent.IndexOf(generatedFileLogEndName);
+				if (startIndex > -1 && endIndex > -1)
+				{
+					startIndex += generatedFileLogStartName.Length;
+					var logContent = previousContent.Substring(startIndex, endIndex - startIndex - 1); 
+					var previousGeneratedFileNames = logContent.Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+					if (previousGeneratedFileNames.Any())
+					{
+						var excessFiles = previousGeneratedFileNames.Except(generatedFileNames);
+						foreach (var fileName in excessFiles)
+						{
+							var projectItem = vsHelper.FindProjectItem(fileName);
+							if (projectItem != null)
+							{
+								projectItem.Delete();
+							}
+						}
+					}
+				}
+				// Delete previous log file item if name of template has changed.
+				if (!previousLogFileName.Equals(logFileName, StringComparison.OrdinalIgnoreCase))
+                {
+					previousLogProjectItem.Delete();
+                }
+            }
 
+			// Add files to project(s).
 			var groupedFiles = 
 				(from f in generatedFiles
 				group f by new { f.ProjectName, f.FolderName }
@@ -307,48 +349,7 @@ public class FileManager
 				}
             }
 
-			// Load previously generated filenames from log, and delete any excess.
-			var generatedFileLogStartName = "--GENERATED FILE LOG START--";
-			var generatedFileLogEndName = "--GENERATED FILE LOG END--";
-			var logFileSuffix = ".generated.log";
-			var logFileName = Path.Combine(templateDirectoryName, templateFileNameWithoutExtension + logFileSuffix);
-			var previousLogProjectItem = templateProjectItem.ProjectItems.Cast<EnvDTE.ProjectItem>().Where(x => x.Name.EndsWith(logFileSuffix)).FirstOrDefault();
-			if (previousLogProjectItem != null)
-            {
-				var previousLogFileName = previousLogProjectItem.FileNames[0];
-				var previousContent = string.Empty;
-				if (File.Exists(previousLogFileName))
-                {
-					previousContent = File.ReadAllText(previousLogFileName);
-				}
-				var startIndex = previousContent.IndexOf(generatedFileLogStartName);
-				var endIndex = previousContent.IndexOf(generatedFileLogEndName);
-				if (startIndex > -1 && endIndex > -1)
-				{
-					startIndex += generatedFileLogStartName.Length;
-					var logContent = previousContent.Substring(startIndex, endIndex - startIndex - 1); 
-					var previousGeneratedFileNames = logContent.Split(new string[] {Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-					if (previousGeneratedFileNames.Any())
-					{
-						var excessFiles = previousGeneratedFileNames.Except(generatedFileNames);
-						foreach (var fileName in excessFiles)
-						{
-							var projectItem = vsHelper.FindProjectItem(fileName);
-							if (projectItem != null)
-							{
-								projectItem.Delete();
-							}
-						}
-					}
-				}
-				// Delete previous log file item if name of template has changed.
-				if (!previousLogFileName.Equals(logFileName, StringComparison.OrdinalIgnoreCase))
-                {
-					previousLogProjectItem.Delete();
-                }
-            }
-
-			// Write generated filenames log.
+			// Write generated filenames log and add to project.
 			var logBuilder = new StringBuilder();
 			logBuilder.AppendLine(generatedFileLogStartName);
 			foreach (var fileName in generatedFileNames)
@@ -358,6 +359,7 @@ public class FileManager
 			logBuilder.AppendLine(generatedFileLogEndName);
 
 			File.WriteAllText(logFileName, logBuilder.ToString());
+
 			CheckoutFileIfRequired(logFileName);
 
 			if (vsHelper.FindProjectItem(logFileName) == null)
@@ -378,6 +380,33 @@ public class FileManager
 				checkOutAction.EndInvoke(checkOutAction.BeginInvoke(fileName, null, null));
             }
         }
+
+		/// <summary>
+		/// Returns a relative path string from a full path based on a provided base path.
+		/// </summary>
+		/// <param name="relativeTo">The base path on which relative processing is based. Should be a directory.</param>
+		/// <param name="path">The path to convert. Can be either a file or a directory.</param>
+		/// <returns>
+		/// String of the relative path.
+		/// Examples of returned values:
+		///  test.txt, ..\test.txt, ..\..\..\test.txt, ., .., subdir\test.txt
+		/// </returns>
+		public static string GetRelativePath(string relativeTo, string path) 
+		{
+			// Require trailing backslash for path.
+			if (!relativeTo.EndsWith("\\"))
+			{	
+				relativeTo += "\\";
+			}
+
+			Uri baseUri = new Uri(relativeTo);
+			Uri fullUri = new Uri(path);
+
+			Uri relativeUri = baseUri.MakeRelativeUri(fullUri);
+
+			// Uri's use forward slashes so convert back to backward slashes.
+			return relativeUri.ToString().Replace("/", "\\");
+		}
     }
 
 	/// <summary>

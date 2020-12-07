@@ -76,9 +76,21 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
-                    foreach (var col in _obj.Columns)
+
+                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                     {
+                        // Column and class name must not be equal.
+                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            col.PropertyName += "Column";
+                        }
+
                         WriteLine();
+                        if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
+                        {
+                            WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
+                        }
+
                         if (_objSettings.AddAnnotations)
                         {
                             var attributes = new DotNetAttributeCollection();
