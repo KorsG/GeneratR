@@ -1,6 +1,8 @@
 <Project>
   <PropertyGroup>
     <Authors>Morten Korsgaard</Authors>
+    <RepositoryUrl>https://github.com/KorsG/GeneratR</RepositoryUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 </Project>
