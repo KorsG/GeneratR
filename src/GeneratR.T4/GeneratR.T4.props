@@ -1,0 +1,7 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<GeneratRToolsPath>$(MSBuildThisFileDirectory)..\tools\</GeneratRToolsPath>
+		<GeneratRT4Path>$(MSBuildThisFileDirectory)..\contentFiles\any\any\GeneratR.T4\</GeneratRT4Path>
+		<GeneratRT4CommonPath>$(MSBuildThisFileDirectory)..\contentFiles\any\any\GeneratR.T4\Common\</GeneratRT4CommonPath>
+	</PropertyGroup>
+</Project>

@@ -15,10 +15,18 @@
   <!-- NuGet content files -->
   <!-- https://docs.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target -->
   <ItemGroup>
-    <None Include="Common\FileManager.ttinclude" BuildAction="None" Pack="true" PackageCopyToOutput="true" 
-          PackagePath="contentFiles\any\any\GeneratR.T4\Common;content\GeneratR.T4\Common;" />
+    <None Include="Common\FileManager.ttinclude" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="contentFiles\any\any\GeneratR.T4\Common;content\GeneratR.T4\Common;" />
 
-    <None Include="Database\SqlServerSchemaGenerator.tttemplate" BuildAction="None" Pack="true" PackageCopyToOutput="false" 
-          PackagePath="contentFiles\any\any\GeneratR.T4\Database;content\GeneratR.T4\Database;" />
+    <None Include="Database\SqlServerSchemaGenerator.tttemplate" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="contentFiles\any\any\GeneratR.T4\Database;content\GeneratR.T4\Database;" />
+
+    <None Include="bin\Release\**\GeneratR.dll" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\GeneratR.pdb" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\GeneratR.xml" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+
+    <None Include="bin\Release\**\GeneratR.Database.Templates.dll" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\GeneratR.Database.Templates.pdb" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\GeneratR.Database.Templates.xml" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    
+    <None Include="GeneratR.T4.props" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="build" />
   </ItemGroup>
 </Project>
