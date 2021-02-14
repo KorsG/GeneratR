@@ -18,5 +18,23 @@ namespace GeneratR.Database.SqlServer
         public List<SqlServerColumnConfiguration> Columns { get; set; }
 
         public List<SqlServerParameterConfiguration> Parameters { get; set; }
+
+        public SqlServerColumnConfiguration GetColumn(string name)
+        {
+            return Columns?.FirstOrDefault(x => x.DbObject.Name == name);
+        }
+
+        public SqlServerTableFunctionConfiguration WithColumn(string name, Action<SqlServerColumnConfiguration> action)
+        {
+            if (action != null)
+            {
+                var column = GetColumn(name);
+                if (column != null)
+                {
+                    action(column);
+                }
+            }
+            return this;
+        }
     }
 }
