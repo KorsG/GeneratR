@@ -24,12 +24,12 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<Column> GetAllForTables()
         {
-            return GetWhere("ParentType=@ParentType", new { ParentType = "U" });
+            return GetWhere("ParentType = @ParentType", new { ParentType = "U" });
         }
 
         public IEnumerable<Column> GetAllForViews()
         {
-            return GetWhere("ParentType=@ParentType", new { ParentType = "V" });
+            return GetWhere("ParentType = @ParentType", new { ParentType = "V" });
         }
 
         public IEnumerable<Column> GetAllForTableFunctions()
@@ -39,21 +39,38 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<Column> GetAllForTableTypes()
         {
-            return GetWhere("ParentType=@ParentType", new { ParentType = "TT" });
+            return GetWhere("ParentType = @ParentType", new { ParentType = "TT" });
         }
 
         private IEnumerable<Column> GetWhere(string whereSql, object whereParams)
         {
-            if (!string.IsNullOrWhiteSpace(whereSql) && !whereSql.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase))
+            var sqlBuilder = new SqlBuilder();
+
+            if (!string.IsNullOrWhiteSpace(whereSql))
             {
-                whereSql = "WHERE " + whereSql;
+                sqlBuilder.Where(whereSql, whereParams);
             }
 
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectColumns}) AS [t] {whereSql} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[ParentSchema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
+
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[ParentSchema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectColumns}
+) AS [t] 
+/**where**/
+ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position];");
 
             using (var conn = _schemaContext.GetConnection())
             {
-                var dbColumns = conn.Query(sqlText, whereParams);
+                var dbColumns = conn.Query(query.RawSql, query.Parameters);
 
                 var columns = dbColumns.Select(x => new Column
                 {

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -26,15 +25,30 @@ namespace GeneratR.Database.SqlServer
         {
             var schema = new SqlServerDbSchema();
 
-            var schemaContext = new Schema.SqlServerSchemaContext(Settings.ConnectionString);
+            var schemaContext = new Schema.SqlServerSchemaContext(Settings.ConnectionString)
+            {
+                IncludeSchemas = Settings.IncludeSchemas ?? new HashSet<string>(),
+                ExcludeSchemas = Settings.ExcludeSchemas ?? new HashSet<string>(),
+            };
 
-            // Tables
+            // Tables.
             if (Settings.Table.Generate)
             {
                 var dbTables = schemaContext.Tables.GetAll();
+
+                if (Settings.IncludeObjects?.Any() == true)
+                {
+                    dbTables = dbTables.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
+                if (Settings.ExcludeObjects?.Any() == true)
+                {
+                    dbTables = dbTables.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
                 foreach (var tbl in dbTables)
                 {
-                    if (!base.ShouldGenerateDbObject(tbl.Name, tbl.Schema)) { continue; }
+                    if (!Settings.Table.ShouldInclude(tbl)) { continue; }
 
                     var o = new SqlServerTableConfiguration(tbl);
                     o.Namespace = Settings.Table.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
@@ -91,9 +105,20 @@ namespace GeneratR.Database.SqlServer
             if (Settings.View.Generate)
             {
                 var dbViews = schemaContext.Views.GetAll();
+
+                if (Settings.IncludeObjects?.Any() == true)
+                {
+                    dbViews = dbViews.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
+                if (Settings.ExcludeObjects?.Any() == true)
+                {
+                    dbViews = dbViews.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
                 foreach (var vw in dbViews)
                 {
-                    if (!base.ShouldGenerateDbObject(vw.Name, vw.Schema)) { continue; }
+                    if (!Settings.View.ShouldInclude(vw)) { continue; }
 
                     var o = new SqlServerViewConfiguration(vw);
 
@@ -130,9 +155,20 @@ namespace GeneratR.Database.SqlServer
             if (Settings.TableFunction.Generate)
             {
                 var dbFuncs = schemaContext.TableFunctions.GetAll();
+
+                if (Settings.IncludeObjects?.Any() == true)
+                {
+                    dbFuncs = dbFuncs.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
+                if (Settings.ExcludeObjects?.Any() == true)
+                {
+                    dbFuncs = dbFuncs.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
                 foreach (var f in dbFuncs)
                 {
-                    if (!base.ShouldGenerateDbObject(f.Name, f.Schema)) { continue; }
+                    if (!Settings.TableFunction.ShouldInclude(f)) { continue; }
 
                     var o = new SqlServerTableFunctionConfiguration(f);
 
@@ -178,9 +214,20 @@ namespace GeneratR.Database.SqlServer
             if (Settings.StoredProcedure.Generate)
             {
                 var dbProcs = schemaContext.StoredProcedures.GetAll(Settings.StoredProcedure.GenerateResultSet);
+
+                if (Settings.IncludeObjects?.Any() == true)
+                {
+                    dbProcs = dbProcs.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
+                if (Settings.ExcludeObjects?.Any() == true)
+                {
+                    dbProcs = dbProcs.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
                 foreach (var proc in dbProcs)
                 {
-                    if (!base.ShouldGenerateDbObject(proc.Name, proc.Schema)) { continue; }
+                    if (!Settings.StoredProcedure.ShouldInclude(proc)) { continue; }
 
                     var o = new SqlServerStoredProcedureConfiguration(proc);
 
@@ -225,14 +272,24 @@ namespace GeneratR.Database.SqlServer
                 }
             }
 
-
             // TableTypes.
             if (Settings.TableType.Generate)
             {
                 var dbTypes = schemaContext.TableTypes.GetAll();
+
+                if (Settings.IncludeObjects?.Any() == true)
+                {
+                    dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
+                if (Settings.ExcludeObjects?.Any() == true)
+                {
+                    dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                }
+
                 foreach (var t in dbTypes)
                 {
-                    if (!base.ShouldGenerateDbObject(t.Name, t.Schema)) { continue; }
+                    if (!Settings.TableType.ShouldInclude(t)) { continue; }
 
                     var o = new SqlServerTableTypeConfiguration(t);
 
@@ -266,6 +323,20 @@ namespace GeneratR.Database.SqlServer
             }
 
             return schema;
+        }
+
+        /// <summary>
+        /// Compares the string against a given pattern.
+        /// </summary>
+        /// <param name="str">The string.</param>
+        /// <param name="pattern">The pattern to match, where "*" means any sequence of characters, and "?" means any single character.</param>
+        /// <returns><c>true</c> if the string matches the given pattern; otherwise <c>false</c>.</returns>
+        private static bool StringLike(string str, string pattern)
+        {
+            return new Regex(
+                "^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline
+            ).IsMatch(str);
         }
 
         private void SetTableCollectionForeignKeyProperties(IEnumerable<SqlServerTableConfiguration> tables)

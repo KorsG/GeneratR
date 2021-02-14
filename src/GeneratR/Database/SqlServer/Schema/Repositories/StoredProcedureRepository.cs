@@ -16,16 +16,39 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<StoredProcedure> GetAll(bool includeResultColumns = true)
         {
-            return GetWhere("", null, includeResultColumns);
+            return GetWhere(string.Empty, null, includeResultColumns);
         }
 
         private IEnumerable<StoredProcedure> GetWhere(string whereSql, object whereParams, bool includeResultColumns = true)
         {
+            var sqlBuilder = new SqlBuilder();
+
+            if (!string.IsNullOrWhiteSpace(whereSql))
+            {
+                sqlBuilder.Where(whereSql, whereParams);
+            }
+
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
+
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectStoredProcedures}
+) AS [t] 
+/**where**/
+ORDER BY [t].[Schema], [t].[Name];");
+
             var data = new List<StoredProcedure>();
             using (var conn = _schemaContext.GetConnection())
             {
-                var sql = $"SELECT * FROM ({SqlQueries.SelectStoredProcedures}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
-                var queryResult = conn.Query(sql, whereParams);
+                var queryResult = conn.Query(query.RawSql, query.Parameters);
                 if (queryResult.Any())
                 {
                     var paramLookup = _schemaContext.Parameters.GetAllForStoredProcedures().ToLookup(x => x.ParentObjectID);

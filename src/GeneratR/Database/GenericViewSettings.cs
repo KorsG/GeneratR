@@ -1,4 +1,6 @@
-﻿using GeneratR.DotNet;
+﻿using System;
+using GeneratR.Database.SqlServer.Schema;
+using GeneratR.DotNet;
 
 namespace GeneratR.Database
 {
@@ -25,5 +27,7 @@ namespace GeneratR.Database
         public NamingStrategy NamingStrategy { get; set; }
 
         public DotNetModifierKeyword DefaultColumnDotNetModifier { get; set; }
+
+        public Func<View, bool> ShouldInclude { get; set; } = x => true;
     }
 }

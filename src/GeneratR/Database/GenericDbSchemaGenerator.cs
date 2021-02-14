@@ -21,44 +21,6 @@ namespace GeneratR.Database
 
         public DotNetGenerator DotNetGenerator { get; }
 
-        protected virtual bool ShouldGenerateDbObject(string objectName, string schemaName = "*")
-        {
-            var globalExcludeRegex = _settings.SchemaObjectRegexExcludes.Where(q => q.Key == "*" || q.Key == "").Select(q => q.Value).FirstOrDefault();
-            var schemaExcludeRegex = _settings.SchemaObjectRegexExcludes.Where(q => q.Key.Equals(schemaName, StringComparison.OrdinalIgnoreCase)).Select(q => q.Value).SingleOrDefault();
-            var globalIncludeRegex = _settings.SchemaObjectRegexIncludes.Where(q => q.Key == "*" || q.Key == "").Select(q => q.Value).FirstOrDefault();
-            var schemaIncludeRegex = _settings.SchemaObjectRegexIncludes.Where(q => q.Key.Equals(schemaName, StringComparison.OrdinalIgnoreCase)).Select(q => q.Value).SingleOrDefault();
-
-            var includeDefined = !string.IsNullOrWhiteSpace(globalIncludeRegex) || !string.IsNullOrWhiteSpace(schemaIncludeRegex);
-
-            if (!string.IsNullOrWhiteSpace(globalExcludeRegex) && Regex.IsMatch(objectName, globalExcludeRegex))
-            {
-                return false;
-            }
-            else if (!string.IsNullOrWhiteSpace(schemaExcludeRegex) && Regex.IsMatch(objectName, schemaExcludeRegex))
-            {
-                return false;
-            }
-            else if (!string.IsNullOrWhiteSpace(globalIncludeRegex) && Regex.IsMatch(objectName, globalIncludeRegex))
-            {
-                return true;
-            }
-            else if (!string.IsNullOrWhiteSpace(schemaIncludeRegex) && Regex.IsMatch(objectName, schemaIncludeRegex))
-            {
-                return true;
-            }
-            else
-            {
-                if (includeDefined)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-        }
-
         protected virtual string RemoveRelationalColumnSuffix(string columnName)
         {
             return RemoveRelationalColumnSuffixRegex.Replace(columnName, string.Empty);

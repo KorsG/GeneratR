@@ -27,7 +27,23 @@
 	
 	var schemaGeneratorSettings = new SqlServerSchemaGeneratorSettings()
 	{
-		ConnectionString = connectionString,  
+		ConnectionString = connectionString,
+		
+		IncludeSchemas = new HashSet<string>()
+        {
+        },
+        ExcludeSchemas = new HashSet<string>()
+        {
+        },
+
+		// Filters on objects fullname (* can be used as wildcard).
+		IncludeObjects = new HashSet<string>()
+        {
+        },
+        ExcludeObjects = new HashSet<string>()
+        {
+        }, 
+
 		Table = new SqlServerTableSettings()
         {
             Generate = true,
@@ -46,6 +62,7 @@
 			ForeignKeyCollectionType = ForeignKeyCollectionType.ICollection,
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public,
             DefaultForeignKeyDotNetModifier = DotNetModifierKeyword.Public | DotNetModifierKeyword.Virtual,
+			ShouldInclude = o => true,
         },
         View = new SqlServerViewSettings()
         {
@@ -59,6 +76,7 @@
 			AddConstructor = true,
 			AddAnnotations = true,
 			NamingStrategy = NamingStrategy.Singularize,
+			ShouldInclude = o => true,
         },
         TableFunction = new SqlServerTableFunctionSettings()
         {
@@ -69,6 +87,7 @@
 			AddConstructor = true,
 			AddAnnotations = true,
 			NamingStrategy = NamingStrategy.Singularize,
+			ShouldInclude = o => true,
         },
         TableType =  new SqlServerTableTypeSettings()
         {
@@ -82,6 +101,7 @@
             AddConstructor = true,
             AddAnnotations = true,
             NamingStrategy = NamingStrategy.Singularize,
+			ShouldInclude = o => true,
         },
         StoredProcedure = new SqlServerStoredProcedureSettings()
         {
@@ -94,13 +114,10 @@
 			GenerateResultSet = true,
 			GenerateOutputParameters = true,
 			NamingStrategy = NamingStrategy.Singularize,
+			ShouldInclude = o => true,
         },
 	};
-	
-    schemaGeneratorSettings.SchemaObjectRegexIncludes["dbo"] = "";
-	// Exclude example
-	//schemaGeneratorSettings.SchemaObjectRegexExcludes["RoundhousE"] = ".";
-	
+		
 	var dotNetGenerator = DotNetGenerator.Create(DotNetLanguageType.CS);
     var schemaGenerator = new SqlServerSchemaGenerator(dotNetGenerator, schemaGeneratorSettings);
 
@@ -210,20 +227,4 @@
 
 	// Generate file(s).
 	fm.Process(split: splitFiles, sync: true);
-#>
-
-<#+ 
-	/// <summary>
-	/// Compares the string against a given pattern.
-	/// </summary>
-	/// <param name="str">The string.</param>
-	/// <param name="pattern">The pattern to match, where "*" means any sequence of characters, and "?" means any single character.</param>
-	/// <returns><c>true</c> if the string matches the given pattern; otherwise <c>false</c>.</returns>
-	public static bool StringLike(string str, string pattern)
-	{
-		return new Regex(
-			"^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
-			RegexOptions.IgnoreCase | RegexOptions.Singleline
-		).IsMatch(str);
-	}
 #>

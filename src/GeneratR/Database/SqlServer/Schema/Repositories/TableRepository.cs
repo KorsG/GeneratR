@@ -21,17 +21,34 @@ namespace GeneratR.Database.SqlServer.Schema
 
         private IEnumerable<Table> GetWhere(string whereSql, object whereParams)
         {
-            if (!string.IsNullOrWhiteSpace(whereSql) && !whereSql.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase))
+            var sqlBuilder = new SqlBuilder();
+
+            if (!string.IsNullOrWhiteSpace(whereSql))
             {
-                whereSql = "WHERE " + whereSql;
+                sqlBuilder.Where(whereSql, whereParams);
             }
 
-            var tables = new List<Table>();
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectTables}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
 
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectTables}
+) AS [t] 
+/**where**/
+ORDER BY [t].[Schema], [t].[Name];");
+
+            var tables = new List<Table>();
             using (var conn = _schemaContext.GetConnection())
             {
-                var dbTables = conn.Query(sqlText, whereParams).ToList();
+                var dbTables = conn.Query(query.RawSql, query.Parameters).ToList();
                 if (dbTables.Any())
                 {
                     // Load relations.

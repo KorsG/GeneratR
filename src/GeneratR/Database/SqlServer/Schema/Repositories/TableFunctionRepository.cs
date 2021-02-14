@@ -21,12 +21,34 @@ namespace GeneratR.Database.SqlServer.Schema
 
         private IEnumerable<TableFunction> GetWhere(string whereSql, object whereParams)
         {
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectTableFunctions}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
-            var tableFunctions = new List<TableFunction>();
+            var sqlBuilder = new SqlBuilder();
 
+            if (!string.IsNullOrWhiteSpace(whereSql))
+            {
+                sqlBuilder.Where(whereSql, whereParams);
+            }
+
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
+
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectTableFunctions}
+) AS [t] 
+/**where**/
+ORDER BY [t].[Schema], [t].[Name];");
+
+            var tableFunctions = new List<TableFunction>();
             using (var conn = _schemaContext.GetConnection())
             {
-                var dbTableFunctions = conn.Query(sqlText, whereParams).ToList();
+                var dbTableFunctions = conn.Query(query.RawSql, query.Parameters).ToList();
                 if (dbTableFunctions.Any())
                 {
                     // Load relations.

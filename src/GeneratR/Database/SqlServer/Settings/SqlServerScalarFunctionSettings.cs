@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GeneratR.Database.SqlServer.Schema;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -30,5 +31,7 @@ namespace GeneratR.Database.SqlServer
         public NamingStrategy NamingStrategy { get; set; }
 
         public DotNetModifierKeyword DefaultColumnDotNetModifier { get; set; }
+
+        public Func<ScalarFunction, bool> ShouldInclude { get; set; } = x => true;
     }
 }

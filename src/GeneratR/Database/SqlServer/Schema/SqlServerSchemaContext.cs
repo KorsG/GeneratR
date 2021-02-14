@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 
 namespace GeneratR.Database.SqlServer.Schema
@@ -24,6 +25,10 @@ namespace GeneratR.Database.SqlServer.Schema
         }
 
         public SqlConnection GetConnection() => new SqlConnection(_connectionString);
+
+        public ICollection<string> IncludeSchemas { get; set; } = new HashSet<string>();
+
+        public ICollection<string> ExcludeSchemas { get; set; } = new HashSet<string>();
 
         public ColumnRepository Columns { get; }
 

@@ -96,9 +96,8 @@
         },
 	};
 	
-    schemaGeneratorSettings.SchemaObjectRegexIncludes["dbo"] = "";
-	// Exclude example
-	//schemaGeneratorSettings.SchemaObjectRegexExcludes["RoundhousE"] = ".";
+    schemaGeneratorSettings.IncludeSchemas = new [] { "dbo" };
+	schemaGeneratorSettings.ExcludeSchemas = new [] { "RoundhousE" };
 	
 	var dotNetGenerator = DotNetGenerator.Create(DotNetLanguageType.CS);
     var schemaGenerator = new SqlServerSchemaGenerator(dotNetGenerator, schemaGeneratorSettings);

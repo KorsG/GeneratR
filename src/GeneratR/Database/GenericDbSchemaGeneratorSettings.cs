@@ -5,10 +5,11 @@ namespace GeneratR.Database
 {
     public class GenericDbSchemaGeneratorSettings
     {
+        private GenericTableSettings _table;
+        private GenericViewSettings _view;
+
         public GenericDbSchemaGeneratorSettings()
         {
-            SchemaObjectRegexExcludes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            SchemaObjectRegexIncludes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Table = new GenericTableSettings();
             View = new GenericViewSettings();
         }
@@ -17,14 +18,16 @@ namespace GeneratR.Database
 
         public string ConnectionStringName { get; set; }
 
-        public Dictionary<string, string> SchemaObjectRegexExcludes { get; }
+        public ICollection<string> IncludeSchemas { get; set; } = new List<string>();
 
-        public Dictionary<string, string> SchemaObjectRegexIncludes { get; }
+        public ICollection<string> ExcludeSchemas { get; set; } = new List<string>();
 
-        public GenericTableSettings Table { get { return _Table; } set { _Table = value ?? new GenericTableSettings(); } }
-        private GenericTableSettings _Table;
+        public ICollection<string> IncludeObjects { get; set; } = new List<string>();
 
-        public GenericViewSettings View { get { return _View; } set { _View = value ?? new GenericViewSettings(); } }
-        private GenericViewSettings _View;
+        public ICollection<string> ExcludeObjects { get; set; } = new List<string>();
+
+        public GenericTableSettings Table { get => _table; set { _table = value ?? new GenericTableSettings(); } }
+
+        public GenericViewSettings View { get => _view; set { _view = value ?? new GenericViewSettings(); } }
     }
 }

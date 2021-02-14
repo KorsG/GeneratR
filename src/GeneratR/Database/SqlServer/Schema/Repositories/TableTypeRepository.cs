@@ -21,12 +21,34 @@ namespace GeneratR.Database.SqlServer.Schema
 
         private IEnumerable<TableType> GetWhere(string whereSql, object whereParams)
         {
-            var tableTypes = new List<TableType>();
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectTableTypes}) AS [t] {whereSql} ORDER BY [t].[Schema], [t].[Name]";
+            var sqlBuilder = new SqlBuilder();
 
+            if (!string.IsNullOrWhiteSpace(whereSql))
+            {
+                sqlBuilder.Where(whereSql, whereParams);
+            }
+
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
+
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[Schema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectTableTypes}
+) AS [t] 
+/**where**/
+ORDER BY [t].[Schema], [t].[Name];");
+
+            var tableTypes = new List<TableType>();
             using (var conn = _schemaContext.GetConnection())
             {
-                var dbTableTypes = conn.Query(sqlText, whereParams);
+                var dbTableTypes = conn.Query(query.RawSql, query.Parameters);
                 if (dbTableTypes.Any())
                 {
                     // Load relations.

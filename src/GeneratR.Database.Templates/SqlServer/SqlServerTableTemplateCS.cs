@@ -192,7 +192,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                     if (_objSettings.GenerateForeignKeys)
                     {
-                        foreach (var fk in _obj.ForeignKeys)
+                        foreach (var fk in _obj.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
                         {
                             WriteLine();
                             if (_objSettings.AddAnnotations)

@@ -16,7 +16,7 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<Parameter> GetAll()
         {
-            return GetWhere("", null);
+            return GetWhere(string.Empty, null);
         }
 
         public IEnumerable<Parameter> GetAllForTableFunctions()
@@ -31,22 +31,39 @@ namespace GeneratR.Database.SqlServer.Schema
 
         public IEnumerable<Parameter> GetAllForStoredProcedures()
         {
-            return GetWhere("ParentType=@ParentType", new { ParentType = "P" });
+            return GetWhere("ParentType = @ParentType", new { ParentType = "P" });
         }
 
-        private IEnumerable<Parameter> GetWhere(string sqlWhere, object sqlParams)
+        private IEnumerable<Parameter> GetWhere(string whereSql, object whereParams)
         {
-            if (!string.IsNullOrWhiteSpace(sqlWhere) && !sqlWhere.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase))
+            var sqlBuilder = new SqlBuilder();
+
+            if (!string.IsNullOrWhiteSpace(whereSql))
             {
-                sqlWhere = "WHERE " + sqlWhere;
+                sqlBuilder.Where(whereSql, whereParams);
             }
 
-            var parameters = new List<Parameter>();
-            var sqlText = $"SELECT * FROM ({SqlQueries.SelectParameters}) AS [t] {sqlWhere} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position]";
+            if (_schemaContext.IncludeSchemas != null && _schemaContext.IncludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[ParentSchema] IN @IncludeSchemas", new { IncludeSchemas = _schemaContext.IncludeSchemas, });
+            }
 
+            if (_schemaContext.ExcludeSchemas != null && _schemaContext.ExcludeSchemas.Any())
+            {
+                sqlBuilder.Where("[t].[ParentSchema] NOT IN @ExcludeSchemas", new { ExcludeSchemas = _schemaContext.ExcludeSchemas, });
+            }
+
+            var query = sqlBuilder.AddTemplate($@"
+SELECT * FROM (
+{SqlQueries.SelectParameters}
+) AS [t] 
+/**where**/
+ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[Position];");
+
+            var parameters = new List<Parameter>();
             using (var conn = _schemaContext.GetConnection())
             {
-                var dbParameters = conn.Query(sqlText, sqlParams).ToList();
+                var dbParameters = conn.Query(query.RawSql, query.Parameters).ToList();
                 foreach (var q in dbParameters)
                 {
                     var param = new Parameter()

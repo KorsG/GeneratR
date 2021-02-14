@@ -9,15 +9,10 @@
 
   <ItemGroup>
     <Compile Remove="SchemaGenerator.cs" />
-    <Compile Remove="SqlServerSchemaGenerator.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="SqlServerSchemaGenerator.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>SqlServerSchemaGenerator.tt</DependentUpon>
-    </None>
+    <ProjectReference Include="..\GeneratR\GeneratR.csproj" />
   </ItemGroup>
 
   <ItemGroup>
