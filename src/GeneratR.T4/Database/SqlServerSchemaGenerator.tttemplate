@@ -1,8 +1,9 @@
 ﻿<#@ template debug="false" hostSpecific="true" #>
 <#@ output extension="cs" #>
 <#@ assembly name="System.Core" #>
-<#@ assembly name="$(TargetDir)GeneratR.dll" #>
-<#@ assembly name="$(TargetDir)GeneratR.Database.Templates.dll" #>
+<#@ assembly name="$(GeneratRToolsPath)\net462\Dapper.dll" #>
+<#@ assembly name="$(GeneratRToolsPath)\net462\GeneratR.dll" #>
+<#@ assembly name="$(GeneratRToolsPath)\net462\GeneratR.Database.Templates.dll" #>
 <#@ import namespace="System" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
@@ -11,7 +12,7 @@
 <#@ import namespace="GeneratR.Database" #>
 <#@ import namespace="GeneratR.Database.SqlServer" #>
 <#@ import namespace="GeneratR.Database.SqlServer.Templates" #>
-<#@ include file="$(TargetDir)GeneratR.T4\Common\FileManager.ttinclude" #>
+<#@ include file="$(GeneratRT4CommonPath)FileManager.ttinclude" once="true" #>
 <#
     return "Compile project, setup configuration and references, copy this file and/or change file extension to .tt, and remove this line to run template.";
 
