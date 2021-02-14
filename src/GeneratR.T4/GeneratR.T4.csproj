@@ -27,6 +27,10 @@
     <None Include="bin\Release\**\GeneratR.Database.Templates.pdb" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
     <None Include="bin\Release\**\GeneratR.Database.Templates.xml" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
     
+    <None Include="bin\Release\**\Dapper.dll" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\Dapper.pdb" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    <None Include="bin\Release\**\Dapper.xml" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="tools" />
+    
     <None Include="GeneratR.T4.props" BuildAction="None" Pack="true" PackageCopyToOutput="false" PackagePath="build" />
   </ItemGroup>
 </Project>
