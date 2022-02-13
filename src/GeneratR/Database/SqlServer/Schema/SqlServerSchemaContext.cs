@@ -24,7 +24,7 @@ namespace GeneratR.Database.SqlServer.Schema
             TableTypes = new TableTypeRepository(this);
         }
 
-        public SqlConnection GetConnection() => new SqlConnection(_connectionString);
+        public SqlConnection GetConnection() => new(_connectionString);
 
         public ICollection<string> IncludeSchemas { get; set; } = new HashSet<string>();
 

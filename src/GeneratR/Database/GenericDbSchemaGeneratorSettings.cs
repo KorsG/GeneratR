@@ -14,8 +14,14 @@ namespace GeneratR.Database
             View = new GenericViewSettings();
         }
 
-        public string ConnectionString { get; set; }
+        /// <summary>
+        /// Inherited from ConnectionString if not set.
+        /// </summary>
+        public string DatabaseName { get; set; }
 
+        public string ConnectionString { get; set; }
+        
+        [Obsolete("Not supported")]
         public string ConnectionStringName { get; set; }
 
         public ICollection<string> IncludeSchemas { get; set; } = new List<string>();

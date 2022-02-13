@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
 using GeneratR.DotNet;
@@ -8,24 +9,35 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerSchemaGenerator : GenericDbSchemaGenerator
     {
-        public SqlServerSchemaGeneratorSettings Settings { get; }
+        private SqlConnectionStringBuilder _connectionStringBuilder;
 
-        public SqlServerSchemaGenerator(DotNetGenerator DotNetGenerator)
-            : this(DotNetGenerator, new SqlServerSchemaGeneratorSettings())
+        public SqlServerSchemaGenerator(DotNetGenerator dotNetGenerator)
+            : this(dotNetGenerator, new SqlServerSchemaGeneratorSettings())
         {
         }
 
-        public SqlServerSchemaGenerator(DotNetGenerator DotNetGenerator, SqlServerSchemaGeneratorSettings settings)
-            : base(DotNetGenerator, settings)
+        public SqlServerSchemaGenerator(DotNetGenerator dotNetGenerator, SqlServerSchemaGeneratorSettings settings)
+            : base(dotNetGenerator, settings)
         {
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _connectionStringBuilder = new SqlConnectionStringBuilder(Settings.ConnectionString);
+            if (!string.IsNullOrWhiteSpace(settings.DatabaseName))
+            {
+                _connectionStringBuilder.InitialCatalog = settings.DatabaseName;
+            }
+
+            DatabaseName = _connectionStringBuilder.InitialCatalog;
         }
+
+        public SqlServerSchemaGeneratorSettings Settings { get; }
+
+        public string DatabaseName { get; }
 
         public virtual SqlServerDbSchema LoadSqlServerDbSchema()
         {
             var schema = new SqlServerDbSchema();
 
-            var schemaContext = new Schema.SqlServerSchemaContext(Settings.ConnectionString)
+            var schemaContext = new Schema.SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)
             {
                 IncludeSchemas = Settings.IncludeSchemas ?? new HashSet<string>(),
                 ExcludeSchemas = Settings.ExcludeSchemas ?? new HashSet<string>(),
