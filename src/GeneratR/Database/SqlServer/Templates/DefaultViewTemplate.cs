@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultViewTemplate : StringTemplateBase, IViewTemplate
+    public class DefaultViewTemplate : StringTemplateBase, ITemplate
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -17,19 +17,21 @@ namespace GeneratR.Database.SqlServer.Templates
 
         private readonly DotNetGenerator _dotNetGenerator;
         private readonly SqlServerViewSettings _objSettings;
+        private readonly SqlServerViewConfiguration _obj;
 
-        public DefaultViewTemplate(SqlServerSchemaGenerator schemaGenerator)
+        public DefaultViewTemplate(ViewTemplateContext context)
         {
-            _dotNetGenerator = schemaGenerator.DotNetGenerator;
-            _objSettings = schemaGenerator.Settings.View;
+            _dotNetGenerator = context.DotNetGenerator;
+            _objSettings = context.Settings;
+            _obj = context.Object;
         }
 
-        public string Generate(SqlServerViewConfiguration obj)
+        public string Generate()
         {
-            var inheritClassName = !string.IsNullOrWhiteSpace(obj.InheritClassName) ? obj.InheritClassName : _objSettings.InheritClass;
-            var classAsAbstract = obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+            var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
+            var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
 
-            WriteLine(_dotNetGenerator.CreateNamespaceStart(obj.Namespace));
+            WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
             WriteLine();
             using (IndentScope())
             {
@@ -46,30 +48,30 @@ namespace GeneratR.Database.SqlServer.Templates
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!obj.DbObject.Name.Equals(obj.ClassName, StringComparison.Ordinal) || !obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+                    if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(obj.DbObject.Name, obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(obj.IncludeAttributes);
-                    attributes.RemoveList(obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.IncludeAttributes);
+                    attributes.RemoveList(_obj.ExcludeAttributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
                     }
                 }
 
-                WriteLine(_dotNetGenerator.CreateClassStart(obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
                 using (IndentScope())
                 {
                     if (_objSettings.AddConstructor)
                     {
-                        WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, obj.ClassName));
+                        WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
 
-                    foreach (var col in obj.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         // Column and class name must not be equal.
-                        if (string.Equals(col.PropertyName, obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
                         {
                             col.PropertyName += "Column";
                         }

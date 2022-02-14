@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using GeneratR.DotNet;
+﻿using GeneratR.Database.SqlServer.Templates;
+using GeneratR.Templating;
+using System;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -13,5 +10,7 @@ namespace GeneratR.Database.SqlServer
             : base()
         {
         }
+
+        public Func<TableTemplateContext, ITemplate> TemplateFactory { get; set; } = (ctx) => new DefaultTableTemplate(ctx);
     }
 }

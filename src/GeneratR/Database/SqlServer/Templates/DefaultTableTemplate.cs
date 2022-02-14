@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultTableTemplate : ITableTemplate
+    public class DefaultTableTemplate : StringTemplateBase, ITemplate
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -23,70 +23,70 @@ namespace GeneratR.Database.SqlServer.Templates
 
         private readonly DotNetGenerator _dotNetGenerator;
         private readonly SqlServerTableSettings _objSettings;
+        private readonly SqlServerTableConfiguration _obj;
 
-        public DefaultTableTemplate(SqlServerSchemaGenerator schemaGenerator)
+        public DefaultTableTemplate(TableTemplateContext context)
         {
-            _dotNetGenerator = schemaGenerator.DotNetGenerator;
-            _objSettings = schemaGenerator.Settings.Table;
+            _dotNetGenerator = context.DotNetGenerator;
+            _objSettings = context.Settings;
+            _obj = context.Table;
         }
 
-        public virtual string Generate(SqlServerTableConfiguration obj)
+        public virtual string Generate()
         {
-            var b = new StringTemplateBuilder();
+            var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
+            var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
 
-            var inheritClassName = !string.IsNullOrWhiteSpace(obj.InheritClassName) ? obj.InheritClassName : _objSettings.InheritClass;
-            var classAsAbstract = obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-
-            b.WriteLine(_dotNetGenerator.CreateNamespaceStart(obj.Namespace));
-            b.WriteLine();
-            using (b.IndentScope())
+            WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
+            WriteLine();
+            using (IndentScope())
             {
                 // TODO: Add as "using" write to "DotNetGenerator".
-                b.WriteLine("using System;");
-                b.WriteLine("using System.Collections.Generic;");
+                WriteLine("using System;");
+                WriteLine("using System.Collections.Generic;");
                 if (_objSettings.AddAnnotations)
                 {
-                    b.WriteLine("using System.ComponentModel.DataAnnotations;");
-                    b.WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                    b.WriteLine();
+                    WriteLine("using System.ComponentModel.DataAnnotations;");
+                    WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
+                    WriteLine();
                 }
 
                 if (_objSettings.AddAnnotations)
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!obj.DbObject.Name.Equals(obj.ClassName, StringComparison.Ordinal) || !obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+                    if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(obj.DbObject.Name, obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(obj.IncludeAttributes);
-                    attributes.RemoveList(obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.IncludeAttributes);
+                    attributes.RemoveList(_obj.ExcludeAttributes);
                     if (attributes.Any())
                     {
-                        b.Write(attributes.ToMultilineString());
+                        Write(attributes.ToMultilineString());
                     }
                 }
 
-                b.WriteLine(_dotNetGenerator.CreateClassStart(obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
-                using (b.IndentScope())
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                using (IndentScope())
                 {
                     if (_objSettings.AddConstructor)
                     {
-                        b.WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, obj.ClassName));
+                        WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
 
-                    foreach (var col in obj.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         // Column and class name must not be equal.
-                        if (string.Equals(col.PropertyName, obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
                         {
                             col.PropertyName += "Column";
                         }
 
-                        b.WriteLine();
+                        WriteLine();
                         if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
                         {
-                            b.WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
+                            WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
                         }
 
                         if (_objSettings.AddAnnotations)
@@ -182,18 +182,18 @@ namespace GeneratR.Database.SqlServer.Templates
                             attributes.RemoveList(col.ExcludeAttributes);
                             if (attributes.Any())
                             {
-                                b.Write(attributes.ToMultilineString());
+                                Write(attributes.ToMultilineString());
                             }
                         }
 
-                        b.WriteLine(_dotNetGenerator.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
+                        WriteLine(_dotNetGenerator.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
                     }
 
                     if (_objSettings.GenerateForeignKeys)
                     {
-                        foreach (var fk in obj.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
+                        foreach (var fk in _obj.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
                         {
-                            b.WriteLine();
+                            WriteLine();
                             if (_objSettings.AddAnnotations)
                             {
                                 var attributes = new DotNetAttributeCollection();
@@ -208,21 +208,21 @@ namespace GeneratR.Database.SqlServer.Templates
                                 attributes.RemoveList(fk.ExcludeAttributes);
                                 if (attributes.Any())
                                 {
-                                    b.Write(attributes.ToMultilineString());
+                                    Write(attributes.ToMultilineString());
                                 }
                             }
 
-                            b.WriteLine($"{_dotNetGenerator.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            b.WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine($"{_dotNetGenerator.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
 
                     if (_objSettings.GenerateReferencingForeignKeys)
                     {
-                        var referencingKeys = obj.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
+                        var referencingKeys = _obj.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
                         foreach (var fk in referencingKeys)
                         {
-                            b.WriteLine();
+                            WriteLine();
                             if (_objSettings.AddAnnotations)
                             {
                                 var attributes = new DotNetAttributeCollection();
@@ -235,22 +235,22 @@ namespace GeneratR.Database.SqlServer.Templates
                                 attributes.RemoveList(fk.ExcludeAttributes);
                                 if (attributes.Any())
                                 {
-                                    b.Write(attributes.ToMultilineString());
+                                    Write(attributes.ToMultilineString());
                                 }
                             }
 
-                            b.WriteLine($"{_dotNetGenerator.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            b.WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine($"{_dotNetGenerator.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
                 }
-                b.WriteLine(_dotNetGenerator.CreateClassEnd());
-                b.WriteLine();
+                WriteLine(_dotNetGenerator.CreateClassEnd());
+                WriteLine();
             }
-            b.WriteLine(_dotNetGenerator.CreateNamespaceEnd());
-            b.WriteLine();
+            WriteLine(_dotNetGenerator.CreateNamespaceEnd());
+            WriteLine();
 
-            return b.ToString();
+            return TemplateBuilder.ToString();
         }
 
     }

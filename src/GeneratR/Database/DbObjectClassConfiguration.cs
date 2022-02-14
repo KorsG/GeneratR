@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using GeneratR.DotNet;
+using GeneratR.Templating;
 
 namespace GeneratR.Database
 {
@@ -11,6 +13,8 @@ namespace GeneratR.Database
             IncludeAttributes = new DotNetAttributeCollection();
             ExcludeAttributes = new List<string>();
         }
+
+        public ITemplate Template { get; set; }
 
         public T DbObject { get; }
 

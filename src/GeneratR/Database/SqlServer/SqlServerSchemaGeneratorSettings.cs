@@ -1,7 +1,18 @@
-﻿namespace GeneratR.Database.SqlServer
+﻿using GeneratR.Database.SqlServer.Templates;
+using GeneratR.Templating;
+using System;
+
+namespace GeneratR.Database.SqlServer
 {
     public class SqlServerSchemaGeneratorSettings : GenericDbSchemaGeneratorSettings
     {
+        private SqlServerTableSettings _table;
+        private SqlServerViewSettings _view;
+        private SqlServerTableFunctionSettings _tableFunction;
+        private SqlServerTableTypeSettings _tableType;
+        private SqlServerScalarFunctionSettings _scalarFunction;
+        private SqlServerStoredProcedureSettings _storedProcedure;
+
         public SqlServerSchemaGeneratorSettings()
         {
             Table = new SqlServerTableSettings();
@@ -12,22 +23,16 @@
             TableType = new SqlServerTableTypeSettings();
         }
 
-        public new SqlServerTableSettings Table { get { return _Table; } set { base.Table = value ?? new SqlServerTableSettings(); _Table = value ?? new SqlServerTableSettings(); } }
-        private SqlServerTableSettings _Table;
+        public new SqlServerTableSettings Table { get { return _table; } set { base.Table = value ?? new SqlServerTableSettings(); _table = value ?? new SqlServerTableSettings(); } }
 
-        public new SqlServerViewSettings View { get { return _View; } set { base.View = value ?? new SqlServerViewSettings(); _View = value ?? new SqlServerViewSettings(); } }
-        private SqlServerViewSettings _View;
+        public new SqlServerViewSettings View { get { return _view; } set { base.View = value ?? new SqlServerViewSettings(); _view = value ?? new SqlServerViewSettings(); } }
 
-        public SqlServerTableFunctionSettings TableFunction { get { return _TableFunction; } set { _TableFunction = value ?? new SqlServerTableFunctionSettings(); } }
-        private SqlServerTableFunctionSettings _TableFunction;
+        public SqlServerTableFunctionSettings TableFunction { get { return _tableFunction; } set { _tableFunction = value ?? new SqlServerTableFunctionSettings(); } }
 
-        public SqlServerScalarFunctionSettings ScalarFunction { get { return _ScalarFunction; } set { _ScalarFunction = value ?? new SqlServerScalarFunctionSettings(); } }
-        private SqlServerScalarFunctionSettings _ScalarFunction;
+        public SqlServerScalarFunctionSettings ScalarFunction { get { return _scalarFunction; } set { _scalarFunction = value ?? new SqlServerScalarFunctionSettings(); } }
 
-        public SqlServerStoredProcedureSettings StoredProcedure { get { return _StoredProcedure; } set { _StoredProcedure = value ?? new SqlServerStoredProcedureSettings(); } }
-        private SqlServerStoredProcedureSettings _StoredProcedure;
+        public SqlServerStoredProcedureSettings StoredProcedure { get { return _storedProcedure; } set { _storedProcedure = value ?? new SqlServerStoredProcedureSettings(); } }
 
-        public SqlServerTableTypeSettings TableType { get { return _TableType; } set { _TableType = value ?? new SqlServerTableTypeSettings(); } }
-        private SqlServerTableTypeSettings _TableType;
+        public SqlServerTableTypeSettings TableType { get { return _tableType; } set { _tableType = value ?? new SqlServerTableTypeSettings(); } }
     }
 }

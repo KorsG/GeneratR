@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using GeneratR.DotNet;
+using GeneratR.Templating;
 
 namespace GeneratR.Database.SqlServer
 {
     public class SqlServerSchemaGenerator : GenericDbSchemaGenerator
     {
-        private SqlConnectionStringBuilder _connectionStringBuilder;
-
-        public SqlServerSchemaGenerator(DotNetGenerator dotNetGenerator)
-            : this(dotNetGenerator, new SqlServerSchemaGeneratorSettings())
-        {
-        }
+        private readonly SqlConnectionStringBuilder _connectionStringBuilder;
 
         public SqlServerSchemaGenerator(DotNetGenerator dotNetGenerator, SqlServerSchemaGeneratorSettings settings)
             : base(dotNetGenerator, settings)
@@ -63,6 +60,8 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.Table.ShouldInclude(tbl)) { continue; }
 
                     var o = new SqlServerTableConfiguration(tbl);
+                    o.Template = Settings.Table.TemplateFactory(new Templates.TableTemplateContext(DotNetGenerator, Settings.Table, o));
+
                     o.Namespace = Settings.Table.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.Table.NamingStrategy == NamingStrategy.Pluralize)
@@ -133,6 +132,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.View.ShouldInclude(vw)) { continue; }
 
                     var o = new SqlServerViewConfiguration(vw);
+                    o.Template = Settings.View.TemplateFactory(new Templates.ViewTemplateContext(DotNetGenerator, Settings.View, o));
 
                     o.Namespace = Settings.View.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
