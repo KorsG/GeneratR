@@ -11,7 +11,6 @@ namespace GeneratR.Database.SqlServer
         {
         }
 
-        public Func<ViewTemplateContext, ITemplate> TemplateFactory { get; set; } 
-            = (ctx) => new DefaultViewTemplate(ctx);
+        public Func<ViewTemplateModel, ITemplate> TemplateFactory { get; set; } = (x) => new ViewTemplate(x);
     }
 }

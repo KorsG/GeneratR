@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GeneratR.DotNet;
+using System;
 using System.Collections.Generic;
 
 namespace GeneratR.Database
@@ -8,11 +9,14 @@ namespace GeneratR.Database
         private GenericTableSettings _table;
         private GenericViewSettings _view;
 
-        public GenericDbSchemaGeneratorSettings()
+        public GenericDbSchemaGeneratorSettings(DotNetGenerator dotNetGenerator)
         {
+            DotNetGenerator = dotNetGenerator;
             Table = new GenericTableSettings();
             View = new GenericViewSettings();
         }
+
+        public DotNetGenerator DotNetGenerator { get; }
 
         /// <summary>
         /// Inherited from ConnectionString if not set.

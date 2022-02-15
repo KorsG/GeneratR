@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database
@@ -11,15 +7,14 @@ namespace GeneratR.Database
     public abstract class GenericDbSchemaGenerator
     {
         protected static Regex RemoveRelationalColumnSuffixRegex = new Regex(@"(Id|No|Key|Code)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private GenericDbSchemaGeneratorSettings _settings { get; }
+        private readonly GenericDbSchemaGeneratorSettings _settings;
 
-        public GenericDbSchemaGenerator(DotNetGenerator dotNetGenerator, GenericDbSchemaGeneratorSettings settings)
+        public GenericDbSchemaGenerator(GenericDbSchemaGeneratorSettings settings)
         {
-            DotNetGenerator = dotNetGenerator;
             _settings = settings;
         }
 
-        public DotNetGenerator DotNetGenerator { get; }
+        public DotNetGenerator DotNetGenerator => _settings.DotNetGenerator;
 
         protected virtual string RemoveRelationalColumnSuffix(string columnName)
         {

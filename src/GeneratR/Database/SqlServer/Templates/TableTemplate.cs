@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultTableTemplate : StringTemplateBase, ITemplate
+    public class TableTemplate : StringTemplateBase, ITemplate
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -25,12 +25,15 @@ namespace GeneratR.Database.SqlServer.Templates
         private readonly SqlServerTableSettings _objSettings;
         private readonly SqlServerTableConfiguration _obj;
 
-        public DefaultTableTemplate(TableTemplateContext context)
+        public TableTemplate(TableTemplateModel model)
         {
-            _dotNetGenerator = context.DotNetGenerator;
-            _objSettings = context.Settings;
-            _obj = context.Table;
+            Model = model;
+            _dotNetGenerator = model.Generator.DotNetGenerator;
+            _objSettings = model.Generator.Settings.Table;
+            _obj = model.Object;
         }
+
+        public TableTemplateModel Model { get; }
 
         public virtual string Generate()
         {

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultTableTypeTemplate : StringTemplateBase, ITableTypeTemplate
+    public class TableTypeTemplate : StringTemplateBase, ITemplate
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -15,29 +15,32 @@ namespace GeneratR.Database.SqlServer.Templates
         protected static readonly HashSet<string> _allStringTypes = new HashSet<string>(_ansiStringTypes.Union(_unicodeStringTypes), StringComparer.OrdinalIgnoreCase);
         protected static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
-        protected readonly SqlServerSchemaGenerator SchemaGenerator;
-        protected readonly DotNetGenerator DotNetGenerator;
-        protected readonly SqlServerTableTypeSettings ObjSettings;
+        private readonly DotNetGenerator _dotNetGenerator;
+        private readonly SqlServerTableTypeSettings _objSettings;
+        private readonly SqlServerTableTypeConfiguration _obj;
 
-        public DefaultTableTypeTemplate(SqlServerSchemaGenerator schemaGenerator)
+        public TableTypeTemplate(TableTypeTemplateModel model)
         {
-            SchemaGenerator = schemaGenerator;
-            DotNetGenerator = schemaGenerator.DotNetGenerator;
-            ObjSettings = schemaGenerator.Settings.TableType;
+            Model = model;
+            _dotNetGenerator = model.Generator.DotNetGenerator;
+            _objSettings = model.Generator.Settings.TableType;
+            _obj = model.Object;
         }
 
-        public virtual string Generate(SqlServerTableTypeConfiguration obj)
-        {
-            var inheritClassName = !string.IsNullOrWhiteSpace(obj.InheritClassName) ? obj.InheritClassName : ObjSettings.InheritClass;
-            var classAsAbstract = obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+        public TableTypeTemplateModel Model { get; }
 
-            WriteLine(DotNetGenerator.CreateNamespaceStart(obj.Namespace));
+        public virtual string Generate()
+        {
+            var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
+            var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+
+            WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
             WriteLine();
             using (IndentScope())
             {
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
-                if (ObjSettings.AddAnnotations)
+                if (_objSettings.AddAnnotations)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
@@ -46,37 +49,37 @@ namespace GeneratR.Database.SqlServer.Templates
                 WriteLine("using Microsoft.SqlServer.Server;");
                 WriteLine();
 
-                if (ObjSettings.AddAnnotations)
+                if (_objSettings.AddAnnotations)
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!obj.DbObject.Name.Equals(obj.ClassName, StringComparison.Ordinal) || !obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+                    if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(DotNetGenerator.AttributeFactory.CreateTableAttribute(obj.DbObject.Name, obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(obj.IncludeAttributes);
-                    attributes.RemoveList(obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.IncludeAttributes);
+                    attributes.RemoveList(_obj.ExcludeAttributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
                     }
                 }
 
-                WriteLine(DotNetGenerator.CreateClassStart(obj.ClassName, ObjSettings.ClassAsPartial, classAsAbstract, inheritClassName, ObjSettings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
                 using (IndentScope())
                 {
-                    WriteLine($@"public static string SqlName => ""{obj.DbObject.FullName}"";");
+                    WriteLine($@"public static string SqlName => ""{_obj.DbObject.FullName}"";");
                     WriteLine();
 
-                    if (ObjSettings.AddConstructor)
+                    if (_objSettings.AddConstructor)
                     {
-                        WriteLine(DotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, obj.ClassName));
+                        WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
 
-                    foreach (var col in obj.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         // Column and class name must not be equal.
-                        if (string.Equals(col.PropertyName, obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
                         {
                             col.PropertyName += "Column";
                         }
@@ -87,13 +90,13 @@ namespace GeneratR.Database.SqlServer.Templates
                             WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
                         }
 
-                        if (ObjSettings.AddAnnotations)
+                        if (_objSettings.AddAnnotations)
                         {
                             var attributes = new DotNetAttributeCollection();
 
                             if (col.DbObject.IsPrimaryKey)
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateKeyAttribute();
+                                var attr = _dotNetGenerator.AttributeFactory.CreateKeyAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 
@@ -115,22 +118,22 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             if (col.DbObject.IsPrimaryKey && hasNameDiff)
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, col.DbObject.Position - 1, typeName: columnAttributeTypeName);
+                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, col.DbObject.Position - 1, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (col.DbObject.IsPrimaryKey)
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Position - 1, typeName: columnAttributeTypeName);
+                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Position - 1, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (hasNameDiff)
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, typeName: columnAttributeTypeName);
+                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (!string.IsNullOrWhiteSpace(columnAttributeTypeName))
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(typeName: columnAttributeTypeName);
+                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
 
@@ -139,24 +142,24 @@ namespace GeneratR.Database.SqlServer.Templates
                                 DotNetAttribute attr;
                                 if (col.DbObject.Length == -1)
                                 {
-                                    attr = DotNetGenerator.AttributeFactory.CreateMaxLengthAttribute();
+                                    attr = _dotNetGenerator.AttributeFactory.CreateMaxLengthAttribute();
                                 }
                                 else
                                 {
-                                    attr = DotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length);
+                                    attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length);
                                 }
                                 attributes.AddIfNotExists(attr);
                             }
 
                             if (_fixedStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
+                                var attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
                                 attributes.AddIfNotExists(attr);
                             }
 
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase) && !col.DbObject.IsNullable)
                             {
-                                var attr = DotNetGenerator.AttributeFactory.CreateRequiredAttribute();
+                                var attr = _dotNetGenerator.AttributeFactory.CreateRequiredAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 
@@ -168,7 +171,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             }
                         }
 
-                        WriteLine(DotNetGenerator.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
+                        WriteLine(_dotNetGenerator.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
                     }
                     WriteLine();
 
@@ -178,7 +181,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         WriteLine("var record = new SqlDataRecord(_sqlColumnMetaData);");
 
-                        foreach (var col in obj.Columns.OrderBy(x => x.DbObject.Position))
+                        foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                         {
                             WriteLine($@"record.SetValue({col.DbObject.Position - 1}, {col.PropertyName});");
                         }
@@ -192,9 +195,9 @@ namespace GeneratR.Database.SqlServer.Templates
                     WriteLine("{");
                     using (IndentScope())
                     {
-                        foreach (var col in obj.Columns.OrderBy(x => x.DbObject.Position))
+                        foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                         {
-                            var sqlDataType = SchemaGenerator.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
+                            var sqlDataType = Model.Generator.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
                                 WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");
@@ -211,10 +214,10 @@ namespace GeneratR.Database.SqlServer.Templates
                     }
                     WriteLine("};");
                 }
-                WriteLine(DotNetGenerator.CreateClassEnd());
+                WriteLine(_dotNetGenerator.CreateClassEnd());
                 WriteLine();
             }
-            WriteLine(DotNetGenerator.CreateNamespaceEnd());
+            WriteLine(_dotNetGenerator.CreateNamespaceEnd());
             WriteLine();
 
             return TemplateBuilder.ToString();

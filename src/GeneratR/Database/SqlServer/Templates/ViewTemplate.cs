@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultViewTemplate : StringTemplateBase, ITemplate
+    public class ViewTemplate : StringTemplateBase, ITemplate
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -19,12 +19,15 @@ namespace GeneratR.Database.SqlServer.Templates
         private readonly SqlServerViewSettings _objSettings;
         private readonly SqlServerViewConfiguration _obj;
 
-        public DefaultViewTemplate(ViewTemplateContext context)
+        public ViewTemplate(ViewTemplateModel model)
         {
-            _dotNetGenerator = context.DotNetGenerator;
-            _objSettings = context.Settings;
-            _obj = context.Object;
+            Model = model;
+            _dotNetGenerator = model.Generator.DotNetGenerator;
+            _objSettings = model.Generator.Settings.View;
+            _obj = model.Object;
         }
+
+        public ViewTemplateModel Model { get; }
 
         public string Generate()
         {

@@ -11,6 +11,6 @@ namespace GeneratR.Database.SqlServer
         {
         }
 
-        public Func<TableTemplateContext, ITemplate> TemplateFactory { get; set; } = (ctx) => new DefaultTableTemplate(ctx);
+        public Func<TableTemplateModel, ITemplate> TemplateFactory { get; set; } = (x) => new TableTemplate(x);
     }
 }

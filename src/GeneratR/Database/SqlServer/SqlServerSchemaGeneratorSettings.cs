@@ -1,6 +1,4 @@
-﻿using GeneratR.Database.SqlServer.Templates;
-using GeneratR.Templating;
-using System;
+﻿using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -13,7 +11,13 @@ namespace GeneratR.Database.SqlServer
         private SqlServerScalarFunctionSettings _scalarFunction;
         private SqlServerStoredProcedureSettings _storedProcedure;
 
-        public SqlServerSchemaGeneratorSettings()
+        public SqlServerSchemaGeneratorSettings(DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
+           : this(DotNetGenerator.Create(dotNetLanguage))
+        {
+        }
+
+        public SqlServerSchemaGeneratorSettings(DotNetGenerator dotNetGenerator)
+            : base(dotNetGenerator)
         {
             Table = new SqlServerTableSettings();
             View = new SqlServerViewSettings();
@@ -34,5 +38,6 @@ namespace GeneratR.Database.SqlServer
         public SqlServerStoredProcedureSettings StoredProcedure { get { return _storedProcedure; } set { _storedProcedure = value ?? new SqlServerStoredProcedureSettings(); } }
 
         public SqlServerTableTypeSettings TableType { get { return _tableType; } set { _tableType = value ?? new SqlServerTableTypeSettings(); } }
+
     }
 }

@@ -6,12 +6,12 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class DefaultStoredProcedureTemplate : StringTemplateBase, IStoredProcedureTemplate
+    public class StoredProcedureTemplate : StringTemplateBase, IStoredProcedureTemplate
     {
         private readonly SqlServerStoredProcedureSettings _settings;
         private readonly DotNetGenerator _dotNetGenerator;
 
-        public DefaultStoredProcedureTemplate(SqlServerSchemaGenerator schemaGenerator)
+        public StoredProcedureTemplate(SqlServerSchemaGenerator schemaGenerator)
         {
             _dotNetGenerator = schemaGenerator.DotNetGenerator;
             _settings = schemaGenerator.Settings.StoredProcedure;

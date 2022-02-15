@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GeneratR.Database.SqlServer.Schema;
+using GeneratR.Database.SqlServer.Templates;
 using GeneratR.DotNet;
+using GeneratR.Templating;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -16,6 +14,8 @@ namespace GeneratR.Database.SqlServer
             NamingStrategy = NamingStrategy.KeepOriginal;
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
+
+        public Func<TableFunctionTemplateModel, ITemplate> TemplateFactory { get; set; } = (x) => new TableFunctionTemplate(x);
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }
