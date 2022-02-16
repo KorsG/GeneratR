@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GeneratR.Database.SqlServer.Schema;
+using GeneratR.Database.SqlServer.Templates;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -16,6 +13,8 @@ namespace GeneratR.Database.SqlServer
             NamingStrategy = NamingStrategy.KeepOriginal;
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
+
+        public Func<StoredProcedureTemplateModel, string> GenerateFactory { get; set; } = (x) => new StoredProcedureTemplate(x).Generate();
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }

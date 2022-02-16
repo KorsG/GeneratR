@@ -1,8 +1,10 @@
 ﻿using GeneratR.DotNet;
+using System;
+using System.Collections.Generic;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerSchemaGeneratorSettings : GenericDbSchemaGeneratorSettings
+    public class SqlServerSchemaGeneratorSettings
     {
         private SqlServerTableSettings _table;
         private SqlServerViewSettings _view;
@@ -17,8 +19,8 @@ namespace GeneratR.Database.SqlServer
         }
 
         public SqlServerSchemaGeneratorSettings(DotNetGenerator dotNetGenerator)
-            : base(dotNetGenerator)
         {
+            DotNetGenerator = dotNetGenerator;
             Table = new SqlServerTableSettings();
             View = new SqlServerViewSettings();
             TableFunction = new SqlServerTableFunctionSettings();
@@ -27,9 +29,29 @@ namespace GeneratR.Database.SqlServer
             TableType = new SqlServerTableTypeSettings();
         }
 
-        public new SqlServerTableSettings Table { get { return _table; } set { base.Table = value ?? new SqlServerTableSettings(); _table = value ?? new SqlServerTableSettings(); } }
+        public DotNetGenerator DotNetGenerator { get; }
 
-        public new SqlServerViewSettings View { get { return _view; } set { base.View = value ?? new SqlServerViewSettings(); _view = value ?? new SqlServerViewSettings(); } }
+        /// <summary>
+        /// Inherited from ConnectionString if not set.
+        /// </summary>
+        public string DatabaseName { get; set; }
+
+        public string ConnectionString { get; set; }
+
+        [Obsolete("Not supported")]
+        public string ConnectionStringName { get; set; }
+
+        public ICollection<string> IncludeSchemas { get; set; } = new List<string>();
+
+        public ICollection<string> ExcludeSchemas { get; set; } = new List<string>();
+
+        public ICollection<string> IncludeObjects { get; set; } = new List<string>();
+
+        public ICollection<string> ExcludeObjects { get; set; } = new List<string>();
+
+        public SqlServerTableSettings Table { get { return _table; } set { _table = value ?? new SqlServerTableSettings(); } }
+
+        public SqlServerViewSettings View { get { return _view; } set { _view = value ?? new SqlServerViewSettings(); } }
 
         public SqlServerTableFunctionSettings TableFunction { get { return _tableFunction; } set { _tableFunction = value ?? new SqlServerTableFunctionSettings(); } }
 
@@ -38,6 +60,5 @@ namespace GeneratR.Database.SqlServer
         public SqlServerStoredProcedureSettings StoredProcedure { get { return _storedProcedure; } set { _storedProcedure = value ?? new SqlServerStoredProcedureSettings(); } }
 
         public SqlServerTableTypeSettings TableType { get { return _tableType; } set { _tableType = value ?? new SqlServerTableTypeSettings(); } }
-
     }
 }

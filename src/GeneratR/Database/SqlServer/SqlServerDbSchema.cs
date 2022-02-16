@@ -39,6 +39,11 @@ namespace GeneratR.Database.SqlServer
                 .ToList();
         }
 
+        public SqlServerTableConfiguration GetTable(string schema, string name)
+        {
+            return Tables?.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
+        }
+
         public SqlServerTableConfiguration GetTable(string fullName)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.FullName == fullName);
@@ -49,6 +54,19 @@ namespace GeneratR.Database.SqlServer
             if (action != null)
             {
                 var obj = GetTable(fullName);
+                if (obj != null)
+                {
+                    action(obj);
+                }
+            }
+            return this;
+        }
+
+        public SqlServerDbSchema WithTable(string schema, string name, Action<SqlServerTableConfiguration> action)
+        {
+            if (action != null)
+            {
+                var obj = GetTable(schema, name);
                 if (obj != null)
                 {
                     action(obj);

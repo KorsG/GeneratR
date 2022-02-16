@@ -1,8 +1,15 @@
 ﻿namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableFunctionTemplateModel : TemplateModel<SqlServerTableFunctionConfiguration>
+    public class TableFunctionTemplateModel
     {
-        public TableFunctionTemplateModel(SqlServerSchemaGenerator generator, SqlServerTableFunctionConfiguration @object)
-            : base(generator, @object) { }
+        public TableFunctionTemplateModel(SqlServerSchemaGenerator generator, SqlServerTableFunctionConfiguration tableFunction)
+        {
+            Generator = generator;
+            TableFunction = tableFunction;
+        }
+
+        public SqlServerSchemaGenerator Generator { get; }
+
+        public SqlServerTableFunctionConfiguration TableFunction { get; }
     }
 }

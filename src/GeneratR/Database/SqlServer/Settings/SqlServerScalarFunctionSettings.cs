@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GeneratR.Database.SqlServer.Schema;
+using GeneratR.Database.SqlServer.Templates;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -16,6 +17,8 @@ namespace GeneratR.Database.SqlServer
             NamingStrategy = NamingStrategy.KeepOriginal;
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
+
+        public Func<ScalarFunctionTemplateModel, string> GenerateFactory { get; set; } = (x) => "TODO: Not implemented";
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }

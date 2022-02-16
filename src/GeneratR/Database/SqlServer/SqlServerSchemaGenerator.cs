@@ -7,12 +7,12 @@ using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerSchemaGenerator : GenericDbSchemaGenerator
+    public class SqlServerSchemaGenerator
     {
+        protected static Regex RemoveRelationalColumnSuffixRegex = new Regex(@"(Id|No|Key|Code)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
 
         public SqlServerSchemaGenerator(SqlServerSchemaGeneratorSettings settings)
-            : base(settings)
         {
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _connectionStringBuilder = new SqlConnectionStringBuilder(Settings.ConnectionString);
@@ -23,6 +23,8 @@ namespace GeneratR.Database.SqlServer
 
             DatabaseName = _connectionStringBuilder.InitialCatalog;
         }
+
+        public DotNetGenerator DotNetGenerator => Settings.DotNetGenerator;
 
         public SqlServerSchemaGeneratorSettings Settings { get; }
 
@@ -58,7 +60,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.Table.ShouldInclude(tbl)) { continue; }
 
                     var o = new SqlServerTableConfiguration(tbl);
-                    o.Template = Settings.Table.TemplateFactory(new Templates.TableTemplateModel(this, o));
+                    o.Generate = () => Settings.Table.GenerateFactory(new Templates.TableTemplateModel(this, o));
                     o.Namespace = Settings.Table.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.Table.NamingStrategy == NamingStrategy.Pluralize)
@@ -129,7 +131,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.View.ShouldInclude(vw)) { continue; }
 
                     var o = new SqlServerViewConfiguration(vw);
-                    o.Template = Settings.View.TemplateFactory(new Templates.ViewTemplateModel(this, o));
+                    o.Generate = () => Settings.View.GenerateFactory(new Templates.ViewTemplateModel(this, o));
                     o.Namespace = Settings.View.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.View.NamingStrategy == NamingStrategy.Pluralize)
@@ -179,7 +181,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.TableFunction.ShouldInclude(f)) { continue; }
 
                     var o = new SqlServerTableFunctionConfiguration(f);
-                    o.Template = Settings.TableFunction.TemplateFactory(new Templates.TableFunctionTemplateModel(this, o));
+                    o.Generate = () => Settings.TableFunction.GenerateFactory(new Templates.TableFunctionTemplateModel(this, o));
                     o.Namespace = Settings.TableFunction.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.TableFunction.NamingStrategy == NamingStrategy.Pluralize)
@@ -238,7 +240,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.StoredProcedure.ShouldInclude(proc)) { continue; }
 
                     var o = new SqlServerStoredProcedureConfiguration(proc);
-
+                    o.Generate = () => Settings.StoredProcedure.GenerateFactory(new Templates.StoredProcedureTemplateModel(this, o));
                     o.Namespace = Settings.StoredProcedure.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.StoredProcedure.NamingStrategy == NamingStrategy.Pluralize)
@@ -300,7 +302,7 @@ namespace GeneratR.Database.SqlServer
                     if (!Settings.TableType.ShouldInclude(t)) { continue; }
 
                     var o = new SqlServerTableTypeConfiguration(t);
-                    o.Template = Settings.TableType.TemplateFactory(new Templates.TableTypeTemplateModel(this, o));
+                    o.Generate = () => Settings.TableType.GenerateFactory(new Templates.TableTypeTemplateModel(this, o));
                     o.Namespace = Settings.TableType.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
 
                     if (Settings.TableType.NamingStrategy == NamingStrategy.Pluralize)
@@ -339,7 +341,7 @@ namespace GeneratR.Database.SqlServer
         /// <param name="str">The string.</param>
         /// <param name="pattern">The pattern to match, where "*" means any sequence of characters, and "?" means any single character.</param>
         /// <returns><c>true</c> if the string matches the given pattern; otherwise <c>false</c>.</returns>
-        private static bool StringLike(string str, string pattern)
+        protected static bool StringLike(string str, string pattern)
         {
             return new Regex(
                 "^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
@@ -523,6 +525,29 @@ namespace GeneratR.Database.SqlServer
             var parsed = string.Concat(fk.FromColumns.Select(x => RemoveRelationalColumnSuffix(x.ColumnName)));
             parsed += fk.ToName;
             return parsed;
+        }
+
+        protected virtual string RemoveRelationalColumnSuffix(string columnName)
+        {
+            return RemoveRelationalColumnSuffixRegex.Replace(columnName, string.Empty);
+        }
+
+        protected virtual string CreateForeignKeyCollectionTypeDotNetString(ForeignKeyCollectionType collectionType, string elementType)
+        {
+            // TODO: Create vb compatible method.
+            switch (collectionType)
+            {
+                case ForeignKeyCollectionType.IEnumerable:
+                    return string.Format("IEnumerable<{0}>", elementType);
+                case ForeignKeyCollectionType.ICollection:
+                    return string.Format("ICollection<{0}>", elementType);
+                case ForeignKeyCollectionType.IList:
+                    return string.Format("IList<{0}>", elementType);
+                case ForeignKeyCollectionType.List:
+                    return string.Format("List<{0}>", elementType);
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         public virtual string ConvertDataTypeToDotNetType(string sqlDataType, bool nullable, bool isTableType = false)

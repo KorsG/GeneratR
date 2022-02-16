@@ -2,7 +2,6 @@
 using GeneratR.Database.SqlServer.Schema;
 using GeneratR.Database.SqlServer.Templates;
 using GeneratR.DotNet;
-using GeneratR.Templating;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -15,7 +14,7 @@ namespace GeneratR.Database.SqlServer
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
 
-        public Func<TableFunctionTemplateModel, ITemplate> TemplateFactory { get; set; } = (x) => new TableFunctionTemplate(x);
+        public Func<TableFunctionTemplateModel, string> GenerateFactory { get; set; } = (x) => new TableFunctionTemplate(x).Generate();
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableTypeTemplate : StringTemplateBase, ITemplate
+    public class TableTypeTemplate : StringTemplateBase
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -24,7 +24,7 @@ namespace GeneratR.Database.SqlServer.Templates
             Model = model;
             _dotNetGenerator = model.Generator.DotNetGenerator;
             _objSettings = model.Generator.Settings.TableType;
-            _obj = model.Object;
+            _obj = model.TableType;
         }
 
         public TableTypeTemplateModel Model { get; }

@@ -1,10 +1,15 @@
-﻿using GeneratR.DotNet;
-
-namespace GeneratR.Database.SqlServer.Templates
+﻿namespace GeneratR.Database.SqlServer.Templates
 {
-    public class ViewTemplateModel : TemplateModel<SqlServerViewConfiguration>
+    public class ViewTemplateModel 
     {
-        public ViewTemplateModel(SqlServerSchemaGenerator generator, SqlServerViewConfiguration @object)
-            : base(generator, @object) { }
+        public ViewTemplateModel(SqlServerSchemaGenerator generator, SqlServerViewConfiguration view)
+        {
+            Generator = generator;
+            View = view;
+        }
+
+        public SqlServerSchemaGenerator Generator { get; }
+
+        public SqlServerViewConfiguration View { get; }
     }
 }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GeneratR.Database.SqlServer
+﻿namespace GeneratR.Database.SqlServer
 {
     public class SqlServerColumnConfiguration : DbObjectPropertyConfiguration<Schema.Column>
     {

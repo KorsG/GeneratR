@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableTemplate : StringTemplateBase, ITemplate
+    public class TableTemplate : StringTemplateBase
     {
         protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
@@ -21,16 +21,16 @@ namespace GeneratR.Database.SqlServer.Templates
         protected static readonly HashSet<string> _dateTimeTypesWithoutScale = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", };
         protected static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
-        private readonly DotNetGenerator _dotNetGenerator;
+        private readonly DotNetGenerator _dotNet;
         private readonly SqlServerTableSettings _objSettings;
         private readonly SqlServerTableConfiguration _obj;
 
         public TableTemplate(TableTemplateModel model)
         {
             Model = model;
-            _dotNetGenerator = model.Generator.DotNetGenerator;
+            _dotNet = model.Generator.DotNetGenerator;
             _objSettings = model.Generator.Settings.Table;
-            _obj = model.Object;
+            _obj = model.Table;
         }
 
         public TableTemplateModel Model { get; }
@@ -40,7 +40,7 @@ namespace GeneratR.Database.SqlServer.Templates
             var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
             var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
 
-            WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(_obj.Namespace));
             WriteLine();
             using (IndentScope())
             {
@@ -60,7 +60,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
                     if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
                     attributes.AddRange(_obj.IncludeAttributes);
                     attributes.RemoveList(_obj.ExcludeAttributes);
@@ -70,12 +70,12 @@ namespace GeneratR.Database.SqlServer.Templates
                     }
                 }
 
-                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                WriteLine(_dotNet.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
                 using (IndentScope())
                 {
                     if (_objSettings.AddConstructor)
                     {
-                        WriteLine(_dotNetGenerator.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
                     }
 
                     foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
@@ -98,7 +98,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             if (col.DbObject.IsPrimaryKey)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateKeyAttribute();
+                                var attr = _dotNet.AttributeFactory.CreateKeyAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 
@@ -131,28 +131,28 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             if (col.DbObject.IsPrimaryKey && hasNameDiff)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, col.DbObject.Position - 1, typeName: columnAttributeTypeName);
+                                var attr = _dotNet.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, col.DbObject.Position - 1, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (col.DbObject.IsPrimaryKey)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Position - 1, typeName: columnAttributeTypeName);
+                                var attr = _dotNet.AttributeFactory.CreateColumnAttribute(col.DbObject.Position - 1, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (hasNameDiff)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, typeName: columnAttributeTypeName);
+                                var attr = _dotNet.AttributeFactory.CreateColumnAttribute(col.DbObject.Name, typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
                             else if (!string.IsNullOrWhiteSpace(columnAttributeTypeName))
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateColumnAttribute(typeName: columnAttributeTypeName);
+                                var attr = _dotNet.AttributeFactory.CreateColumnAttribute(typeName: columnAttributeTypeName);
                                 attributes.AddIfNotExists(attr);
                             }
 
                             if (col.DbObject.IsComputed || _rowVersionTypes.Contains(col.DbObject.DataType))
                             {
-                                attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Computed));
+                                attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Computed));
                             }
 
                             if (_variableStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
@@ -160,24 +160,24 @@ namespace GeneratR.Database.SqlServer.Templates
                                 DotNetAttribute attr;
                                 if (col.DbObject.Length == -1)
                                 {
-                                    attr = _dotNetGenerator.AttributeFactory.CreateMaxLengthAttribute();
+                                    attr = _dotNet.AttributeFactory.CreateMaxLengthAttribute();
                                 }
                                 else
                                 {
-                                    attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length);
+                                    attr = _dotNet.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length);
                                 }
                                 attributes.AddIfNotExists(attr);
                             }
 
                             if (_fixedStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
+                                var attr = _dotNet.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
                                 attributes.AddIfNotExists(attr);
                             }
 
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase) && !col.DbObject.IsNullable)
                             {
-                                var attr = _dotNetGenerator.AttributeFactory.CreateRequiredAttribute();
+                                var attr = _dotNet.AttributeFactory.CreateRequiredAttribute();
                                 attributes.AddIfNotExists(attr);
                             }
 
@@ -189,7 +189,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             }
                         }
 
-                        WriteLine(_dotNetGenerator.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
+                        WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
                     }
 
                     if (_objSettings.GenerateForeignKeys)
@@ -215,8 +215,8 @@ namespace GeneratR.Database.SqlServer.Templates
                                 }
                             }
 
-                            WriteLine($"{_dotNetGenerator.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine($"{_dotNet.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
 
@@ -242,15 +242,15 @@ namespace GeneratR.Database.SqlServer.Templates
                                 }
                             }
 
-                            WriteLine($"{_dotNetGenerator.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNetGenerator.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine($"{_dotNet.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
                 }
-                WriteLine(_dotNetGenerator.CreateClassEnd());
+                WriteLine(_dotNet.CreateClassEnd());
                 WriteLine();
             }
-            WriteLine(_dotNetGenerator.CreateNamespaceEnd());
+            WriteLine(_dotNet.CreateNamespaceEnd());
             WriteLine();
 
             return TemplateBuilder.ToString();

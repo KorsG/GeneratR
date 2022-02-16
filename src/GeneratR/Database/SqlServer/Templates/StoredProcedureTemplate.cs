@@ -6,23 +6,28 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class StoredProcedureTemplate : StringTemplateBase, IStoredProcedureTemplate
+    public class StoredProcedureTemplate : StringTemplateBase
     {
         private readonly SqlServerStoredProcedureSettings _settings;
+        private readonly SqlServerStoredProcedureConfiguration _obj;
         private readonly DotNetGenerator _dotNetGenerator;
 
-        public StoredProcedureTemplate(SqlServerSchemaGenerator schemaGenerator)
+        public StoredProcedureTemplate(StoredProcedureTemplateModel model)
         {
-            _dotNetGenerator = schemaGenerator.DotNetGenerator;
-            _settings = schemaGenerator.Settings.StoredProcedure;
+            Model = model;
+            _dotNetGenerator = model.Generator.DotNetGenerator;
+            _settings = model.Generator.Settings.StoredProcedure;
+            _obj = model.StoredProcedure;
         }
 
-        public virtual string Generate(SqlServerStoredProcedureConfiguration obj)
-        {
-            var inheritClassName = !string.IsNullOrWhiteSpace(obj.InheritClassName) ? obj.InheritClassName : _settings.InheritClass;
-            var classAsAbstract = obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+        public StoredProcedureTemplateModel Model { get; }
 
-            WriteLine(_dotNetGenerator.CreateNamespaceStart(obj.Namespace));
+        public virtual string Generate()
+        {
+            var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _settings.InheritClass;
+            var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+
+            WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
             using (IndentScope())
             {
                 WriteLine("using System;");
@@ -39,12 +44,12 @@ namespace GeneratR.Database.SqlServer.Templates
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!obj.DbObject.Name.Equals(obj.ClassName, StringComparison.Ordinal) || !obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+                    if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(obj.DbObject.Name, obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(obj.IncludeAttributes);
-                    attributes.RemoveList(obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.IncludeAttributes);
+                    attributes.RemoveList(_obj.ExcludeAttributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
@@ -52,18 +57,18 @@ namespace GeneratR.Database.SqlServer.Templates
                 }
 
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
-                WriteLine(_dotNetGenerator.CreateClassStart(obj.ClassName, _settings.ClassAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _settings.ClassAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterface));
                 using (IndentScope())
                 {
-                    var generateOutputParameters = _settings.GenerateOutputParameters && obj.DbObject.HasOutputParameters;
+                    var generateOutputParameters = _settings.GenerateOutputParameters && _obj.DbObject.HasOutputParameters;
                     var outputParameterClassName = "OutputParametersModel";
 
-                    var generateResultSet = _settings.GenerateResultSet && obj.DbObject.HasResultColumns;
+                    var generateResultSet = _settings.GenerateResultSet && _obj.DbObject.HasResultColumns;
                     var resultSetClassName = "ResultModel";
 
                     if (_settings.AddConstructor)
                     {
-                        WriteLine(@"public {0}()", obj.ClassName);
+                        WriteLine(@"public {0}()", _obj.ClassName);
                         WriteLine("{");
                         if (generateOutputParameters)
                         {
@@ -103,7 +108,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                 WriteLine("public {0}(){1}{{{1}}}{1}", outputParameterClassName, Environment.NewLine);
                             }
 
-                            foreach (var p in obj.Parameters.Where(x => x.DbObject.Direction == ParameterDirection.InAndOutDirection || x.DbObject.Direction == ParameterDirection.OutDirection))
+                            foreach (var p in _obj.Parameters.Where(x => x.DbObject.Direction == ParameterDirection.InAndOutDirection || x.DbObject.Direction == ParameterDirection.OutDirection))
                             {
                                 if (_settings.AddAnnotations)
                                 {
@@ -135,7 +140,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                 WriteLine("public {0}(){1}{{{1}}}{1}", resultSetClassName, Environment.NewLine);
                             }
 
-                            foreach (var col in obj.ResultColumns)
+                            foreach (var col in _obj.ResultColumns)
                             {
                                 if (_settings.AddAnnotations)
                                 {

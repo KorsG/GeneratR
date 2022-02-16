@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using GeneratR.DotNet;
-using GeneratR.Templating;
 
 namespace GeneratR.Database
 {
@@ -14,8 +13,14 @@ namespace GeneratR.Database
             ExcludeAttributes = new List<string>();
         }
 
-        public ITemplate Template { get; set; }
+        /// <summary>
+        /// Function to Generate .NET type for this config.
+        /// </summary>
+        public Func<string> Generate { get; set; }
 
+        /// <summary>
+        /// The underlying database object.
+        /// </summary>
         public T DbObject { get; }
 
         public string Namespace { get; set; }
