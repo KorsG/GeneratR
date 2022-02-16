@@ -238,6 +238,36 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
+        public virtual string GetFullColumnDataType(Schema.Column col)
+        {
+            if (DataTypeIsAnsiString(col))
+            {
+                var colLength = col.Length == -1 ? "max" : col.Length.ToString();
+                return $"{col.DataType.ToLowerInvariant()}({colLength})";
+            }
+            else if (DataTypeIsDecimal(col))
+            {
+                return  $"{col.DataType.ToLowerInvariant()}({col.Precision}, {col.Scale})";
+            }
+            else if (DataTypeIsDateTime(col))
+            {
+                if (DataTypeIsDateTimeWithoutScale(col))
+                {
+                    return $"{col.DataType.ToLowerInvariant()}";
+                }
+                else
+                {
+                    return $"{col.DataType.ToLowerInvariant()}({col.Scale})";
+                }
+            }
+            else if (DataTypeIsRowVersion(col.DataType))
+            {
+                return "rowversion";
+            }
+
+            return col.DataType;
+        }
+
         public virtual bool DataTypeIsVariableStringLength(Schema.Column column) => DataTypeIsVariableStringLength(column.DataType);
         public virtual bool DataTypeIsVariableStringLength(string dataType) => _variableStringTypes.Contains(dataType);
 
