@@ -26,6 +26,8 @@ namespace GeneratR.Database.SqlServer
 
         public DotNetGenerator DotNetGenerator => Settings.DotNetGenerator;
 
+        public SqlServerTypeMapper TypeMapper => Settings.TypeMapper;
+
         public SqlServerSchemaGeneratorSettings Settings { get; }
 
         public string DatabaseName { get; }
@@ -44,120 +46,19 @@ namespace GeneratR.Database.SqlServer
             if (Settings.Table.Generate)
             {
                 var dbTables = schemaContext.Tables.GetAll();
-
-                if (Settings.IncludeObjects?.Any() == true)
+                if (dbTables.Any())
                 {
-                    dbTables = dbTables.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                    schema.Tables.AddRange(BuildTables(dbTables));
                 }
-
-                if (Settings.ExcludeObjects?.Any() == true)
-                {
-                    dbTables = dbTables.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                foreach (var tbl in dbTables)
-                {
-                    if (!Settings.Table.ShouldInclude(tbl)) { continue; }
-
-                    var o = new SqlServerTableConfiguration(tbl);
-                    o.Generate = () => Settings.Table.GenerateFactory(new Templates.TableTemplateModel(this, o));
-                    o.Namespace = Settings.Table.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                    if (Settings.Table.NamingStrategy == NamingStrategy.Pluralize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                    }
-                    else if (Settings.Table.NamingStrategy == NamingStrategy.Singularize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                    }
-                    else
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                    }
-
-                    // Table columns.
-                    foreach (var col in tbl.Columns)
-                    {
-                        var c = new SqlServerColumnConfiguration(col);
-                        c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
-                        c.PropertyType = ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = Settings.Table.DefaultColumnDotNetModifier;
-                        o.Columns.Add(c);
-                    }
-
-                    // Table foreign keys.
-                    foreach (var fk in tbl.ForeignKeys)
-                    {
-                        var f = new SqlServerForeignKeyConfiguration(fk)
-                        {
-                            DotNetModifier = Settings.Table.DefaultForeignKeyDotNetModifier
-                        };
-                        o.ForeignKeys.Add(f);
-                    }
-                    foreach (var fk in tbl.ReferencingForeignKeys)
-                    {
-                        var f = new SqlServerForeignKeyConfiguration(fk)
-                        {
-                            DotNetModifier = Settings.Table.DefaultForeignKeyDotNetModifier
-                        };
-                        o.ReferencingForeignKeys.Add(f);
-                    }
-
-                    schema.Tables.Add(o);
-                }
-
-                // Foreign key properties and relations must be handled after tables have been parsed, because it needs info from all tables in the collection to parse correctly.
-                SetTableCollectionForeignKeyProperties(schema.Tables);
             }
 
             // Views.
             if (Settings.View.Generate)
             {
                 var dbViews = schemaContext.Views.GetAll();
-
-                if (Settings.IncludeObjects?.Any() == true)
+                if (dbViews.Any())
                 {
-                    dbViews = dbViews.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                if (Settings.ExcludeObjects?.Any() == true)
-                {
-                    dbViews = dbViews.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                foreach (var vw in dbViews)
-                {
-                    if (!Settings.View.ShouldInclude(vw)) { continue; }
-
-                    var o = new SqlServerViewConfiguration(vw);
-                    o.Generate = () => Settings.View.GenerateFactory(new Templates.ViewTemplateModel(this, o));
-                    o.Namespace = Settings.View.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                    if (Settings.View.NamingStrategy == NamingStrategy.Pluralize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                    }
-                    else if (Settings.View.NamingStrategy == NamingStrategy.Singularize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                    }
-                    else
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                    }
-
-                    // View columns.
-                    foreach (var col in vw.Columns)
-                    {
-                        var c = new SqlServerColumnConfiguration(col);
-                        c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
-                        c.PropertyType = ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = Settings.View.DefaultColumnDotNetModifier;
-                        o.Columns.Add(c);
-                    }
-
-                    schema.Views.Add(o);
+                    schema.Views.AddRange(BuildViews(dbViews));
                 }
             }
 
@@ -165,58 +66,9 @@ namespace GeneratR.Database.SqlServer
             if (Settings.TableFunction.Generate)
             {
                 var dbFuncs = schemaContext.TableFunctions.GetAll();
-
-                if (Settings.IncludeObjects?.Any() == true)
+                if (dbFuncs.Any())
                 {
-                    dbFuncs = dbFuncs.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                if (Settings.ExcludeObjects?.Any() == true)
-                {
-                    dbFuncs = dbFuncs.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                foreach (var f in dbFuncs)
-                {
-                    if (!Settings.TableFunction.ShouldInclude(f)) { continue; }
-
-                    var o = new SqlServerTableFunctionConfiguration(f);
-                    o.Generate = () => Settings.TableFunction.GenerateFactory(new Templates.TableFunctionTemplateModel(this, o));
-                    o.Namespace = Settings.TableFunction.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                    if (Settings.TableFunction.NamingStrategy == NamingStrategy.Pluralize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                    }
-                    else if (Settings.TableFunction.NamingStrategy == NamingStrategy.Singularize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                    }
-                    else
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                    }
-
-                    // Function columns.
-                    foreach (var col in f.Columns)
-                    {
-                        var c = new SqlServerColumnConfiguration(col);
-                        c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
-                        c.PropertyType = ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = Settings.TableFunction.DefaultColumnDotNetModifier;
-                        o.Columns.Add(c);
-                    }
-
-                    // Function parameters.
-                    foreach (var param in f.Parameters)
-                    {
-                        var p = new SqlServerParameterConfiguration(param);
-                        p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
-                        p.PropertyType = ConvertDbParameterToDotNetType(p.DbObject);
-                        o.Parameters.Add(p);
-                    }
-
-                    schema.TableFunctions.Add(o);
+                    schema.TableFunctions.AddRange(BuildTableFunctions(dbFuncs));
                 }
             }
 
@@ -224,61 +76,9 @@ namespace GeneratR.Database.SqlServer
             if (Settings.StoredProcedure.Generate)
             {
                 var dbProcs = schemaContext.StoredProcedures.GetAll(Settings.StoredProcedure.GenerateResultSet);
-
-                if (Settings.IncludeObjects?.Any() == true)
+                if (dbProcs.Any())
                 {
-                    dbProcs = dbProcs.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                if (Settings.ExcludeObjects?.Any() == true)
-                {
-                    dbProcs = dbProcs.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                foreach (var proc in dbProcs)
-                {
-                    if (!Settings.StoredProcedure.ShouldInclude(proc)) { continue; }
-
-                    var o = new SqlServerStoredProcedureConfiguration(proc);
-                    o.Generate = () => Settings.StoredProcedure.GenerateFactory(new Templates.StoredProcedureTemplateModel(this, o));
-                    o.Namespace = Settings.StoredProcedure.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                    if (Settings.StoredProcedure.NamingStrategy == NamingStrategy.Pluralize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                    }
-                    else if (Settings.StoredProcedure.NamingStrategy == NamingStrategy.Singularize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                    }
-                    else
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                    }
-
-                    // StoredProcedure ResultColumns.
-                    if (Settings.StoredProcedure.GenerateResultSet)
-                    {
-                        foreach (var colr in proc.ResultColumns)
-                        {
-                            var c = new SqlServerStoredProcedureResultColumnConfiguration(colr);
-                            c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
-                            c.PropertyType = ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                            c.DotNetModifier = Settings.StoredProcedure.DefaultColumnDotNetModifier;
-                            o.ResultColumns.Add(c);
-                        }
-                    }
-
-                    // StoredProcedure parameters
-                    foreach (var param in proc.Parameters)
-                    {
-                        var p = new SqlServerParameterConfiguration(param);
-                        p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
-                        p.PropertyType = ConvertDbParameterToDotNetType(p.DbObject);
-                        o.Parameters.Add(p);
-                    }
-
-                    schema.StoredProcedures.Add(o);
+                    schema.StoredProcedures.AddRange(BuildStoredProcedures(dbProcs));
                 }
             }
 
@@ -286,53 +86,374 @@ namespace GeneratR.Database.SqlServer
             if (Settings.TableType.Generate)
             {
                 var dbTypes = schemaContext.TableTypes.GetAll();
-
-                if (Settings.IncludeObjects?.Any() == true)
+                if (dbTypes.Any())
                 {
-                    dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                if (Settings.ExcludeObjects?.Any() == true)
-                {
-                    dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
-                }
-
-                foreach (var t in dbTypes)
-                {
-                    if (!Settings.TableType.ShouldInclude(t)) { continue; }
-
-                    var o = new SqlServerTableTypeConfiguration(t);
-                    o.Generate = () => Settings.TableType.GenerateFactory(new Templates.TableTypeTemplateModel(this, o));
-                    o.Namespace = Settings.TableType.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                    if (Settings.TableType.NamingStrategy == NamingStrategy.Pluralize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                    }
-                    else if (Settings.TableType.NamingStrategy == NamingStrategy.Singularize)
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                    }
-                    else
-                    {
-                        o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                    }
-
-                    // Columns.
-                    foreach (var col in t.Columns)
-                    {
-                        var c = new SqlServerColumnConfiguration(col);
-                        c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
-                        c.PropertyType = ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = Settings.TableType.DefaultColumnDotNetModifier;
-                        o.Columns.Add(c);
-                    }
-
-                    schema.TableTypes.Add(o);
+                    schema.TableTypes.AddRange(BuildTableTypes(dbTypes));
                 }
             }
 
             return schema;
+        }
+
+        protected virtual List<SqlServerTableConfiguration> BuildTables(IEnumerable<Schema.Table> dbTypes)
+        {
+            var configs = new List<SqlServerTableConfiguration>();
+
+            if (Settings.IncludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            if (Settings.ExcludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            var objSettings = Settings.Table;
+            foreach (var t in dbTypes)
+            {
+                if (!objSettings.ShouldInclude(t)) { continue; }
+
+                var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
+                {
+                    GenerateForeignKeys = objSettings.GenerateForeignKeys,
+                    GenerateReferencingForeignKeys = objSettings.GenerateReferencingForeignKeys,
+                    AddAttributes = objSettings.AddAnnotations,
+                    AddConstructor = objSettings.AddConstructor,
+                    InheritClassName = objSettings.InheritClass,
+                };
+
+                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
+                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
+                {
+                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
+                }
+
+                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                }
+                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                }
+                else
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                }
+
+                // Table columns.
+                foreach (var col in t.Columns)
+                {
+                    var c = new SqlServerColumnConfiguration(col);
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+                    c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
+                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    o.Columns.Add(c);
+                }
+
+                // Table foreign keys.
+                foreach (var fk in t.ForeignKeys)
+                {
+                    var f = new SqlServerForeignKeyConfiguration(fk)
+                    {
+                        DotNetModifier = objSettings.DefaultForeignKeyDotNetModifier,
+                    };
+                    o.ForeignKeys.Add(f);
+                }
+                foreach (var fk in t.ReferencingForeignKeys)
+                {
+                    var f = new SqlServerForeignKeyConfiguration(fk)
+                    {
+                        DotNetModifier = objSettings.DefaultForeignKeyDotNetModifier
+                    };
+                    o.ReferencingForeignKeys.Add(f);
+                }
+
+                configs.Add(o);
+            }
+
+            // Foreign key properties and relations must be handled after tables have been parsed, because it needs info from all tables in the collection to parse correctly.
+            SetTableCollectionForeignKeyProperties(configs);
+
+            return configs;
+        }
+
+        protected virtual List<SqlServerViewConfiguration> BuildViews(IEnumerable<Schema.View> dbTypes)
+        {
+            var configs = new List<SqlServerViewConfiguration>();
+
+            if (Settings.IncludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            if (Settings.ExcludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            var objSettings = Settings.View;
+            foreach (var t in dbTypes)
+            {
+                if (!objSettings.ShouldInclude(t)) { continue; }
+
+                var o = new SqlServerViewConfiguration(t, DotNetGenerator, TypeMapper)
+                {
+                    AddAttributes = objSettings.AddAnnotations,
+                    AddConstructor = objSettings.AddConstructor,
+                    InheritClassName = objSettings.InheritClass,
+                };
+
+                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
+                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
+                {
+                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
+                }
+
+                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                }
+                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                }
+                else
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                }
+
+                // View columns.
+                foreach (var col in t.Columns)
+                {
+                    var c = new SqlServerColumnConfiguration(col);
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+                    c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
+                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    o.Columns.Add(c);
+                }
+
+                configs.Add(o);
+            }
+
+            return configs;
+        }
+
+        protected virtual List<SqlServerTableTypeConfiguration> BuildTableTypes(IEnumerable<Schema.TableType> dbTypes)
+        {
+            var configs = new List<SqlServerTableTypeConfiguration>();
+
+            if (Settings.IncludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            if (Settings.ExcludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            var objSettings = Settings.TableType;
+            foreach (var t in dbTypes)
+            {
+                if (!objSettings.ShouldInclude(t)) { continue; }
+
+                var o = new SqlServerTableTypeConfiguration(t, DotNetGenerator, TypeMapper)
+                {
+                    AddAttributes = objSettings.AddAnnotations,
+                    AddConstructor = objSettings.AddConstructor,
+                    InheritClassName = objSettings.InheritClass,
+                };
+
+                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
+                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
+                {
+                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
+                }
+
+                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                }
+                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                }
+                else
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                }
+
+                // Columns.
+                foreach (var col in t.Columns)
+                {
+                    var c = new SqlServerColumnConfiguration(col);
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+                    c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
+                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    o.Columns.Add(c);
+                }
+
+                configs.Add(o);
+            }
+
+            return configs;
+        }
+
+        protected virtual List<SqlServerTableFunctionConfiguration> BuildTableFunctions(IEnumerable<Schema.TableFunction> dbTypes)
+        {
+            var configs = new List<SqlServerTableFunctionConfiguration>();
+
+            if (Settings.IncludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            if (Settings.ExcludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            var objSettings = Settings.TableFunction;
+            foreach (var t in dbTypes)
+            {
+                if (!objSettings.ShouldInclude(t)) { continue; }
+
+                var o = new SqlServerTableFunctionConfiguration(t, DotNetGenerator, TypeMapper)
+                {
+                    AddAttributes = objSettings.AddAnnotations,
+                    AddConstructor = objSettings.AddConstructor,
+                    InheritClassName = objSettings.InheritClass,
+                };
+
+                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
+                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
+                {
+                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
+                }
+
+                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                }
+                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                }
+                else
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                }
+
+                // Function columns.
+                foreach (var col in t.Columns)
+                {
+                    var c = new SqlServerColumnConfiguration(col);
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+                    c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
+                    c.DotNetModifier = Settings.TableFunction.DefaultColumnDotNetModifier;
+                    o.Columns.Add(c);
+                }
+
+                // Function parameters.
+                foreach (var param in t.Parameters)
+                {
+                    var p = new SqlServerParameterConfiguration(param);
+                    p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
+                    p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
+                    o.Parameters.Add(p);
+                }
+
+                configs.Add(o);
+            }
+
+            return configs;
+        }
+
+        protected virtual List<SqlServerStoredProcedureConfiguration> BuildStoredProcedures(IEnumerable<Schema.StoredProcedure> dbTypes)
+        {
+            var configs = new List<SqlServerStoredProcedureConfiguration>();
+
+            if (Settings.IncludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            if (Settings.ExcludeObjects?.Any() == true)
+            {
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+            }
+
+            var objSettings = Settings.StoredProcedure;
+            foreach (var t in dbTypes)
+            {
+                if (!objSettings.ShouldInclude(t)) { continue; }
+
+                var o = new SqlServerStoredProcedureConfiguration(t, DotNetGenerator, TypeMapper)
+                {
+                    AddAttributes = objSettings.AddAnnotations,
+                    AddConstructor = objSettings.AddConstructor,
+                    InheritClassName = objSettings.InheritClass,
+                    GenerateOutputParameters = objSettings.GenerateOutputParameters,
+                    GenerateResultSet = objSettings.GenerateResultSet,
+                };
+
+                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
+                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
+                {
+                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
+                }
+
+                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                }
+                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                }
+                else
+                {
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                }
+
+                // StoredProcedure ResultColumns.
+                if (objSettings.GenerateResultSet)
+                {
+                    foreach (var colr in t.ResultColumns)
+                    {
+                        var c = new SqlServerStoredProcedureResultColumnConfiguration(colr);
+                        c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+                        c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
+                        c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                        o.ResultColumns.Add(c);
+                    }
+                }
+
+                // StoredProcedure parameters
+                foreach (var param in t.Parameters)
+                {
+                    var p = new SqlServerParameterConfiguration(param);
+                    p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
+                    p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
+                    o.Parameters.Add(p);
+                }
+
+                configs.Add(o);
+            }
+
+            return configs;
         }
 
         /// <summary>
@@ -550,218 +671,19 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        public virtual string ConvertDataTypeToDotNetType(string sqlDataType, bool nullable, bool isTableType = false)
-        {
-            if (isTableType)
-            {
-                sqlDataType = "table type";
-            }
-            ParseSqlServerDataType(sqlDataType, nullable, out string dotNetType, out string dbType, out string sqlDbType);
-            return dotNetType;
-        }
+        protected string ConvertDataTypeToDotNetType(string sqlDataType, bool nullable, bool isTableType = false)
+            => Settings.TypeMapper.ConvertDataTypeToDotNetType(sqlDataType, nullable, isTableType);
 
-        public virtual string ConvertDbParameterToDotNetType(Schema.Parameter p)
-        {
-            if (p.IsTableType)
-            {
-                return p.DataType;
-            }
-            ParseSqlServerDataType(p.DataType, p.IsNullable, out string dotNetType, out string dbType, out string sqlDbType);
-            return dotNetType;
-        }
+        protected string ConvertDbParameterToDotNetType(Schema.Parameter p)
+            => Settings.TypeMapper.ConvertDbParameterToDotNetType(p);
 
-        public virtual string ConvertDataTypeToDbType(string sqlDataType, bool isTableType = false)
-        {
-            if (isTableType)
-            {
-                sqlDataType = "table type";
-            }
-            ParseSqlServerDataType(sqlDataType, false, out string _, out string dbType, out string sqlDbType);
-            return dbType;
-        }
+        protected string ConvertDataTypeToDbType(string sqlDataType, bool isTableType = false)
+            => Settings.TypeMapper.ConvertDataTypeToDbType(sqlDataType, isTableType);
 
-        public virtual string ConvertDataTypeToSqlDbType(string sqlDataType, bool isTableType = false)
-        {
-            if (isTableType)
-            {
-                sqlDataType = "table type";
-            }
-            ParseSqlServerDataType(sqlDataType, false, out string dotNetType, out string dbType, out string sqlDbType);
-            return sqlDbType;
-        }
+        protected string ConvertDataTypeToSqlDbType(string sqlDataType, bool isTableType = false)
+            => Settings.TypeMapper.ConvertDataTypeToSqlDbType(sqlDataType, isTableType);
 
-        public virtual void ParseSqlServerDataType(string sqlDataType, bool nullable, out string dotNetType, out string dbType, out string sqlDbType)
-        {
-            switch (sqlDataType.ToLowerInvariant())
-            {
-                case "char":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.AnsiStringFixedLength";
-                    sqlDbType = "SqlDbType.Char";
-                    break;
-                case "varchar":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.AnsiString";
-                    sqlDbType = "SqlDbType.VarChar";
-                    break;
-                case "text":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.AnsiString";
-                    sqlDbType = "SqlDbType.VarChar";
-                    break;
-                case "nchar":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.StringFixedLength";
-                    sqlDbType = "SqlDbType.NChar";
-                    break;
-                case "nvarchar":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.String";
-                    sqlDbType = "SqlDbType.NVarChar";
-                    break;
-                case "ntext":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.String";
-                    sqlDbType = "SqlDbType.NVarChar";
-                    break;
-                case "bigint":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(long?)) : DotNetGenerator.GetTypeAsString(typeof(long));
-                    dbType = "DbType.Int64";
-                    sqlDbType = "SqlDbType.BigInt";
-                    break;
-                case "int":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(int?)) : DotNetGenerator.GetTypeAsString(typeof(int));
-                    dbType = "DbType.Int32";
-                    sqlDbType = "SqlDbType.Int";
-                    break;
-                case "smallint":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(short?)) : DotNetGenerator.GetTypeAsString(typeof(short));
-                    dbType = "DbType.Int16";
-                    sqlDbType = "SqlDbType.SmallInt";
-                    break;
-                case "tinyint":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(byte?)) : DotNetGenerator.GetTypeAsString(typeof(byte));
-                    dbType = "DbType.Byte";
-                    sqlDbType = "SqlDbType.TinyInt";
-                    break;
-                case "uniqueidentifier":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(Guid?)) : DotNetGenerator.GetTypeAsString(typeof(Guid));
-                    dbType = "DbType.Guid";
-                    sqlDbType = "SqlDbType.UniqueIdentifier";
-                    break;
-                case "smalldatetime":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
-                    dbType = "DbType.DateTime";
-                    sqlDbType = "SqlDbType.SmallDateTime";
-                    break;
-                case "datetime":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
-                    dbType = "DbType.DateTime";
-                    sqlDbType = "SqlDbType.DateTime";
-                    break;
-                case "datetime2":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
-                    dbType = "DbType.DateTime2";
-                    sqlDbType = "SqlDbType.DateTime2";
-                    break;
-                case "date":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
-                    dbType = "DbType.Date";
-                    sqlDbType = "SqlDbType.Date";
-                    break;
-                case "time":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(TimeSpan?)) : DotNetGenerator.GetTypeAsString(typeof(TimeSpan));
-                    dbType = "DbType.Time";
-                    sqlDbType = "SqlDbType.Time";
-                    break;
-                case "datetimeoffset":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTimeOffset?)) : DotNetGenerator.GetTypeAsString(typeof(DateTimeOffset));
-                    dbType = "DbType.DateTimeOffset";
-                    sqlDbType = "SqlDbType.DateTimeOffset";
-                    break;
-                case "float":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(double?)) : DotNetGenerator.GetTypeAsString(typeof(double));
-                    dbType = "DbType.Double";
-                    sqlDbType = "SqlDbType.Float";
-                    break;
-                case "real":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(float?)) : DotNetGenerator.GetTypeAsString(typeof(float));
-                    dbType = "DbType.Double";
-                    sqlDbType = "SqlDbType.Real";
-                    break;
-                case "numeric":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
-                    dbType = "DbType.Decimal";
-                    sqlDbType = "SqlDbType.Decimal";
-                    break;
-                case "smallmoney":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
-                    dbType = "DbType.Decimal";
-                    sqlDbType = "SqlDbType.SmallMoney";
-                    break;
-                case "decimal":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
-                    dbType = "DbType.Decimal";
-                    sqlDbType = "SqlDbType.Decimal";
-                    break;
-                case "money":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
-                    dbType = "DbType.Decimal";
-                    sqlDbType = "SqlDbType.Money";
-                    break;
-                case "bit":
-                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(bool?)) : DotNetGenerator.GetTypeAsString(typeof(bool));
-                    dbType = "DbType.Boolean";
-                    sqlDbType = "SqlDbType.Bit";
-                    break;
-                case "image":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
-                    dbType = "DbType.Binary";
-                    sqlDbType = "SqlDbType.Image";
-                    break;
-                case "binary":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
-                    dbType = "DbType.Binary";
-                    sqlDbType = "SqlDbType.Binary";
-                    break;
-                case "varbinary":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
-                    dbType = "DbType.Binary";
-                    sqlDbType = "SqlDbType.VarBinary";
-                    break;
-                case "timestamp":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
-                    dbType = "DbType.Binary";
-                    sqlDbType = "SqlDbType.Timestamp";
-                    break;
-                case "geography":
-                    dotNetType = "Microsoft.SqlServer.Types.SqlGeography";
-                    dbType = "DbType.Object";
-                    sqlDbType = "SqlDbType.Udt";
-                    break;
-                case "geometry":
-                    dotNetType = "Microsoft.SqlServer.Types.SqlGeometry";
-                    dbType = "DbType.Object";
-                    sqlDbType = "SqlDbType.Udt";
-                    break;
-                case "table type":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(object));
-                    dbType = "DbType.Object";
-                    sqlDbType = "SqlDbType.Structured";
-                    break;
-                case "sysname":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.String";
-                    sqlDbType = "SqlDbType.NVarChar";
-                    break;
-                case "xml":
-                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
-                    dbType = "DbType.Xml";
-                    sqlDbType = "SqlDbType.Xml";
-                    break;
-                default:
-                    throw new InvalidOperationException(string.Format("Unknown SqlServerDataType: '{0}'", sqlDataType));
-            }
-        }
+        protected void ParseSqlServerDataType(string sqlDataType, bool nullable, out string dotNetType, out string dbType, out string sqlDbType)
+            => Settings.TypeMapper.ParseSqlServerDataType(sqlDataType, nullable, out dotNetType, out dbType, out sqlDbType);
     }
 }

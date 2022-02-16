@@ -6,11 +6,14 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerViewConfiguration : DbObjectClassConfiguration<Schema.View>
     {
-        public SqlServerViewConfiguration(Schema.View dbObject)
-            : base(dbObject)
+        public SqlServerViewConfiguration(Schema.View dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
+            : base(dbObject, dotNetGenerator)
         {
             Columns = new List<SqlServerColumnConfiguration>();
+            TypeMapper = typeMapper;
         }
+
+        public SqlServerTypeMapper TypeMapper { get; }
 
         public List<SqlServerColumnConfiguration> Columns { get; set; }
 

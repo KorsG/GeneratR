@@ -198,7 +198,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
                         {
-                            var sqlDataType = _schemaGenerator.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
+                            var sqlDataType = _schemaGenerator.Settings.TypeMapper.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
                             if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
                             {
                                 WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");

@@ -21,6 +21,7 @@ namespace GeneratR.Database.SqlServer
         public SqlServerSchemaGeneratorSettings(DotNetGenerator dotNetGenerator)
         {
             DotNetGenerator = dotNetGenerator;
+            TypeMapper = new SqlServerTypeMapper(dotNetGenerator);
             Table = new SqlServerTableSettings();
             View = new SqlServerViewSettings();
             TableFunction = new SqlServerTableFunctionSettings();
@@ -30,6 +31,8 @@ namespace GeneratR.Database.SqlServer
         }
 
         public DotNetGenerator DotNetGenerator { get; }
+
+        public SqlServerTypeMapper TypeMapper { get; }
 
         /// <summary>
         /// Inherited from ConnectionString if not set.

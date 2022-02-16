@@ -8,8 +8,8 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerScalarFunctionConfiguration : DbObjectClassConfiguration<Schema.ScalarFunction>
     {
-        public SqlServerScalarFunctionConfiguration(Schema.ScalarFunction dbObject)
-            : base(dbObject)
+        public SqlServerScalarFunctionConfiguration(Schema.ScalarFunction dbObject, DotNet.DotNetGenerator dotNetGenerator)
+            : base(dbObject, dotNetGenerator)
         {
             Parameters = new List<SqlServerParameterConfiguration>();
         }

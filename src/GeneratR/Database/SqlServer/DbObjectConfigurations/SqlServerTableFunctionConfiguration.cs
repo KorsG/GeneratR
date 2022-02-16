@@ -8,12 +8,14 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerTableFunctionConfiguration : DbObjectClassConfiguration<Schema.TableFunction>
     {
-        public SqlServerTableFunctionConfiguration(Schema.TableFunction dbObject)
-            : base(dbObject)
+        public SqlServerTableFunctionConfiguration(Schema.TableFunction dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
+            : base(dbObject, dotNetGenerator)
         {
             Columns = new List<SqlServerColumnConfiguration>();
             Parameters = new List<SqlServerParameterConfiguration>();
+            TypeMapper = typeMapper;
         }
+        public SqlServerTypeMapper TypeMapper { get; }
 
         public List<SqlServerColumnConfiguration> Columns { get; set; }
 

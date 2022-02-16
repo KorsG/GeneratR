@@ -6,9 +6,10 @@ namespace GeneratR.Database
 {
     public class DbObjectClassConfiguration<T> where T : class
     {
-        public DbObjectClassConfiguration(T dbObject)
+        public DbObjectClassConfiguration(T dbObject, DotNetGenerator dotNetGenerator)
         {
             DbObject = dbObject;
+            DotNetGenerator = dotNetGenerator;
             IncludeAttributes = new DotNetAttributeCollection();
             ExcludeAttributes = new List<string>();
         }
@@ -23,13 +24,21 @@ namespace GeneratR.Database
         /// </summary>
         public T DbObject { get; }
 
+        public DotNetGenerator DotNetGenerator { get; set; }
+
         public string Namespace { get; set; }
 
         public string ClassName { get; set; }
 
         public string InheritClassName { get; set; }
 
+        public List<string> ImplementInterfaces { get; set; } = new List<string>();
+
         public DotNetModifierKeyword DotNetModifier { get; set; }
+
+        public bool AddConstructor { get; set; }
+
+        public bool AddAttributes { get; set; }
 
         ///<summary>
         /// List of attributes which will be included. Replaces any auto generated attributes. Exclude takes precedence over includes.

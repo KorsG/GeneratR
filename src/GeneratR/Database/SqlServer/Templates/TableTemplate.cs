@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
@@ -21,67 +19,60 @@ namespace GeneratR.Database.SqlServer.Templates
         protected static readonly HashSet<string> _dateTimeTypesWithoutScale = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", };
         protected static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
+        private readonly SqlServerTableConfiguration _config;
         private readonly DotNetGenerator _dotNet;
-        private readonly SqlServerTableSettings _objSettings;
-        private readonly SqlServerTableConfiguration _obj;
 
-        public TableTemplate(TableTemplateModel model)
+        public TableTemplate(SqlServerTableConfiguration config)
         {
-            Model = model;
-            _dotNet = model.Generator.DotNetGenerator;
-            _objSettings = model.Generator.Settings.Table;
-            _obj = model.Table;
+            _config = config;
+            _dotNet = _config.DotNetGenerator;
         }
-
-        public TableTemplateModel Model { get; }
 
         public virtual string Generate()
         {
-            var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
-            var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+            var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+            var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
 
-            WriteLine(_dotNet.CreateNamespaceStart(_obj.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
             WriteLine();
             using (IndentScope())
             {
                 // TODO: Add as "using" write to "DotNetGenerator".
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
-                if (_objSettings.AddAnnotations)
+
+                if (_config.AddAttributes)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
                     WriteLine();
-                }
 
-                if (_objSettings.AddAnnotations)
-                {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!_obj.DbObject.Name.Equals(_obj.ClassName, StringComparison.Ordinal) || !_obj.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+                    if (!_config.DbObject.Name.Equals(_config.ClassName, StringComparison.Ordinal) || !_config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
                     {
-                        attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
+                        attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateTableAttribute(_config.DbObject.Name, _config.DbObject.Schema));
                     }
-                    attributes.AddRange(_obj.IncludeAttributes);
-                    attributes.RemoveList(_obj.ExcludeAttributes);
+                    attributes.AddRange(_config.IncludeAttributes);
+                    attributes.RemoveList(_config.ExcludeAttributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
                     }
                 }
 
-                WriteLine(_dotNet.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
                 using (IndentScope())
                 {
-                    if (_objSettings.AddConstructor)
+                    if (_config.AddConstructor)
                     {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _obj.ClassName));
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _config.ClassName));
                     }
 
-                    foreach (var col in _obj.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         // Column and class name must not be equal.
-                        if (string.Equals(col.PropertyName, _obj.ClassName, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(col.PropertyName, _config.ClassName, StringComparison.OrdinalIgnoreCase))
                         {
                             col.PropertyName += "Column";
                         }
@@ -92,7 +83,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
                         }
 
-                        if (_objSettings.AddAnnotations)
+                        if (_config.AddAttributes)
                         {
                             var attributes = new DotNetAttributeCollection();
 
@@ -192,12 +183,12 @@ namespace GeneratR.Database.SqlServer.Templates
                         WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
                     }
 
-                    if (_objSettings.GenerateForeignKeys)
+                    if (_config.GenerateForeignKeys)
                     {
-                        foreach (var fk in _obj.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
+                        foreach (var fk in _config.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
                         {
                             WriteLine();
-                            if (_objSettings.AddAnnotations)
+                            if (_config.AddAttributes)
                             {
                                 var attributes = new DotNetAttributeCollection();
 
@@ -220,13 +211,13 @@ namespace GeneratR.Database.SqlServer.Templates
                         }
                     }
 
-                    if (_objSettings.GenerateReferencingForeignKeys)
+                    if (_config.GenerateReferencingForeignKeys)
                     {
-                        var referencingKeys = _obj.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
+                        var referencingKeys = _config.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
                         foreach (var fk in referencingKeys)
                         {
                             WriteLine();
-                            if (_objSettings.AddAnnotations)
+                            if (_config.AddAttributes)
                             {
                                 var attributes = new DotNetAttributeCollection();
 

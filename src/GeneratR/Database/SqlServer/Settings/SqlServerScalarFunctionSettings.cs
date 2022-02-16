@@ -18,7 +18,7 @@ namespace GeneratR.Database.SqlServer
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
 
-        public Func<ScalarFunctionTemplateModel, string> GenerateFactory { get; set; } = (x) => "TODO: Not implemented";
+        public Func<SqlServerScalarFunctionConfiguration, string> GenerateFactory { get; set; } = (x) => "TODO: Not implemented";
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }

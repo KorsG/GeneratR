@@ -17,7 +17,7 @@ namespace GeneratR.Database.SqlServer
             DefaultForeignKeyDotNetModifier = DotNetModifierKeyword.Public;
         }
 
-        public Func<TableTemplateModel, string> GenerateFactory { get; set; } = (x) => new TableTemplate(x).Generate();
+        public Func<SqlServerTableConfiguration, string> GenerateFactory { get; set; } = (x) => new TableTemplate(x).Generate();
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }

@@ -6,11 +6,14 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerTableTypeConfiguration : DbObjectClassConfiguration<Schema.TableType>
     {
-        public SqlServerTableTypeConfiguration(Schema.TableType dbObject)
-            : base(dbObject)
+        public SqlServerTableTypeConfiguration(Schema.TableType dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
+            : base(dbObject, dotNetGenerator)
         {
             Columns = new List<SqlServerColumnConfiguration>();
+            TypeMapper = typeMapper;
         }
+
+        public SqlServerTypeMapper TypeMapper { get; }
 
         public List<SqlServerColumnConfiguration> Columns { get; set; }
 
