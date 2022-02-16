@@ -1,7 +1,6 @@
 ﻿using GeneratR.DotNet;
 using GeneratR.Templating;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
@@ -9,23 +8,15 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class TableTemplate : StringTemplateBase
     {
-        protected static readonly HashSet<string> _variableStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
-        protected static readonly HashSet<string> _fixedStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
-        protected static readonly HashSet<string> _ansiStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "char", "varchar", };
-        protected static readonly HashSet<string> _unicodeStringTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "nchar", "nvarchar", };
-        protected static readonly HashSet<string> _allStringTypes = new HashSet<string>(_ansiStringTypes.Union(_unicodeStringTypes), StringComparer.OrdinalIgnoreCase);
-        protected static readonly HashSet<string> _decimalTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "decimal", "numeric", };
-        protected static readonly HashSet<string> _dateTimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", "datetime2", "datetimeoffset", };
-        protected static readonly HashSet<string> _dateTimeTypesWithoutScale = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", };
-        protected static readonly HashSet<string> _rowVersionTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
-
         private readonly SqlServerTableConfiguration _config;
         private readonly DotNetGenerator _dotNet;
+        private readonly SqlServerTypeMapper _typeMapper;
 
         public TableTemplate(SqlServerTableConfiguration config)
         {
             _config = config;
-            _dotNet = _config.DotNetGenerator;
+            _dotNet = config.DotNetGenerator;
+            _typeMapper = config.TypeMapper;
         }
 
         public virtual string Generate()
@@ -40,13 +31,15 @@ namespace GeneratR.Database.SqlServer.Templates
                 // TODO: Add as "using" write to "DotNetGenerator".
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
-
                 if (_config.AddAttributes)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                    WriteLine();
+                }
+                WriteLine();
 
+                if (_config.AddAttributes)
+                {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
                     if (!_config.DbObject.Name.Equals(_config.ClassName, StringComparison.Ordinal) || !_config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
@@ -95,18 +88,18 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
                             string columnAttributeTypeName = null;
-                            if (_ansiStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            if (_typeMapper.DataTypeIsAnsiString(col.DbObject))
                             {
                                 var colLength = col.DbObject.Length == -1 ? "max" : col.DbObject.Length.ToString();
                                 columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({colLength})";
                             }
-                            else if (_decimalTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            else if (_typeMapper.DataTypeIsDecimal(col.DbObject))
                             {
                                 columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({col.DbObject.Precision}, {col.DbObject.Scale})";
                             }
-                            else if (_dateTimeTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            else if (_typeMapper.DataTypeIsDateTime(col.DbObject))
                             {
-                                if (_dateTimeTypesWithoutScale.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                                if (_typeMapper.DataTypeIsDateTimeWithoutScale(col.DbObject))
                                 {
                                     columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}";
                                 }
@@ -115,7 +108,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                     columnAttributeTypeName = $"{col.DbObject.DataType.ToLower()}({col.DbObject.Scale})";
                                 }
                             }
-                            else if (_rowVersionTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            else if (_typeMapper.DataTypeIsRowVersion(col.DbObject.DataType))
                             {
                                 columnAttributeTypeName = "rowversion";
                             }
@@ -141,12 +134,12 @@ namespace GeneratR.Database.SqlServer.Templates
                                 attributes.AddIfNotExists(attr);
                             }
 
-                            if (col.DbObject.IsComputed || _rowVersionTypes.Contains(col.DbObject.DataType))
+                            if (col.DbObject.IsComputed || _typeMapper.DataTypeIsRowVersion(col.DbObject))
                             {
                                 attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Computed));
                             }
 
-                            if (_variableStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            if (_typeMapper.DataTypeIsVariableStringLength(col.DbObject))
                             {
                                 DotNetAttribute attr;
                                 if (col.DbObject.Length == -1)
@@ -159,14 +152,13 @@ namespace GeneratR.Database.SqlServer.Templates
                                 }
                                 attributes.AddIfNotExists(attr);
                             }
-
-                            if (_fixedStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase))
+                            else if (_typeMapper.DataTypeIsFixedStringLength(col.DbObject))
                             {
                                 var attr = _dotNet.AttributeFactory.CreateStringLengthAttribute(col.DbObject.Length, col.DbObject.Length);
                                 attributes.AddIfNotExists(attr);
                             }
 
-                            if (_allStringTypes.Contains(col.DbObject.DataType, StringComparer.OrdinalIgnoreCase) && !col.DbObject.IsNullable)
+                            if (_typeMapper.DataTypeIsString(col.DbObject) && !col.DbObject.IsNullable)
                             {
                                 var attr = _dotNet.AttributeFactory.CreateRequiredAttribute();
                                 attributes.AddIfNotExists(attr);

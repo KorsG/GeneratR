@@ -1,10 +1,22 @@
 ﻿using GeneratR.DotNet;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneratR.Database.SqlServer
 {
     public class SqlServerTypeMapper
     {
+        protected static readonly HashSet<string> _variableStringTypes = new(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
+        protected static readonly HashSet<string> _fixedStringTypes = new(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
+        protected static readonly HashSet<string> _ansiStringTypes = new(StringComparer.OrdinalIgnoreCase) { "char", "varchar", };
+        protected static readonly HashSet<string> _unicodeStringTypes = new(StringComparer.OrdinalIgnoreCase) { "nchar", "nvarchar", };
+        protected static readonly HashSet<string> _allStringTypes = new(_ansiStringTypes.Union(_unicodeStringTypes), StringComparer.OrdinalIgnoreCase);
+        protected static readonly HashSet<string> _decimalTypes = new(StringComparer.OrdinalIgnoreCase) { "decimal", "numeric", };
+        protected static readonly HashSet<string> _dateTimeTypes = new(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", "datetime2", "datetimeoffset", };
+        protected static readonly HashSet<string> _dateTimeTypesWithoutScale = new(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", };
+        protected static readonly HashSet<string> _rowVersionTypes = new(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
+
         private readonly DotNetGenerator _dotNetGenerator;
 
         public SqlServerTypeMapper(DotNetGenerator dotNetGenerator)
@@ -225,5 +237,32 @@ namespace GeneratR.Database.SqlServer
                     throw new InvalidOperationException(string.Format("Unknown SqlServerDataType: '{0}'", sqlDataType));
             }
         }
+
+        public virtual bool DataTypeIsVariableStringLength(Schema.Column column) => DataTypeIsVariableStringLength(column.DataType);
+        public virtual bool DataTypeIsVariableStringLength(string dataType) => _variableStringTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsFixedStringLength(Schema.Column column) => DataTypeIsFixedStringLength(column.DataType);
+        public virtual bool DataTypeIsFixedStringLength(string dataType) => _fixedStringTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsAnsiString(Schema.Column column) => DataTypeIsAnsiString(column.DataType);
+        public virtual bool DataTypeIsAnsiString(string dataType) => _ansiStringTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsUnicodeString(Schema.Column column) => DataTypeIsUnicodeString(column.DataType);
+        public virtual bool DataTypeIsUnicodeString(string dataType) => _unicodeStringTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsString(Schema.Column column) => DataTypeIsString(column.DataType);
+        public virtual bool DataTypeIsString(string dataType) => _allStringTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsDecimal(Schema.Column column) => DataTypeIsDecimal(column.DataType);
+        public virtual bool DataTypeIsDecimal(string dataType) => _decimalTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsDateTime(Schema.Column column) => DataTypeIsDateTime(column.DataType);
+        public virtual bool DataTypeIsDateTime(string dataType) => _dateTimeTypes.Contains(dataType);
+
+        public virtual bool DataTypeIsDateTimeWithoutScale(Schema.Column column) => DataTypeIsDateTimeWithoutScale(column.DataType);
+        public virtual bool DataTypeIsDateTimeWithoutScale(string dataType) => _dateTimeTypesWithoutScale.Contains(dataType);
+
+        public virtual bool DataTypeIsRowVersion(Schema.Column column) => DataTypeIsRowVersion(column.DataType);
+        public virtual bool DataTypeIsRowVersion(string dataType) => _rowVersionTypes.Contains(dataType);
     }
 }
