@@ -28,29 +28,17 @@ namespace GeneratR.Database.SqlServer.Templates
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
                 WriteLine("using System.ComponentModel;");
-                if (_config.AddAttributes)
+                if (_config.AddDataAnnotationAttributes)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
                 }
                 WriteLine();
 
-                if (_config.AddAttributes)
+                if (_config.Attributes.Any())
                 {
-                    var attributes = new DotNetAttributeCollection();
-                    // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
-                    if (!_config.DbObject.Name.Equals(_config.ClassName, StringComparison.Ordinal) || !_config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
-                    {
-                        attributes.AddIfNotExists(_dotNet.AttributeFactory.CreateTableAttribute(_config.DbObject.Name, _config.DbObject.Schema));
-                    }
-                    attributes.AddRange(_config.IncludeAttributes);
-                    attributes.RemoveList(_config.ExcludeAttributes);
-                    if (attributes.Any())
-                    {
-                        Write(attributes.ToMultilineString());
-                    }
+                    Write(_config.Attributes.ToMultilineString());
                 }
-
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
                 WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
                 using (IndentScope())
@@ -105,16 +93,9 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             foreach (var p in _config.Parameters.Where(x => x.DbObject.Direction == ParameterDirection.InAndOutDirection || x.DbObject.Direction == ParameterDirection.OutDirection))
                             {
-                                if (_config.AddAttributes)
+                                if (p.Attributes.Any())
                                 {
-                                    // TODO: If propertyname is different from parameter name, then add somekind of original name attribute
-                                    var attrColllection = new DotNetAttributeCollection();
-                                    attrColllection.AddList(p.IncludeAttributes);
-                                    attrColllection.RemoveList(p.ExcludeAttributes);
-                                    if (attrColllection.Any())
-                                    {
-                                        Write(attrColllection.ToMultilineString());
-                                    }
+                                    Write(p.Attributes.ToMultilineString());
                                 }
                                 WriteLine($"public {p.PropertyType} {p.PropertyName} {{ get; set; }}");
                             }
@@ -137,23 +118,9 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             foreach (var col in _config.ResultColumns)
                             {
-                                if (_config.AddAttributes)
+                                if (col.Attributes.Any())
                                 {
-                                    var attrCollection = new DotNetAttributeCollection();
-
-                                    var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
-                                    if (hasNameDiff)
-                                    {
-                                        var attr = _dotNet.AttributeFactory.CreateColumnAttribute(col.DbObject.Name);
-                                        attrCollection.AddIfNotExists(attr);
-                                    }
-
-                                    attrCollection.AddList(col.IncludeAttributes);
-                                    attrCollection.RemoveList(col.ExcludeAttributes);
-                                    if (attrCollection.Any())
-                                    {
-                                        Write(attrCollection.ToMultilineString());
-                                    }
+                                    Write(col.Attributes.ToMultilineString());
                                 }
                                 WriteLine($"public {col.PropertyType} {col.PropertyName} {{ get; set; }}");
                             }

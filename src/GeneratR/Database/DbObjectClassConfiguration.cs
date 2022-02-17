@@ -10,8 +10,7 @@ namespace GeneratR.Database
         {
             DbObject = dbObject;
             DotNetGenerator = dotNetGenerator;
-            IncludeAttributes = new DotNetAttributeCollection();
-            ExcludeAttributes = new List<string>();
+            Attributes = new DotNetAttributeCollection();
         }
 
         /// <summary>
@@ -38,30 +37,23 @@ namespace GeneratR.Database
 
         public bool AddConstructor { get; set; }
 
-        public bool AddAttributes { get; set; }
+        public bool AddDataAnnotationAttributes { get; set; }
 
         ///<summary>
-        /// List of attributes which will be included. Replaces any auto generated attributes. Exclude takes precedence over includes.
+        /// List of attributes added to the class.
         ///</summary>
-        public DotNetAttributeCollection IncludeAttributes { get; set; }
+        public DotNetAttributeCollection Attributes { get; set; }
 
-        ///<summary>
-        /// List of attribute names which will be exluded. Exclude takes precedence over includes.
-        ///</summary>
-        public List<string> ExcludeAttributes { get; set; }
-
-        public DbObjectClassConfiguration<T> AddIncludeAttribute(DotNetAttribute attribute)
+        public DbObjectClassConfiguration<T> AddAttribute(DotNetAttribute attribute)
         {
-            IncludeAttributes.Add(attribute);
+            if (Attributes == null) { Attributes = new DotNetAttributeCollection(); }
+            Attributes.Add(attribute);
             return this;
         }
 
-        public DbObjectClassConfiguration<T> AddExcludeAttribute(string attributeName)
+        public DbObjectClassConfiguration<T> RemoveAttribute(string attributeName)
         {
-            if (!ExcludeAttributes.Contains(attributeName.ToLower()))
-            {
-                ExcludeAttributes.Add(attributeName.ToLower());
-            }
+            Attributes?.Remove(attributeName);
             return this;
         }
 

@@ -34,6 +34,7 @@ namespace GeneratR.Database.SqlServer.Templates
         {
             var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _objSettings.InheritClass;
             var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+            var classAsPartial = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
 
             WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
             WriteLine();
@@ -41,7 +42,7 @@ namespace GeneratR.Database.SqlServer.Templates
             {
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
-                if (_objSettings.AddAnnotations)
+                if (_objSettings.AddDataAnnotationAttributes)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
@@ -50,7 +51,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 WriteLine("using Microsoft.SqlServer.Server;");
                 WriteLine();
 
-                if (_objSettings.AddAnnotations)
+                if (_objSettings.AddDataAnnotationAttributes)
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
@@ -58,15 +59,14 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(_obj.IncludeAttributes);
-                    attributes.RemoveList(_obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.Attributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
                     }
                 }
 
-                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _objSettings.ClassAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
                 using (IndentScope())
                 {
                     WriteLine($@"public static string SqlName => ""{_obj.DbObject.FullName}"";");
@@ -91,7 +91,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
                         }
 
-                        if (_objSettings.AddAnnotations)
+                        if (_objSettings.AddDataAnnotationAttributes)
                         {
                             var attributes = new DotNetAttributeCollection();
 
@@ -164,8 +164,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                 attributes.AddIfNotExists(attr);
                             }
 
-                            attributes.AddList(col.IncludeAttributes);
-                            attributes.RemoveList(col.ExcludeAttributes);
+                            attributes.AddList(col.Attributes);
                             if (attributes.Any())
                             {
                                 Write(attributes.ToMultilineString());

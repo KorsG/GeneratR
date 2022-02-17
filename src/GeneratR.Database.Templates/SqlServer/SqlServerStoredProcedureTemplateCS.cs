@@ -29,6 +29,7 @@ namespace GeneratR.Database.SqlServer.Templates
         {
             var inheritClassName = !string.IsNullOrWhiteSpace(_obj.InheritClassName) ? _obj.InheritClassName : _settings.InheritClass;
             var classAsAbstract = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+            var classAsPartial = _obj.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
 
             WriteLine(_dotNetGenerator.CreateNamespaceStart(_obj.Namespace));
             using (IndentScope())
@@ -36,14 +37,14 @@ namespace GeneratR.Database.SqlServer.Templates
                 WriteLine("using System;");
                 WriteLine("using System.Collections.Generic;");
                 WriteLine("using System.ComponentModel;");
-                if (_settings.AddAnnotations)
+                if (_settings.AddDataAnnotationAttributes)
                 {
                     WriteLine("using System.ComponentModel.DataAnnotations;");
                     WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
                 }
                 WriteLine();
 
-                if (_settings.AddAnnotations)
+                if (_settings.AddDataAnnotationAttributes)
                 {
                     var attributes = new DotNetAttributeCollection();
                     // Create Table attribute if ClassName is different than the database object name, or if the schema is different than the default.
@@ -51,8 +52,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     {
                         attributes.AddIfNotExists(_dotNetGenerator.AttributeFactory.CreateTableAttribute(_obj.DbObject.Name, _obj.DbObject.Schema));
                     }
-                    attributes.AddRange(_obj.IncludeAttributes);
-                    attributes.RemoveList(_obj.ExcludeAttributes);
+                    attributes.AddRange(_obj.Attributes);
                     if (attributes.Any())
                     {
                         Write(attributes.ToMultilineString());
@@ -60,7 +60,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 }
 
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
-                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, _settings.ClassAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterface));
                 using (IndentScope())
                 {
                     var generateOutputParameters = _settings.GenerateOutputParameters && _obj.DbObject.HasOutputParameters;
@@ -113,12 +113,11 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             foreach (var p in _obj.Parameters.Where(x => x.DbObject.Direction == ParameterDirection.InAndOutDirection || x.DbObject.Direction == ParameterDirection.OutDirection))
                             {
-                                if (_settings.AddAnnotations)
+                                if (_settings.AddDataAnnotationAttributes)
                                 {
                                     // TODO: If propertyname is different from parameter name, then add somekind of original name attribute
                                     var attrColllection = new DotNetAttributeCollection();
-                                    attrColllection.AddList(p.IncludeAttributes);
-                                    attrColllection.RemoveList(p.ExcludeAttributes);
+                                    attrColllection.AddList(p.Attributes);
                                     if (attrColllection.Any())
                                     {
                                         Write(attrColllection.ToMultilineString());
@@ -145,7 +144,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             foreach (var col in _obj.ResultColumns)
                             {
-                                if (_settings.AddAnnotations)
+                                if (_settings.AddDataAnnotationAttributes)
                                 {
                                     var attrCollection = new DotNetAttributeCollection();
 
@@ -156,8 +155,7 @@ namespace GeneratR.Database.SqlServer.Templates
                                         attrCollection.AddIfNotExists(attr);
                                     }
 
-                                    attrCollection.AddList(col.IncludeAttributes);
-                                    attrCollection.RemoveList(col.ExcludeAttributes);
+                                    attrCollection.AddList(col.Attributes);
                                     if (attrCollection.Any())
                                     {
                                         Write(attrCollection.ToMultilineString());

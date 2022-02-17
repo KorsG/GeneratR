@@ -13,6 +13,7 @@ namespace GeneratR.Database.SqlServer
             NamingStrategy = NamingStrategy.KeepOriginal;
             ForeignKeyNamingStrategy = ForeignKeyNamingStrategy.ReferencingTableName;
             ForeignKeyCollectionType = ForeignKeyCollectionType.ICollection;
+            DefaultClassDotNetModifier = DotNetModifierKeyword.Public;
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
             DefaultForeignKeyDotNetModifier = DotNetModifierKeyword.Public;
         }
@@ -21,12 +22,10 @@ namespace GeneratR.Database.SqlServer
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }
-        public bool ClassAsPartial { get; set; }
-        public bool ClassAsAbstract { get; set; }
         public string ImplementInterface { get; set; }
         public string InheritClass { get; set; }
         public bool AddConstructor { get; set; }
-        public bool AddAnnotations { get; set; }
+        public bool AddDataAnnotationAttributes { get; set; }
         public string OutputProjectPath { get; set; }
         public string OutputFolderPath { get; set; }
 
@@ -37,6 +36,7 @@ namespace GeneratR.Database.SqlServer
         public ForeignKeyNamingStrategy ForeignKeyNamingStrategy { get; set; }
         public ForeignKeyCollectionType ForeignKeyCollectionType { get; set; }
 
+        public DotNetModifierKeyword DefaultClassDotNetModifier { get; set; }
         public DotNetModifierKeyword DefaultColumnDotNetModifier { get; set; }
         public DotNetModifierKeyword DefaultForeignKeyDotNetModifier { get; set; }
 

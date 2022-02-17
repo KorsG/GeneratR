@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -116,9 +117,10 @@ namespace GeneratR.Database.SqlServer
 
                 var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
                 {
+                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
                     GenerateForeignKeys = objSettings.GenerateForeignKeys,
                     GenerateReferencingForeignKeys = objSettings.GenerateReferencingForeignKeys,
-                    AddAttributes = objSettings.AddAnnotations,
+                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                 };
@@ -148,7 +150,13 @@ namespace GeneratR.Database.SqlServer
                 foreach (var col in t.Columns)
                 {
                     var c = new SqlServerColumnConfiguration(col);
-                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+
+                    var propertyName = c.DbObject.Name;
+                    if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        propertyName += "Column";
+                    }
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                     c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
                     o.Columns.Add(c);
@@ -178,6 +186,15 @@ namespace GeneratR.Database.SqlServer
             // Foreign key properties and relations must be handled after tables have been parsed, because it needs info from all tables in the collection to parse correctly.
             SetTableCollectionForeignKeyProperties(configs);
 
+            // Add after foreign key parsing.
+            if (objSettings.AddDataAnnotationAttributes)
+            {
+                foreach (var o in configs)
+                {
+                    AddTableDataAnnotationAttributes(o);
+                }
+            }
+
             return configs;
         }
 
@@ -202,7 +219,8 @@ namespace GeneratR.Database.SqlServer
 
                 var o = new SqlServerViewConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    AddAttributes = objSettings.AddAnnotations,
+                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                 };
@@ -232,10 +250,21 @@ namespace GeneratR.Database.SqlServer
                 foreach (var col in t.Columns)
                 {
                     var c = new SqlServerColumnConfiguration(col);
-                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+
+                    var propertyName = c.DbObject.Name;
+                    if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        propertyName += "Column";
+                    }
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                     c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
                     o.Columns.Add(c);
+                }
+
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    AddViewDataAnnotationAttributes(o);
                 }
 
                 configs.Add(o);
@@ -265,7 +294,8 @@ namespace GeneratR.Database.SqlServer
 
                 var o = new SqlServerTableTypeConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    AddAttributes = objSettings.AddAnnotations,
+                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                 };
@@ -295,10 +325,21 @@ namespace GeneratR.Database.SqlServer
                 foreach (var col in t.Columns)
                 {
                     var c = new SqlServerColumnConfiguration(col);
-                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+
+                    var propertyName = c.DbObject.Name;
+                    if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        propertyName += "Column";
+                    }
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                     c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
                     o.Columns.Add(c);
+                }
+
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    AddTableTypeDataAnnotationAttributes(o);
                 }
 
                 configs.Add(o);
@@ -328,7 +369,8 @@ namespace GeneratR.Database.SqlServer
 
                 var o = new SqlServerTableFunctionConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    AddAttributes = objSettings.AddAnnotations,
+                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                 };
@@ -358,7 +400,13 @@ namespace GeneratR.Database.SqlServer
                 foreach (var col in t.Columns)
                 {
                     var c = new SqlServerColumnConfiguration(col);
-                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
+
+                    var propertyName = c.DbObject.Name;
+                    if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        propertyName += "Column";
+                    }
+                    c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                     c.DotNetModifier = Settings.TableFunction.DefaultColumnDotNetModifier;
                     o.Columns.Add(c);
@@ -371,6 +419,11 @@ namespace GeneratR.Database.SqlServer
                     p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
                     p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
                     o.Parameters.Add(p);
+                }
+
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    AddTableFunctionDataAnnotationAttributes(o);
                 }
 
                 configs.Add(o);
@@ -400,7 +453,8 @@ namespace GeneratR.Database.SqlServer
 
                 var o = new SqlServerStoredProcedureConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    AddAttributes = objSettings.AddAnnotations,
+                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     GenerateOutputParameters = objSettings.GenerateOutputParameters,
@@ -450,10 +504,183 @@ namespace GeneratR.Database.SqlServer
                     o.Parameters.Add(p);
                 }
 
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    AddStoredProcedureDataAnnotationAttributes(o);
+                }
+
                 configs.Add(o);
             }
 
             return configs;
+        }
+
+        protected virtual void AddTableDataAnnotationAttributes(SqlServerTableConfiguration config)
+        {
+            if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateTableAttribute(config.DbObject.Name, config.DbObject.Schema));
+            }
+
+            foreach (var col in config.Columns)
+            {
+                AddColumnDataAnnotationAttributes(col);
+            }
+        }
+
+        protected virtual void AddViewDataAnnotationAttributes(SqlServerViewConfiguration config)
+        {
+            if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateTableAttribute(config.DbObject.Name, config.DbObject.Schema));
+            }
+
+            foreach (var col in config.Columns)
+            {
+                AddColumnDataAnnotationAttributes(col);
+            }
+        }
+
+        protected virtual void AddTableFunctionDataAnnotationAttributes(SqlServerTableFunctionConfiguration config)
+        {
+            if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateTableAttribute(config.DbObject.Name, config.DbObject.Schema));
+            }
+
+            foreach (var col in config.Columns)
+            {
+                AddColumnDataAnnotationAttributes(col);
+            }
+        }
+
+        protected virtual void AddTableTypeDataAnnotationAttributes(SqlServerTableTypeConfiguration config)
+        {
+            if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateTableAttribute(config.DbObject.Name, config.DbObject.Schema));
+            }
+
+            foreach (var col in config.Columns)
+            {
+                AddColumnDataAnnotationAttributes(col);
+            }
+        }
+
+        protected virtual void AddStoredProcedureDataAnnotationAttributes(SqlServerStoredProcedureConfiguration config)
+        {
+            if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateTableAttribute(config.DbObject.Name, config.DbObject.Schema));
+            }
+
+            foreach (var x in config.Parameters)
+            {
+                AddStoredProcedureParameterDataAnnotationAttributes(x);
+            }
+
+            foreach (var x in config.ResultColumns)
+            {
+                AddStoredProcedureColumnDataAnnotationAttributes(x);
+            }
+        }
+
+        protected virtual void AddColumnDataAnnotationAttributes(SqlServerColumnConfiguration config)
+        {
+            var col = config.DbObject;
+
+            if (col.IsPrimaryKey)
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateKeyAttribute();
+                config.Attributes.Add(attr);
+            }
+
+            var hasNameDiff = !string.Equals(col.Name, config.PropertyName, StringComparison.OrdinalIgnoreCase);
+
+            // Column+Key.
+            var columnAttributeTypeName = TypeMapper.GetFullColumnDataType(col);
+            if (col.IsPrimaryKey && hasNameDiff)
+            {
+                var keyAttr = DotNetGenerator.AttributeFactory.CreateKeyAttribute();
+                config.Attributes.Add(keyAttr);
+
+                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.Name, col.Position - 1, typeName: columnAttributeTypeName);
+                config.Attributes.Add(attr);
+            }
+            else if (col.IsPrimaryKey)
+            {
+                var keyAttr = DotNetGenerator.AttributeFactory.CreateKeyAttribute();
+                config.Attributes.Add(keyAttr);
+
+                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.Position - 1, typeName: columnAttributeTypeName);
+                config.Attributes.Add(attr);
+            }
+            else if (hasNameDiff)
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.Name, typeName: columnAttributeTypeName);
+                config.Attributes.Add(attr);
+            }
+            else if (!string.IsNullOrWhiteSpace(columnAttributeTypeName))
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(typeName: columnAttributeTypeName);
+                config.Attributes.Add(attr);
+            }
+
+            // DatabaseGenerated (Computed/Identity).
+            if (col.IsIdentity)
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity));
+            }
+            else if (col.IsComputed || TypeMapper.DataTypeIsRowVersion(col))
+            {
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.Computed));
+            }
+            else if (col.IsPrimaryKey)
+            {
+                // Explicitly set none when primary key is not autogenerated.
+                config.Attributes.Add(DotNetGenerator.AttributeFactory.CreateDatabaseGeneratedAttribute(DatabaseGeneratedOption.None));
+            }
+
+            // StringLenght/MaxLength
+            if (TypeMapper.DataTypeIsVariableStringLength(col))
+            {
+                DotNetAttribute attr;
+                if (col.Length == -1)
+                {
+                    attr = DotNetGenerator.AttributeFactory.CreateMaxLengthAttribute();
+                }
+                else
+                {
+                    attr = DotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.Length);
+                }
+                config.Attributes.Add(attr);
+            }
+            else if (TypeMapper.DataTypeIsFixedStringLength(col))
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateStringLengthAttribute(col.Length, col.Length);
+                config.Attributes.Add(attr);
+            }
+
+            // Required.
+            if (!col.IsNullable && TypeMapper.DataTypeIsString(col))
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateRequiredAttribute();
+                config.Attributes.Add(attr);
+            }
+        }
+
+        protected virtual void AddStoredProcedureParameterDataAnnotationAttributes(SqlServerParameterConfiguration col)
+        {
+        }
+
+        protected virtual void AddStoredProcedureColumnDataAnnotationAttributes(SqlServerStoredProcedureResultColumnConfiguration col)
+        {
+            var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
+            if (hasNameDiff)
+            {
+                var attr = DotNetGenerator.AttributeFactory.CreateColumnAttribute(col.DbObject.Name);
+                col.Attributes.Add(attr);
+            }
         }
 
         /// <summary>

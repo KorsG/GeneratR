@@ -1,5 +1,4 @@
 ﻿using GeneratR.DotNet;
-using System.Collections.Generic;
 
 namespace GeneratR.Database
 {
@@ -8,8 +7,7 @@ namespace GeneratR.Database
         public DbObjectPropertyConfiguration(T dbObject)
         {
             DbObject = dbObject;
-            IncludeAttributes = new DotNetAttributeCollection();
-            ExcludeAttributes = new List<string>();
+            Attributes = new DotNetAttributeCollection();
         }
 
         public T DbObject { get; }
@@ -21,27 +19,14 @@ namespace GeneratR.Database
         public DotNetModifierKeyword DotNetModifier { get; set; }
 
         ///<summary>
-        /// List of attributes which will be included. Replaces any auto generated attributes. Exclude takes precedence over includes.
+        /// List of attributes added to the property.
         ///</summary>
-        public DotNetAttributeCollection IncludeAttributes { get; set; }
+        public DotNetAttributeCollection Attributes { get; set; }
 
-        ///<summary>
-        /// List of attribute names which will be exluded. Exclude takes precedence over includes.
-        ///</summary>
-        public List<string> ExcludeAttributes { get; set; }
-
-        public DbObjectPropertyConfiguration<T> AddIncludeAttribute(DotNetAttribute attribute)
+        public DbObjectPropertyConfiguration<T> AddAttribute(DotNetAttribute attribute)
         {
-            IncludeAttributes.Add(attribute);
-            return this;
-        }
-
-        public DbObjectPropertyConfiguration<T> AddExcludeAttribute(string attributeName)
-        {
-            if (!ExcludeAttributes.Contains(attributeName.ToLower()))
-            {
-                ExcludeAttributes.Add(attributeName.ToLower());
-            }
+            if (Attributes == null) { Attributes = new DotNetAttributeCollection(); }
+            Attributes.Add(attribute);
             return this;
         }
     }

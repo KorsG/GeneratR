@@ -11,6 +11,7 @@ namespace GeneratR.Database.SqlServer
         {
             Namespace = string.Empty;
             NamingStrategy = NamingStrategy.KeepOriginal;
+            DefaultClassDotNetModifier = DotNetModifierKeyword.Public;
             DefaultColumnDotNetModifier = DotNetModifierKeyword.Public;
         }
 
@@ -18,17 +19,16 @@ namespace GeneratR.Database.SqlServer
 
         public bool Generate { get; set; }
         public string Namespace { get; set; }
-        public bool ClassAsPartial { get; set; }
-        public bool ClassAsAbstract { get; set; }
         public string ImplementInterface { get; set; }
         public string InheritClass { get; set; }
         public bool AddConstructor { get; set; }
-        public bool AddAnnotations { get; set; }
+        public bool AddDataAnnotationAttributes { get; set; }
         public string OutputProjectPath { get; set; }
         public string OutputFolderPath { get; set; }
 
         public NamingStrategy NamingStrategy { get; set; }
 
+        public DotNetModifierKeyword DefaultClassDotNetModifier { get; set; }
         public DotNetModifierKeyword DefaultColumnDotNetModifier { get; set; }
 
         public Func<TableFunction, bool> ShouldInclude { get; set; } = x => true;
