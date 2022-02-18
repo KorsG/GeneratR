@@ -23,6 +23,9 @@ namespace GeneratR.DotNet
         public override string FalseValue => "false";
 
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
+            => CreateClassStart(name, partialClass, abstractClass, inheritClass, implementInterfaces.AsEnumerable());
+
+        public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, IEnumerable<string> implementInterfaces)
         {
             var value = "public ";
             if (abstractClass) { value += "abstract "; }
@@ -52,7 +55,7 @@ namespace GeneratR.DotNet
 
         public override string CreateNamespaceStart(string name)
         {
-            return string.Format("namespace {0}{1}{2} ", name, Environment.NewLine, "{");
+            return string.Format("namespace {0}{1}{2}", name, Environment.NewLine, "{");
         }
 
         public override string CreateNamespaceEnd() => "}";

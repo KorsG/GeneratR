@@ -60,7 +60,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 }
 
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
-                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _settings.ImplementInterfaces.ToArray()));
                 using (IndentScope())
                 {
                     var generateOutputParameters = _settings.GenerateOutputParameters && _obj.DbObject.HasOutputParameters;

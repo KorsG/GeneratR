@@ -19,28 +19,27 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public virtual string Generate()
         {
-            var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-            var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+            WriteLine("using System;");
+            WriteLine("using System.Collections.Generic;");
+            WriteLine("using System.ComponentModel;");
+            if (_config.AddDataAnnotationAttributes)
+            {
+                WriteLine("using System.ComponentModel.DataAnnotations;");
+                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
+            }
 
+            WriteLine();
             WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
             using (IndentScope())
             {
-                WriteLine("using System;");
-                WriteLine("using System.Collections.Generic;");
-                WriteLine("using System.ComponentModel;");
-                if (_config.AddDataAnnotationAttributes)
-                {
-                    WriteLine("using System.ComponentModel.DataAnnotations;");
-                    WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                }
-                WriteLine();
-
+                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 if (_config.Attributes.Any())
                 {
                     Write(_config.Attributes.ToMultilineString());
                 }
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
+                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
                 using (IndentScope())
                 {
                     var generateOutputParameters = _config.GenerateOutputParameters && _config.DbObject.HasOutputParameters;
@@ -128,10 +127,8 @@ namespace GeneratR.Database.SqlServer.Templates
                         WriteLine(_dotNet.CreateClassEnd());
                         WriteLine();
                     }
-
                 }
                 WriteLine(_dotNet.CreateClassEnd());
-                WriteLine();
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
 

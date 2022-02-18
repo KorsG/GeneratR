@@ -17,6 +17,8 @@ namespace GeneratR.Database.SqlServer
 
         public List<SqlServerColumnConfiguration> Columns { get; set; }
 
+        public bool AddSqlDataRecordMappings { get; set; }
+
         public SqlServerColumnConfiguration GetColumn(string name)
         {
             return Columns?.FirstOrDefault(x => x.DbObject.Name == name);

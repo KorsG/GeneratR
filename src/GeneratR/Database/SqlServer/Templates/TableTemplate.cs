@@ -17,28 +17,26 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public virtual string Generate()
         {
-            var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-            var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
-
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
+            // TODO: Add as "using" write to "DotNetGenerator".
+            WriteLine("using System;");
+            WriteLine("using System.Collections.Generic;");
+            if (_config.AddDataAnnotationAttributes)
+            {
+                WriteLine("using System.ComponentModel.DataAnnotations;");
+                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
+            }
             WriteLine();
+            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
             using (IndentScope())
             {
-                // TODO: Add as "using" write to "DotNetGenerator".
-                WriteLine("using System;");
-                WriteLine("using System.Collections.Generic;");
-                if (_config.AddDataAnnotationAttributes)
-                {
-                    WriteLine("using System.ComponentModel.DataAnnotations;");
-                    WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                }
-                WriteLine();
+                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
 
                 if (_config.Attributes.Any())
                 {
                     Write(_config.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
+                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
                 using (IndentScope())
                 {
                     if (_config.AddConstructor)
@@ -51,7 +49,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         WriteLine();
                         if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
                         {
-                            // TODO: Add summary functon to DotNetGenerator.
+                            // TODO: Add summary/describe function to DotNetGenerator.
                             WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
                         }
 
@@ -74,7 +72,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             }
 
                             // TODO: Make it configurable if this comment should be made.
-                            WriteLine($"{_dotNet.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            //WriteLine($"{_dotNet.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
                             WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
@@ -92,16 +90,14 @@ namespace GeneratR.Database.SqlServer.Templates
                             }
 
                             // TODO: Make it configurable if this comment should be made.
-                            WriteLine($"{_dotNet.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
+                            //WriteLine($"{_dotNet.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
                             WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
                         }
                     }
                 }
                 WriteLine(_dotNet.CreateClassEnd());
-                WriteLine();
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
-            WriteLine();
 
             return TemplateBuilder.ToString();
         }

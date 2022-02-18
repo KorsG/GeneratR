@@ -23,6 +23,9 @@ namespace GeneratR.DotNet
         public override string FalseValue => "False";
 
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
+            => CreateClassStart(name, partialClass, abstractClass, inheritClass, implementInterfaces.AsEnumerable());
+
+        public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, IEnumerable<string> implementInterfaces)
         {
             throw new NotImplementedException();
         }

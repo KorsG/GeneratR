@@ -1,6 +1,5 @@
 ﻿using GeneratR.DotNet;
 using GeneratR.Templating;
-using System;
 using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
@@ -20,30 +19,31 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public virtual string Generate()
         {
-            var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-            var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
-
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
-            WriteLine();
-            using (IndentScope())
+            WriteLine("using System;");
+            WriteLine("using System.Collections.Generic;");
+            if (_config.AddDataAnnotationAttributes)
             {
-                WriteLine("using System;");
-                WriteLine("using System.Collections.Generic;");
-                if (_config.AddDataAnnotationAttributes)
-                {
-                    WriteLine("using System.ComponentModel.DataAnnotations;");
-                    WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                }
-                // TODO: this should be configurable
+                WriteLine("using System.ComponentModel.DataAnnotations;");
+                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
+            }
+
+            if (_config.AddSqlDataRecordMappings)
+            {
                 WriteLine("using System.Data;");
                 WriteLine("using Microsoft.SqlServer.Server;");
-                WriteLine();
+            }
 
+            WriteLine();
+            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
+            using (IndentScope())
+            {
+                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 if (_config.Attributes.Any())
                 {
                     Write(_config.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
+                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
                 using (IndentScope())
                 {
                     WriteLine($@"public static string SqlName => ""{_config.DbObject.FullName}"";");
@@ -70,51 +70,51 @@ namespace GeneratR.Database.SqlServer.Templates
                     }
                     WriteLine();
 
-                    // TODO: Make configurable.
-                    WriteLine("public SqlDataRecord ToSqlDataRecord()");
-                    WriteLine("{");
-                    using (IndentScope())
+                    if (_config.AddSqlDataRecordMappings)
                     {
-                        WriteLine("var record = new SqlDataRecord(_sqlColumnMetaData);");
-
-                        foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                        WriteLine("public SqlDataRecord ToSqlDataRecord()");
+                        WriteLine("{");
+                        using (IndentScope())
                         {
-                            WriteLine($@"record.SetValue({col.DbObject.Position - 1}, {col.PropertyName});");
+                            WriteLine("var record = new SqlDataRecord(_sqlColumnMetaData);");
+
+                            foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                            {
+                                WriteLine($@"record.SetValue({col.DbObject.Position - 1}, {col.PropertyName});");
+                            }
+
+                            WriteLine("return record;");
                         }
+                        WriteLine("}");
+                        WriteLine();
 
-                        WriteLine("return record;");
-                    }
-                    WriteLine("}");
-                    WriteLine();
-
-                    WriteLine("private static readonly SqlMetaData[] _sqlColumnMetaData = new[]");
-                    WriteLine("{");
-                    using (IndentScope())
-                    {
-                        foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                        WriteLine("private static readonly SqlMetaData[] _sqlColumnMetaData = new[]");
+                        WriteLine("{");
+                        using (IndentScope())
                         {
-                            var sqlDataType = _typeMapper.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
-                            if (_config.TypeMapper.DataTypeIsString(col.DbObject))
+                            foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
                             {
-                                WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");
-                            }
-                            else if (_config.TypeMapper.DataTypeIsDecimal(col.DbObject))
-                            {
-                                WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Precision}, {col.DbObject.Scale}),");
-                            }
-                            else
-                            {
-                                WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}),");
+                                var sqlDataType = _typeMapper.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
+                                if (_config.TypeMapper.DataTypeIsString(col.DbObject))
+                                {
+                                    WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");
+                                }
+                                else if (_config.TypeMapper.DataTypeIsDecimal(col.DbObject))
+                                {
+                                    WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Precision}, {col.DbObject.Scale}),");
+                                }
+                                else
+                                {
+                                    WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}),");
+                                }
                             }
                         }
+                        WriteLine("};");
                     }
-                    WriteLine("};");
                 }
                 WriteLine(_dotNet.CreateClassEnd());
-                WriteLine();
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
-            WriteLine();
 
             return TemplateBuilder.ToString();
         }

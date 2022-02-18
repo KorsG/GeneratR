@@ -17,27 +17,25 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public string Generate()
         {
-            var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-            var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+            WriteLine("using System;");
+            WriteLine("using System.Collections.Generic;");
+            if (_config.AddDataAnnotationAttributes)
+            {
+                WriteLine("using System.ComponentModel.DataAnnotations;");
+                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
+            }
 
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
             WriteLine();
+            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
             using (IndentScope())
             {
-                WriteLine("using System;");
-                WriteLine("using System.Collections.Generic;");
-                if (_config.AddDataAnnotationAttributes)
-                {
-                    WriteLine("using System.ComponentModel.DataAnnotations;");
-                    WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-                }
-                WriteLine();
-
+                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 if (_config.Attributes.Any())
                 {
                     Write(_config.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces.ToArray()));
+                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
                 using (IndentScope())
                 {
                     if (_config.AddConstructor)
@@ -62,10 +60,8 @@ namespace GeneratR.Database.SqlServer.Templates
 
                 }
                 WriteLine(_dotNet.CreateClassEnd());
-                WriteLine();
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
-            WriteLine();
 
             return TemplateBuilder.ToString();
         }

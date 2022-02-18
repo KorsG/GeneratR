@@ -66,7 +66,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     }
                 }
 
-                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterface));
+                WriteLine(_dotNetGenerator.CreateClassStart(_obj.ClassName, classAsPartial, classAsAbstract, inheritClassName, _objSettings.ImplementInterfaces));
                 using (IndentScope())
                 {
                     WriteLine($@"public static string SqlName => ""{_obj.DbObject.FullName}"";");

@@ -63,12 +63,8 @@ namespace GeneratR.DotNet
         /// <summary> 
         /// This method creates the signature for the class in provided DotNet syntax.
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="partialClass"></param>
-        /// <param name="abstractClass"></param>
-        /// <param name="inheritClass"></param>
-        /// <param name="implementInterfaces"></param>
         public abstract string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces);
+        public abstract string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, IEnumerable<string> implementInterfaces);
         public abstract string CreateClassEnd();
 
         public abstract string CreateNamespaceStart(string name);

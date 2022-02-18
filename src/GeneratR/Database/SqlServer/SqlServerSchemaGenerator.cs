@@ -110,41 +110,44 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
             }
 
-            var objSettings = Settings.Table;
             foreach (var t in dbTypes)
             {
-                if (!objSettings.ShouldInclude(t)) { continue; }
+                var objSettings = Settings.Table;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t);
+                }
+
+                if (objSettings.IgnoreObject(t)) { continue; }
 
                 var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    DotNetModifier = objSettings.Modifiers,
                     GenerateForeignKeys = objSettings.GenerateForeignKeys,
                     GenerateReferencingForeignKeys = objSettings.GenerateReferencingForeignKeys,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
+                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
                 o.Generate = () => objSettings.GenerateFactory(o);
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
-                {
-                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
-                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
                 }
                 else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
                 }
                 else
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
                 }
+
+                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
 
                 // Table columns.
                 foreach (var col in t.Columns)
@@ -158,7 +161,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    c.DotNetModifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -167,7 +170,7 @@ namespace GeneratR.Database.SqlServer
                 {
                     var f = new SqlServerForeignKeyConfiguration(fk)
                     {
-                        DotNetModifier = objSettings.DefaultForeignKeyDotNetModifier,
+                        DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ForeignKeys.Add(f);
                 }
@@ -175,7 +178,7 @@ namespace GeneratR.Database.SqlServer
                 {
                     var f = new SqlServerForeignKeyConfiguration(fk)
                     {
-                        DotNetModifier = objSettings.DefaultForeignKeyDotNetModifier
+                        DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ReferencingForeignKeys.Add(f);
                 }
@@ -187,12 +190,9 @@ namespace GeneratR.Database.SqlServer
             SetTableCollectionForeignKeyProperties(configs);
 
             // Add after foreign key parsing.
-            if (objSettings.AddDataAnnotationAttributes)
+            foreach (var o in configs.Where(x => x.AddDataAnnotationAttributes))
             {
-                foreach (var o in configs)
-                {
-                    AddTableDataAnnotationAttributes(o);
-                }
+                AddTableDataAnnotationAttributes(o);
             }
 
             return configs;
@@ -212,39 +212,42 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
             }
 
-            var objSettings = Settings.View;
             foreach (var t in dbTypes)
             {
-                if (!objSettings.ShouldInclude(t)) { continue; }
+                var objSettings = Settings.View;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t);
+                }
+
+                if (objSettings.IgnoreObject(t)) { continue; }
 
                 var o = new SqlServerViewConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
+                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
                 o.Generate = () => objSettings.GenerateFactory(o);
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
-                {
-                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
-                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
                 }
                 else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
                 }
                 else
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
                 }
+
+                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
 
                 // View columns.
                 foreach (var col in t.Columns)
@@ -258,7 +261,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    c.DotNetModifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -287,39 +290,43 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
             }
 
-            var objSettings = Settings.TableType;
             foreach (var t in dbTypes)
             {
-                if (!objSettings.ShouldInclude(t)) { continue; }
+                var objSettings = Settings.TableType;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t);
+                }
+
+                if (objSettings.IgnoreObject(t)) { continue; }
 
                 var o = new SqlServerTableTypeConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
+                    AddSqlDataRecordMappings = objSettings.AddSqlDataRecordMappings,
+                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
                 o.Generate = () => objSettings.GenerateFactory(o);
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
-                {
-                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
-                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
                 }
                 else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
                 }
                 else
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
                 }
+
+                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
 
                 // Columns.
                 foreach (var col in t.Columns)
@@ -333,7 +340,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                    c.DotNetModifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -362,39 +369,42 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
             }
 
-            var objSettings = Settings.TableFunction;
             foreach (var t in dbTypes)
             {
-                if (!objSettings.ShouldInclude(t)) { continue; }
+                var objSettings = Settings.TableFunction;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t);
+                }
+
+                if (objSettings.IgnoreObject(t)) { continue; }
 
                 var o = new SqlServerTableFunctionConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
+                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
                 o.Generate = () => objSettings.GenerateFactory(o);
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
-                {
-                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
-                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
                 }
                 else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
                 }
                 else
                 {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
+                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
                 }
+
+                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
 
                 // Function columns.
                 foreach (var col in t.Columns)
@@ -408,7 +418,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = Settings.TableFunction.DefaultColumnDotNetModifier;
+                    c.DotNetModifier = Settings.TableFunction.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -446,28 +456,29 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
             }
 
-            var objSettings = Settings.StoredProcedure;
             foreach (var t in dbTypes)
             {
-                if (!objSettings.ShouldInclude(t)) { continue; }
+                var objSettings = Settings.StoredProcedure;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t);
+                }
+
+                if (objSettings.IgnoreObject(t)) { continue; }
 
                 var o = new SqlServerStoredProcedureConfiguration(t, DotNetGenerator, TypeMapper)
                 {
-                    DotNetModifier = objSettings.DefaultClassDotNetModifier,
+                    DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     GenerateOutputParameters = objSettings.GenerateOutputParameters,
                     GenerateResultSet = objSettings.GenerateResultSet,
+                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
                 o.Generate = () => objSettings.GenerateFactory(o);
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
-
-                if (!string.IsNullOrWhiteSpace(objSettings.ImplementInterface))
-                {
-                    o.ImplementInterfaces.Add(objSettings.ImplementInterface);
-                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -482,6 +493,8 @@ namespace GeneratR.Database.SqlServer
                     o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
                 }
 
+                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+
                 // StoredProcedure ResultColumns.
                 if (objSettings.GenerateResultSet)
                 {
@@ -490,7 +503,7 @@ namespace GeneratR.Database.SqlServer
                         var c = new SqlServerStoredProcedureResultColumnConfiguration(colr);
                         c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
                         c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = objSettings.DefaultColumnDotNetModifier;
+                        c.DotNetModifier = objSettings.ColumnModifiers;
                         o.ResultColumns.Add(c);
                     }
                 }
@@ -699,39 +712,47 @@ namespace GeneratR.Database.SqlServer
 
         private void SetTableCollectionForeignKeyProperties(IEnumerable<SqlServerTableConfiguration> tables)
         {
-            var foreignKeyCollectionType = Settings.Table.ForeignKeyCollectionType;
-            var foreignKeyNamingStrategy = Settings.Table.ForeignKeyNamingStrategy;
-
-            foreach (var tbl in tables)
+            foreach (var t in tables)
             {
+                // TODO: Find a way to reuse possible per-object settings. Maybe set ForeignKeyCollectionType and ForeignKeyNamingStrategy on the table config?
+                var objSettings = Settings.Table;
+                if (objSettings.ApplyObjectSettings != null)
+                {
+                    objSettings = objSettings.Clone();
+                    objSettings.ApplyObjectSettings(objSettings, t.DbObject);
+                }
+
+                var foreignKeyCollectionType = objSettings.ForeignKeyCollectionType;
+                var foreignKeyNamingStrategy = objSettings.ForeignKeyNamingStrategy;
+
                 // Remove all foreign keys from the collection if the table they reference to/from does not exist in the provided table collection.
                 var nonExistingFkRelations = new List<SqlServerForeignKeyConfiguration>();
                 var nonExistingReferencingFkRelations = new List<SqlServerForeignKeyConfiguration>();
-                foreach (var fk in tbl.ForeignKeys)
+                foreach (var fk in t.ForeignKeys)
                 {
                     if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Any())
                     {
                         nonExistingFkRelations.Add(fk);
                     }
                 }
-                foreach (var fk in tbl.ReferencingForeignKeys)
+                foreach (var fk in t.ReferencingForeignKeys)
                 {
                     if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Any())
                     {
                         nonExistingReferencingFkRelations.Add(fk);
                     }
                 }
-                tbl.ForeignKeys.RemoveAll(q => nonExistingFkRelations.Contains(q));
-                tbl.ReferencingForeignKeys.RemoveAll(q => nonExistingReferencingFkRelations.Contains(q));
+                t.ForeignKeys.RemoveAll(q => nonExistingFkRelations.Contains(q));
+                t.ReferencingForeignKeys.RemoveAll(q => nonExistingReferencingFkRelations.Contains(q));
 
                 if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.ForeignKeyName)
                 {
-                    foreach (var fk in tbl.ForeignKeys)
+                    foreach (var fk in t.ForeignKeys)
                     {
                         fk.PropertyName = fk.DbObject.ForeignKeyName;
                         fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                     }
-                    foreach (var fk in tbl.ReferencingForeignKeys)
+                    foreach (var fk in t.ReferencingForeignKeys)
                     {
                         fk.PropertyName = fk.DbObject.ForeignKeyName;
                         fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
@@ -739,7 +760,7 @@ namespace GeneratR.Database.SqlServer
                 }
                 else if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.ReferencingTableName)
                 {
-                    foreach (var fk in tbl.ForeignKeys)
+                    foreach (var fk in t.ForeignKeys)
                     {
                         fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(fk.DbObject.ToName);
                         if (fk.DbObject.IsSelfReferencing)
@@ -749,7 +770,7 @@ namespace GeneratR.Database.SqlServer
                         fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                     }
 
-                    foreach (var fk in tbl.ReferencingForeignKeys)
+                    foreach (var fk in t.ReferencingForeignKeys)
                     {
                         if (fk.DbObject.RelationshipType == Schema.ForeignKeyRelationshipType.OneToOne)
                         {
@@ -764,8 +785,8 @@ namespace GeneratR.Database.SqlServer
                     }
 
                     // Handle relational properties with same name.
-                    var multiples = tbl.ForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList();
-                    multiples.AddRange(tbl.ReferencingForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList());
+                    var multiples = t.ForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList();
+                    multiples.AddRange(t.ReferencingForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList());
                     foreach (var nm in multiples.Select(x => x.PropertyName).Distinct().ToList())
                     {
                         var counter = 1;
@@ -779,9 +800,9 @@ namespace GeneratR.Database.SqlServer
                 }
                 else if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.Intelligent)
                 {
-                    foreach (var tblName in tbl.ForeignKeys.Select(x => x.DbObject.FromName).Distinct().ToList())
+                    foreach (var tblName in t.ForeignKeys.Select(x => x.DbObject.FromName).Distinct().ToList())
                     {
-                        var fks = tbl.ForeignKeys.Where(x => x.DbObject.FromName == tblName).ToList();
+                        var fks = t.ForeignKeys.Where(x => x.DbObject.FromName == tblName).ToList();
 
                         // Handle scenarios where this table only have one fk to a table.
                         var singleRelations = fks.GroupBy(x => x.DbObject.ToName).Where(x => x.Count() == 1).SelectMany(x => x).ToList();
@@ -819,9 +840,9 @@ namespace GeneratR.Database.SqlServer
 
                     }
                     // Referencing/Reverse.
-                    foreach (var tblName in tbl.ReferencingForeignKeys.Select(x => x.DbObject.ToName).Distinct().ToList())
+                    foreach (var tblName in t.ReferencingForeignKeys.Select(x => x.DbObject.ToName).Distinct().ToList())
                     {
-                        var fks = tbl.ReferencingForeignKeys.Where(x => x.DbObject.ToName == tblName).ToList();
+                        var fks = t.ReferencingForeignKeys.Where(x => x.DbObject.ToName == tblName).ToList();
 
                         // Handle scenarios where this table only have one fk to a table.
                         var singleRelations = fks.GroupBy(x => x.DbObject.FromName).Where(x => x.Count() == 1).SelectMany(x => x).ToList();
