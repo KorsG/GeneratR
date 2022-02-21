@@ -15,6 +15,7 @@ namespace GeneratR.Database.SqlServer
         protected static readonly HashSet<string> _decimalTypes = new(StringComparer.OrdinalIgnoreCase) { "decimal", "numeric", };
         protected static readonly HashSet<string> _dateTimeTypes = new(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", "datetime2", "datetimeoffset", };
         protected static readonly HashSet<string> _dateTimeTypesWithoutScale = new(StringComparer.OrdinalIgnoreCase) { "date", "time", "datetime", };
+        protected static readonly HashSet<string> _dateTimeTypesWithScale = new(StringComparer.OrdinalIgnoreCase) { "datetime2", "datetimeoffset", };
         protected static readonly HashSet<string> _rowVersionTypes = new(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
         private readonly DotNetGenerator _dotNetGenerator;
@@ -240,32 +241,25 @@ namespace GeneratR.Database.SqlServer
 
         public virtual string GetFullColumnDataType(Schema.Column col)
         {
-            if (DataTypeIsAnsiString(col))
+            if (DataTypeIsString(col))
             {
                 var colLength = col.Length == -1 ? "max" : col.Length.ToString();
                 return $"{col.DataType.ToLowerInvariant()}({colLength})";
             }
             else if (DataTypeIsDecimal(col))
             {
-                return  $"{col.DataType.ToLowerInvariant()}({col.Precision}, {col.Scale})";
+                return $"{col.DataType.ToLowerInvariant()}({col.Precision}, {col.Scale})";
             }
-            else if (DataTypeIsDateTime(col))
+            else if (DataTypeIsDateTimeWithScale(col))
             {
-                if (DataTypeIsDateTimeWithoutScale(col))
-                {
-                    return $"{col.DataType.ToLowerInvariant()}";
-                }
-                else
-                {
-                    return $"{col.DataType.ToLowerInvariant()}({col.Scale})";
-                }
+                return $"{col.DataType.ToLowerInvariant()}({col.Scale})";
             }
             else if (DataTypeIsRowVersion(col.DataType))
             {
                 return "rowversion";
             }
 
-            return col.DataType;
+            return col.DataType.ToLowerInvariant();
         }
 
         public virtual bool DataTypeIsVariableStringLength(Schema.Column column) => DataTypeIsVariableStringLength(column.DataType);
@@ -291,6 +285,9 @@ namespace GeneratR.Database.SqlServer
 
         public virtual bool DataTypeIsDateTimeWithoutScale(Schema.Column column) => DataTypeIsDateTimeWithoutScale(column.DataType);
         public virtual bool DataTypeIsDateTimeWithoutScale(string dataType) => _dateTimeTypesWithoutScale.Contains(dataType);
+
+        public virtual bool DataTypeIsDateTimeWithScale(Schema.Column column) => DataTypeIsDateTimeWithScale(column.DataType);
+        public virtual bool DataTypeIsDateTimeWithScale(string dataType) => _dateTimeTypesWithScale.Contains(dataType);
 
         public virtual bool DataTypeIsRowVersion(Schema.Column column) => DataTypeIsRowVersion(column.DataType);
         public virtual bool DataTypeIsRowVersion(string dataType) => _rowVersionTypes.Contains(dataType);

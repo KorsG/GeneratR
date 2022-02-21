@@ -39,6 +39,20 @@ namespace GeneratR.Database.SqlServer
                 .ToList();
         }
 
+        /// <summary>
+        /// Get distinct collection of namespaces from currently loaded collections.
+        /// </summary>
+        public IEnumerable<string> GetNamespaces()
+        {
+            return Tables.Select(q => q.Namespace)
+                .Union(Views.Select(q => q.Namespace))
+                .Union(TableFunctions.Select(q => q.Namespace))
+                .Union(StoredProcedures.Select(q => q.Namespace))
+                .Union(TableTypes.Select(q => q.Namespace))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         public SqlServerTableConfiguration GetTable(string schema, string name)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
