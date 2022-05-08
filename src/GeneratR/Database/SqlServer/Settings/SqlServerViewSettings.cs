@@ -12,7 +12,7 @@ namespace GeneratR.Database.SqlServer
         {
         }
 
-        internal SqlServerViewSettings Clone()
+        public SqlServerViewSettings Clone()
         {
             return (SqlServerViewSettings)MemberwiseClone();
         }

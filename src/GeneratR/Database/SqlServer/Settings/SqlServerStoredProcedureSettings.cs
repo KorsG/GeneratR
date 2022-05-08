@@ -12,7 +12,7 @@ namespace GeneratR.Database.SqlServer
         {
         }
 
-        internal SqlServerStoredProcedureSettings Clone()
+        public SqlServerStoredProcedureSettings Clone()
         {
             return (SqlServerStoredProcedureSettings)MemberwiseClone();
         }
