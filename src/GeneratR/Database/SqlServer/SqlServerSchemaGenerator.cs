@@ -44,7 +44,7 @@ namespace GeneratR.Database.SqlServer
             };
 
             // Tables.
-            if (Settings.Table.Generate)
+            if (Settings.Table.Include)
             {
                 var dbTables = schemaContext.Tables.GetAll();
                 if (dbTables.Any())
@@ -119,7 +119,7 @@ namespace GeneratR.Database.SqlServer
                     objSettings.ApplyObjectSettings(objSettings, t);
                 }
 
-                if (objSettings.IgnoreObject(t)) { continue; }
+                if (!objSettings.Include) { continue; }
 
                 var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -132,7 +132,7 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
-                o.Generate = () => objSettings.GenerateFactory(o);
+                o.Generate = () => objSettings.GenerateCodeFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {

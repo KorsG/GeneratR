@@ -17,9 +17,9 @@ namespace GeneratR.Database.SqlServer
             return (SqlServerTableSettings)MemberwiseClone();
         }
 
-        public Func<SqlServerTableConfiguration, string> GenerateFactory { get; set; } = (x) => new TableTemplate(x).Generate();
+        public Func<SqlServerTableConfiguration, string> GenerateCodeFactory { get; set; } = (x) => new TableTemplate(x).Generate();
 
-        public bool Generate { get; set; }
+        public bool Include { get; set; }
         public string Namespace { get; set; } = string.Empty;
         public List<string> ImplementInterfaces { get; set; } = new List<string>();
         public string InheritClass { get; set; }
@@ -39,8 +39,9 @@ namespace GeneratR.Database.SqlServer
         public DotNetModifierKeyword ColumnModifiers { get; set; } = DotNetModifierKeyword.Public;
         public DotNetModifierKeyword ForeignKeyModifiers { get; set; } = DotNetModifierKeyword.Public;
 
-        public Func<Table, bool> IgnoreObject { get; set; } = x => false;
-
+        /// <summary>
+        /// Apply additional per object settings.
+        /// </summary>
         public Action<SqlServerTableSettings, Table> ApplyObjectSettings { get; set; } = null;
     }
 }
