@@ -14,11 +14,6 @@ namespace GeneratR.Database
         }
 
         /// <summary>
-        /// Function to Generate .NET type for this config.
-        /// </summary>
-        public Func<string> Generate { get; set; }
-
-        /// <summary>
         /// The underlying database object.
         /// </summary>
         public T DbObject { get; }

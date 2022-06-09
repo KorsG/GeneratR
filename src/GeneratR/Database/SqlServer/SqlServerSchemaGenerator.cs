@@ -44,7 +44,7 @@ namespace GeneratR.Database.SqlServer
             };
 
             // Tables.
-            if (Settings.Table.Include)
+            if (Settings.Table.Generate)
             {
                 var dbTables = schemaContext.Tables.GetAll();
                 if (dbTables.Any())
@@ -113,13 +113,7 @@ namespace GeneratR.Database.SqlServer
             foreach (var t in dbTypes)
             {
                 var objSettings = Settings.Table;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t);
-                }
-
-                if (!objSettings.Include) { continue; }
+                if (!objSettings.Generate) { continue; }
 
                 var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -131,8 +125,6 @@ namespace GeneratR.Database.SqlServer
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
-
-                o.Generate = () => objSettings.GenerateCodeFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -174,6 +166,7 @@ namespace GeneratR.Database.SqlServer
                     };
                     o.ForeignKeys.Add(f);
                 }
+
                 foreach (var fk in t.ReferencingForeignKeys)
                 {
                     var f = new SqlServerForeignKeyConfiguration(fk)
@@ -215,13 +208,7 @@ namespace GeneratR.Database.SqlServer
             foreach (var t in dbTypes)
             {
                 var objSettings = Settings.View;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t);
-                }
-
-                if (objSettings.IgnoreObject(t)) { continue; }
+                if (!objSettings.Generate) { continue; }
 
                 var o = new SqlServerViewConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -231,8 +218,6 @@ namespace GeneratR.Database.SqlServer
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
-
-                o.Generate = () => objSettings.GenerateFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -293,13 +278,7 @@ namespace GeneratR.Database.SqlServer
             foreach (var t in dbTypes)
             {
                 var objSettings = Settings.TableType;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t);
-                }
-
-                if (objSettings.IgnoreObject(t)) { continue; }
+                if (!objSettings.Generate) { continue; }
 
                 var o = new SqlServerTableTypeConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -310,8 +289,6 @@ namespace GeneratR.Database.SqlServer
                     AddSqlDataRecordMappings = objSettings.AddSqlDataRecordMappings,
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
-
-                o.Generate = () => objSettings.GenerateFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -372,13 +349,7 @@ namespace GeneratR.Database.SqlServer
             foreach (var t in dbTypes)
             {
                 var objSettings = Settings.TableFunction;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t);
-                }
-
-                if (objSettings.IgnoreObject(t)) { continue; }
+                if (!objSettings.Generate) { continue; }
 
                 var o = new SqlServerTableFunctionConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -388,8 +359,6 @@ namespace GeneratR.Database.SqlServer
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
-
-                o.Generate = () => objSettings.GenerateFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -459,13 +428,7 @@ namespace GeneratR.Database.SqlServer
             foreach (var t in dbTypes)
             {
                 var objSettings = Settings.StoredProcedure;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t);
-                }
-
-                if (objSettings.IgnoreObject(t)) { continue; }
+                if (!objSettings.Generate) { continue; }
 
                 var o = new SqlServerStoredProcedureConfiguration(t, DotNetGenerator, TypeMapper)
                 {
@@ -477,8 +440,6 @@ namespace GeneratR.Database.SqlServer
                     GenerateResultSet = objSettings.GenerateResultSet,
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
-
-                o.Generate = () => objSettings.GenerateFactory(o);
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -716,11 +677,6 @@ namespace GeneratR.Database.SqlServer
             {
                 // TODO: Find a way to reuse possible per-object settings. Maybe set ForeignKeyCollectionType and ForeignKeyNamingStrategy on the table config?
                 var objSettings = Settings.Table;
-                if (objSettings.ApplyObjectSettings != null)
-                {
-                    objSettings = objSettings.Clone();
-                    objSettings.ApplyObjectSettings(objSettings, t.DbObject);
-                }
 
                 var foreignKeyCollectionType = objSettings.ForeignKeyCollectionType;
                 var foreignKeyNamingStrategy = objSettings.ForeignKeyNamingStrategy;

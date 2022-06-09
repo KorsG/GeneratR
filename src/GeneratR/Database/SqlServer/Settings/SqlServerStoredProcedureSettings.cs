@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using GeneratR.Database.SqlServer.Schema;
-using GeneratR.Database.SqlServer.Templates;
+﻿using System.Collections.Generic;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -17,15 +14,12 @@ namespace GeneratR.Database.SqlServer
             return (SqlServerStoredProcedureSettings)MemberwiseClone();
         }
 
-        public Func<SqlServerStoredProcedureConfiguration, string> GenerateFactory { get; set; } = (x) => new StoredProcedureTemplate(x).Generate();
-
         public bool Generate { get; set; }
         public string Namespace { get; set; } = string.Empty;
         public List<string> ImplementInterfaces { get; set; } = new List<string>();
         public string InheritClass { get; set; }
         public bool AddConstructor { get; set; }
         public bool AddDataAnnotationAttributes { get; set; }
-        public string OutputProjectPath { get; set; }
         public string OutputFolderPath { get; set; }
 
         /// <summary>
@@ -37,9 +31,5 @@ namespace GeneratR.Database.SqlServer
         public NamingStrategy NamingStrategy { get; set; } = NamingStrategy.KeepOriginal;
         public DotNetModifierKeyword Modifiers { get; set; } = DotNetModifierKeyword.Public | DotNetModifierKeyword.Partial;
         public DotNetModifierKeyword ColumnModifiers { get; set; } = DotNetModifierKeyword.Public;
-
-        public Func<StoredProcedure, bool> IgnoreObject { get; set; } = x => false;
-
-        public Action<SqlServerStoredProcedureSettings, StoredProcedure> ApplyObjectSettings { get; set; } = null;
     }
 }
