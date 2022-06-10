@@ -6,13 +6,13 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class TableTemplate : StringTemplateBase
     {
-        private readonly SqlServerTableCodeModel _config;
+        private readonly SqlServerTableCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
-        public TableTemplate(SqlServerTableCodeModel config)
+        public TableTemplate(SqlServerTableCodeModel model)
         {
-            _config = config;
-            _dotNet = config.DotNetGenerator;
+            _model = model;
+            _dotNet = model.DotNetGenerator;
         }
 
         public virtual string Generate()
@@ -20,31 +20,31 @@ namespace GeneratR.Database.SqlServer.Templates
             // TODO: Add as "using" write to "DotNetGenerator".
             WriteLine("using System;");
             WriteLine("using System.Collections.Generic;");
-            if (_config.AddDataAnnotationAttributes)
+            if (_model.AddDataAnnotationAttributes)
             {
                 WriteLine("using System.ComponentModel.DataAnnotations;");
                 WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
             }
             WriteLine();
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
             using (IndentScope())
             {
-                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+                var classAsAbstract = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
 
-                if (_config.Attributes.Any())
+                if (_model.Attributes.Any())
                 {
-                    Write(_config.Attributes.ToMultilineString());
+                    Write(_model.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
+                WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, _model.InheritClassName, _model.ImplementInterfaces));
                 using (IndentScope())
                 {
-                    if (_config.AddConstructor)
+                    if (_model.AddConstructor)
                     {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _config.ClassName));
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
                     }
 
-                    foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         WriteLine();
                         if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
@@ -60,9 +60,9 @@ namespace GeneratR.Database.SqlServer.Templates
                         WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
                     }
 
-                    if (_config.GenerateForeignKeys)
+                    if (_model.GenerateForeignKeys)
                     {
-                        foreach (var fk in _config.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
+                        foreach (var fk in _model.ForeignKeys.OrderBy(x => x.DbObject.ForeignKeyID))
                         {
                             WriteLine();
 
@@ -77,9 +77,9 @@ namespace GeneratR.Database.SqlServer.Templates
                         }
                     }
 
-                    if (_config.GenerateReferencingForeignKeys)
+                    if (_model.GenerateReferencingForeignKeys)
                     {
-                        var referencingKeys = _config.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
+                        var referencingKeys = _model.ReferencingForeignKeys.Where(x => x.DbObject.IsSelfReferencing == false);
                         foreach (var fk in referencingKeys)
                         {
                             WriteLine();

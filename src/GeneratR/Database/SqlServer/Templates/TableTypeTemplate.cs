@@ -6,55 +6,55 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class TableTypeTemplate : StringTemplateBase
     {
-        private readonly SqlServerTableTypeCodeModel _config;
+        private readonly SqlServerTableTypeCodeModel _model;
         private readonly DotNetGenerator _dotNet;
         private readonly SqlServerTypeMapper _typeMapper;
 
-        public TableTypeTemplate(SqlServerTableTypeCodeModel config)
+        public TableTypeTemplate(SqlServerTableTypeCodeModel model)
         {
-            _config = config;
-            _dotNet = _config.DotNetGenerator;
-            _typeMapper = _config.TypeMapper;
+            _model = model;
+            _dotNet = _model.DotNetGenerator;
+            _typeMapper = _model.TypeMapper;
         }
 
         public virtual string Generate()
         {
             WriteLine("using System;");
             WriteLine("using System.Collections.Generic;");
-            if (_config.AddDataAnnotationAttributes)
+            if (_model.AddDataAnnotationAttributes)
             {
                 WriteLine("using System.ComponentModel.DataAnnotations;");
                 WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
             }
 
-            if (_config.AddSqlDataRecordMappings)
+            if (_model.AddSqlDataRecordMappings)
             {
                 WriteLine("using System.Data;");
                 WriteLine("using Microsoft.SqlServer.Server;");
             }
 
             WriteLine();
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
             using (IndentScope())
             {
-                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
-                if (_config.Attributes.Any())
+                var classAsAbstract = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+                if (_model.Attributes.Any())
                 {
-                    Write(_config.Attributes.ToMultilineString());
+                    Write(_model.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
+                WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, _model.InheritClassName, _model.ImplementInterfaces));
                 using (IndentScope())
                 {
-                    WriteLine($@"public static string SqlName => ""{_config.DbObject.FullName}"";");
+                    WriteLine($@"public static string SqlName => ""{_model.DbObject.FullName}"";");
                     WriteLine();
 
-                    if (_config.AddConstructor)
+                    if (_model.AddConstructor)
                     {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _config.ClassName));
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
                     }
 
-                    foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         WriteLine();
                         if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
@@ -70,7 +70,7 @@ namespace GeneratR.Database.SqlServer.Templates
                     }
                     WriteLine();
 
-                    if (_config.AddSqlDataRecordMappings)
+                    if (_model.AddSqlDataRecordMappings)
                     {
                         WriteLine("public SqlDataRecord ToSqlDataRecord()");
                         WriteLine("{");
@@ -78,7 +78,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         {
                             WriteLine("var record = new SqlDataRecord(_sqlColumnMetaData);");
 
-                            foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                            foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                             {
                                 WriteLine($@"record.SetValue({col.DbObject.Position - 1}, {col.PropertyName});");
                             }
@@ -92,14 +92,14 @@ namespace GeneratR.Database.SqlServer.Templates
                         WriteLine("{");
                         using (IndentScope())
                         {
-                            foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                            foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                             {
                                 var sqlDataType = _typeMapper.ConvertDataTypeToSqlDbType(col.DbObject.DataType);
-                                if (_config.TypeMapper.DataTypeIsString(col.DbObject))
+                                if (_model.TypeMapper.DataTypeIsString(col.DbObject))
                                 {
                                     WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Length}),");
                                 }
-                                else if (_config.TypeMapper.DataTypeIsDecimal(col.DbObject))
+                                else if (_model.TypeMapper.DataTypeIsDecimal(col.DbObject))
                                 {
                                     WriteLine($@"new SqlMetaData(""{col.PropertyName}"", {sqlDataType}, {col.DbObject.Precision}, {col.DbObject.Scale}),");
                                 }

@@ -6,44 +6,44 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class ViewTemplate : StringTemplateBase
     {
-        private readonly SqlServerViewCodeModel _config;
+        private readonly SqlServerViewCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
-        public ViewTemplate(SqlServerViewCodeModel config)
+        public ViewTemplate(SqlServerViewCodeModel model)
         {
-            _config = config;
-            _dotNet = _config.DotNetGenerator;
+            _model = model;
+            _dotNet = _model.DotNetGenerator;
         }
 
         public string Generate()
         {
             WriteLine("using System;");
             WriteLine("using System.Collections.Generic;");
-            if (_config.AddDataAnnotationAttributes)
+            if (_model.AddDataAnnotationAttributes)
             {
                 WriteLine("using System.ComponentModel.DataAnnotations;");
                 WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
             }
 
             WriteLine();
-            WriteLine(_dotNet.CreateNamespaceStart(_config.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
             using (IndentScope())
             {
-                var classAsAbstract = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-                var classAsPartial = _config.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
-                if (_config.Attributes.Any())
+                var classAsAbstract = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+                if (_model.Attributes.Any())
                 {
-                    Write(_config.Attributes.ToMultilineString());
+                    Write(_model.Attributes.ToMultilineString());
                 }
-                WriteLine(_dotNet.CreateClassStart(_config.ClassName, classAsPartial, classAsAbstract, _config.InheritClassName, _config.ImplementInterfaces));
+                WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, _model.InheritClassName, _model.ImplementInterfaces));
                 using (IndentScope())
                 {
-                    if (_config.AddConstructor)
+                    if (_model.AddConstructor)
                     {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _config.ClassName));
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
                     }
 
-                    foreach (var col in _config.Columns.OrderBy(x => x.DbObject.Position))
+                    foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         WriteLine();
                         if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
