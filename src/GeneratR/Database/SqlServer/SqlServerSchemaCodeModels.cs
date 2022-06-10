@@ -4,26 +4,26 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerDbSchema
+    public class SqlServerSchemaCodeModels
     {
-        public SqlServerDbSchema()
+        public SqlServerSchemaCodeModels()
         {
-            Tables = new List<SqlServerTableConfiguration>();
-            Views = new List<SqlServerViewConfiguration>();
-            TableFunctions = new List<SqlServerTableFunctionConfiguration>();
-            StoredProcedures = new List<SqlServerStoredProcedureConfiguration>();
-            TableTypes = new List<SqlServerTableTypeConfiguration>();
+            Tables = new List<SqlServerTableCodeModel>();
+            Views = new List<SqlServerViewCodeModel>();
+            TableFunctions = new List<SqlServerTableFunctionCodeModel>();
+            StoredProcedures = new List<SqlServerStoredProcedureCodeModel>();
+            TableTypes = new List<SqlServerTableTypeCodeModel>();
         }
 
-        public List<SqlServerTableConfiguration> Tables { get; }
+        public List<SqlServerTableCodeModel> Tables { get; }
 
-        public List<SqlServerViewConfiguration> Views { get; }
+        public List<SqlServerViewCodeModel> Views { get; }
 
-        public List<SqlServerTableFunctionConfiguration> TableFunctions { get; }
+        public List<SqlServerTableFunctionCodeModel> TableFunctions { get; }
 
-        public List<SqlServerStoredProcedureConfiguration> StoredProcedures { get; }
+        public List<SqlServerStoredProcedureCodeModel> StoredProcedures { get; }
 
-        public List<SqlServerTableTypeConfiguration> TableTypes { get; }
+        public List<SqlServerTableTypeCodeModel> TableTypes { get; }
 
         /// <summary>
         /// Get distinct collection of Schema names from currently loaded collections.
@@ -53,17 +53,17 @@ namespace GeneratR.Database.SqlServer
                 .ToList();
         }
 
-        public SqlServerTableConfiguration GetTable(string schema, string name)
+        public SqlServerTableCodeModel GetTable(string schema, string name)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
         }
 
-        public SqlServerTableConfiguration GetTable(string fullName)
+        public SqlServerTableCodeModel GetTable(string fullName)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerDbSchema WithTable(string fullName, Action<SqlServerTableConfiguration> action)
+        public SqlServerSchemaCodeModels WithTable(string fullName, Action<SqlServerTableCodeModel> action)
         {
             if (action != null)
             {
@@ -76,7 +76,7 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerDbSchema WithTable(string schema, string name, Action<SqlServerTableConfiguration> action)
+        public SqlServerSchemaCodeModels WithTable(string schema, string name, Action<SqlServerTableCodeModel> action)
         {
             if (action != null)
             {
@@ -89,12 +89,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerViewConfiguration GetView(string fullName)
+        public SqlServerViewCodeModel GetView(string fullName)
         {
             return Views?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerDbSchema WithView(string fullName, Action<SqlServerViewConfiguration> action)
+        public SqlServerSchemaCodeModels WithView(string fullName, Action<SqlServerViewCodeModel> action)
         {
             if (action != null)
             {
@@ -107,12 +107,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerTableFunctionConfiguration GetTableFunction(string fullName)
+        public SqlServerTableFunctionCodeModel GetTableFunction(string fullName)
         {
             return TableFunctions?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerDbSchema WithTableFunction(string fullName, Action<SqlServerTableFunctionConfiguration> action)
+        public SqlServerSchemaCodeModels WithTableFunction(string fullName, Action<SqlServerTableFunctionCodeModel> action)
         {
             if (action != null)
             {
@@ -125,12 +125,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerStoredProcedureConfiguration GetStoredProcedure(string fullName)
+        public SqlServerStoredProcedureCodeModel GetStoredProcedure(string fullName)
         {
             return StoredProcedures?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerDbSchema WithStoredProcedure(string fullName, Action<SqlServerStoredProcedureConfiguration> action)
+        public SqlServerSchemaCodeModels WithStoredProcedure(string fullName, Action<SqlServerStoredProcedureCodeModel> action)
         {
             if (action != null)
             {
@@ -143,12 +143,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerTableTypeConfiguration GetTableType(string fullName)
+        public SqlServerTableTypeCodeModel GetTableType(string fullName)
         {
             return TableTypes?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerDbSchema WithTableType(string fullName, Action<SqlServerTableTypeConfiguration> action)
+        public SqlServerSchemaCodeModels WithTableType(string fullName, Action<SqlServerTableTypeCodeModel> action)
         {
             if (action != null)
             {

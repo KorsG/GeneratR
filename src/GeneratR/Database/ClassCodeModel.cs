@@ -1,24 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database
 {
-    public class DbObjectClassConfiguration<T> where T : class
+    public class ClassCodeModel
     {
-        public DbObjectClassConfiguration(T dbObject, DotNetGenerator dotNetGenerator)
+        public ClassCodeModel(DotNetGenerator dotNetGenerator)
         {
-            DbObject = dbObject;
             DotNetGenerator = dotNetGenerator;
             Attributes = new DotNetAttributeCollection();
         }
 
-        /// <summary>
-        /// The underlying database object.
-        /// </summary>
-        public T DbObject { get; }
-
         public DotNetGenerator DotNetGenerator { get; set; }
+
+        public string OutputFolderPath { get; set; }
 
         public string Namespace { get; set; }
 
@@ -39,14 +34,14 @@ namespace GeneratR.Database
         ///</summary>
         public DotNetAttributeCollection Attributes { get; set; }
 
-        public DbObjectClassConfiguration<T> AddAttribute(DotNetAttribute attribute)
+        public ClassCodeModel AddAttribute(DotNetAttribute attribute)
         {
             if (Attributes == null) { Attributes = new DotNetAttributeCollection(); }
             Attributes.Add(attribute);
             return this;
         }
 
-        public DbObjectClassConfiguration<T> RemoveAttribute(string attributeName)
+        public ClassCodeModel RemoveAttribute(string attributeName)
         {
             Attributes?.Remove(attributeName);
             return this;

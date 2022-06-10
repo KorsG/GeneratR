@@ -6,10 +6,10 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class ViewTemplate : StringTemplateBase
     {
-        private readonly SqlServerViewConfiguration _config;
+        private readonly SqlServerViewCodeModel _config;
         private readonly DotNetGenerator _dotNet;
 
-        public ViewTemplate(SqlServerViewConfiguration config)
+        public ViewTemplate(SqlServerViewCodeModel config)
         {
             _config = config;
             _dotNet = _config.DotNetGenerator;

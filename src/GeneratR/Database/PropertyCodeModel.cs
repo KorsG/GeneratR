@@ -2,15 +2,12 @@
 
 namespace GeneratR.Database
 {
-    public class DbObjectPropertyConfiguration<T> where T : class
+    public class PropertyCodeModel
     {
-        public DbObjectPropertyConfiguration(T dbObject)
+        public PropertyCodeModel()
         {
-            DbObject = dbObject;
             Attributes = new DotNetAttributeCollection();
         }
-
-        public T DbObject { get; }
 
         public string PropertyName { get; set; }
 
@@ -23,7 +20,7 @@ namespace GeneratR.Database
         ///</summary>
         public DotNetAttributeCollection Attributes { get; set; }
 
-        public DbObjectPropertyConfiguration<T> AddAttribute(DotNetAttribute attribute)
+        public PropertyCodeModel AddAttribute(DotNetAttribute attribute)
         {
             if (Attributes == null) { Attributes = new DotNetAttributeCollection(); }
             Attributes.Add(attribute);

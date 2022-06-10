@@ -20,8 +20,6 @@ var solutions = new List<FilePath> {
 
 var projectsToPack = new List<FilePath> {
     Directory(sourceDir) + File("GeneratR/GeneratR.csproj"),
-    Directory(sourceDir) + File("GeneratR.Database.Templates/GeneratR.Database.Templates.csproj"),
-    Directory(sourceDir) + File("GeneratR.T4/GeneratR.T4.csproj"),
 };
 
 GitVersion gitVersionResult;

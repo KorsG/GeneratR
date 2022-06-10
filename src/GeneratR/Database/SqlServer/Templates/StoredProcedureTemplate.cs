@@ -8,10 +8,10 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class StoredProcedureTemplate : StringTemplateBase
     {
-        private readonly SqlServerStoredProcedureConfiguration _config;
+        private readonly SqlServerStoredProcedureCodeModel _config;
         private readonly DotNetGenerator _dotNet;
 
-        public StoredProcedureTemplate(SqlServerStoredProcedureConfiguration config)
+        public StoredProcedureTemplate(SqlServerStoredProcedureCodeModel config)
         {
             _config = config;
             _dotNet = config.DotNetGenerator;

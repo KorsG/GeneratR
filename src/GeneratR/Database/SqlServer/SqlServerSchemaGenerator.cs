@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using GeneratR.Database.SqlServer.Schema;
+using GeneratR.Database.SqlServer.Templates;
 using GeneratR.DotNet;
+using GeneratR.ExtensionMethods;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -13,9 +17,11 @@ namespace GeneratR.Database.SqlServer
         protected static Regex RemoveRelationalColumnSuffixRegex = new Regex(@"(Id|No|Key|Code)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
 
-        public SqlServerSchemaGenerator(SqlServerSchemaGeneratorSettings settings)
+        public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
         {
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            DotNetGenerator = DotNetGenerator.Create(dotNetLanguage);
+            TypeMapper = new SqlServerTypeMapper(DotNetGenerator);
             _connectionStringBuilder = new SqlConnectionStringBuilder(Settings.ConnectionString);
             if (!string.IsNullOrWhiteSpace(settings.DatabaseName))
             {
@@ -25,19 +31,29 @@ namespace GeneratR.Database.SqlServer
             DatabaseName = _connectionStringBuilder.InitialCatalog;
         }
 
-        public DotNetGenerator DotNetGenerator => Settings.DotNetGenerator;
+        public DotNetGenerator DotNetGenerator { get; }
 
-        public SqlServerTypeMapper TypeMapper => Settings.TypeMapper;
+        public SqlServerTypeMapper TypeMapper { get; }
 
-        public SqlServerSchemaGeneratorSettings Settings { get; }
+        public SqlServerSchemaGenerationSettings Settings { get; }
 
         public string DatabaseName { get; }
 
-        public virtual SqlServerDbSchema LoadSqlServerDbSchema()
+        /// <summary>
+        /// Execute generator steps: 1. LoadCodeModels -> 2. GenerateSourceCode -> 3. WriteCodeFiles
+        /// </summary>
+        public virtual void Execute()
         {
-            var schema = new SqlServerDbSchema();
+            var model = LoadCodeModels();
+            var files = GenerateCodeFiles(model);
+            WriteCodeFiles(files);
+        }
 
-            var schemaContext = new Schema.SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)
+        public virtual SqlServerSchemaCodeModels LoadCodeModels()
+        {
+            var schema = new SqlServerSchemaCodeModels();
+
+            var schemaContext = new SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)
             {
                 IncludeSchemas = Settings.IncludeSchemas ?? new HashSet<string>(),
                 ExcludeSchemas = Settings.ExcludeSchemas ?? new HashSet<string>(),
@@ -93,29 +109,246 @@ namespace GeneratR.Database.SqlServer
                 }
             }
 
+            OnCodeModelsLoadedFunc(schema);
+
             return schema;
         }
 
-        protected virtual List<SqlServerTableConfiguration> BuildTables(IEnumerable<Schema.Table> dbTypes)
+        public virtual IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels schemaModels)
         {
-            var configs = new List<SqlServerTableConfiguration>();
+            // TODO: FileName generation should be configurable/overrideable (func?)
+
+            foreach (var obj in schemaModels.Tables)
+            {
+                yield return new SourceCodeFile()
+                {
+                    FileName = $"{obj.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = obj.OutputFolderPath,
+                    Code = GenerateTableCode(obj),
+                };
+            }
+
+            foreach (var obj in schemaModels.Views)
+            {
+                yield return new SourceCodeFile()
+                {
+                    FileName = $"{obj.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = obj.OutputFolderPath,
+                    Code = GenerateViewCode(obj),
+                };
+            }
+
+            foreach (var obj in schemaModels.TableFunctions)
+            {
+                yield return new SourceCodeFile()
+                {
+                    FileName = $"{obj.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = obj.OutputFolderPath,
+                    Code = GenerateTableFunctionCode(obj),
+                };
+            }
+
+            foreach (var obj in schemaModels.TableTypes)
+            {
+                yield return new SourceCodeFile()
+                {
+                    FileName = $"{obj.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = obj.OutputFolderPath,
+                    Code = GenerateTableTypeCode(obj),
+                };
+            }
+
+            foreach (var obj in schemaModels.StoredProcedures)
+            {
+                yield return new SourceCodeFile()
+                {
+                    FileName = $"{obj.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = obj.OutputFolderPath,
+                    Code = GenerateStoredProcedureCode(obj),
+                };
+            }
+        }
+
+        public virtual void WriteCodeFiles(IEnumerable<SourceCodeFile> codeFiles)
+        {
+            foreach (var cf in codeFiles)
+            {
+                var outputFolderPath = cf.FolderPath;
+                var outputFilePath = Path.Combine(outputFolderPath, cf.FileName);
+
+                // TODO: Optimize folder creation by finding all folders first and grouping etc.,
+                // or cache which folder have been checked/created.
+                if (!Directory.Exists(outputFolderPath))
+                {
+                    Directory.CreateDirectory(outputFolderPath);
+                }
+
+                File.WriteAllText(outputFilePath, cf.Code);
+            }
+        }
+
+        public Action<SqlServerSchemaCodeModels> OnCodeModelsLoadedFunc { get; set; } = null;
+
+        #region GenerateCode functions
+
+        public Func<SqlServerTableCodeModel, string> GenerateTableCodeFunc { get; set; } = null;
+
+        protected virtual string GenerateTableCode(SqlServerTableCodeModel model)
+        {
+            var code = GenerateTableCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new TableTemplate(model).Generate();
+            }
+            return code;
+        }
+
+        public Func<SqlServerViewCodeModel, string> GenerateViewCodeFunc { get; set; } = null;
+
+        protected virtual string GenerateViewCode(SqlServerViewCodeModel model)
+        {
+            var code = GenerateViewCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new ViewTemplate(model).Generate();
+            }
+            return code;
+        }
+
+        public Func<SqlServerTableFunctionCodeModel, string> GenerateTableFunctionCodeFunc { get; set; } = null;
+
+        protected virtual string GenerateTableFunctionCode(SqlServerTableFunctionCodeModel model)
+        {
+            var code = GenerateTableFunctionCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new TableFunctionTemplate(model).Generate();
+            }
+            return code;
+        }
+
+        public Func<SqlServerTableTypeCodeModel, string> GenerateTableTypeCodeFunc { get; set; } = null;
+
+        protected virtual string GenerateTableTypeCode(SqlServerTableTypeCodeModel model)
+        {
+            var code = GenerateTableTypeCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new TableTypeTemplate(model).Generate();
+            }
+            return code;
+        }
+
+        public Func<SqlServerStoredProcedureCodeModel, string> GenerateStoredProcedureCodeFunc { get; set; } = null;
+
+        protected virtual string GenerateStoredProcedureCode(SqlServerStoredProcedureCodeModel model)
+        {
+            var code = GenerateStoredProcedureCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new StoredProcedureTemplate(model).Generate();
+            }
+            return code;
+        }
+
+        #endregion
+
+        #region Apply/Get settings
+
+        /// <summary>Apply additional per object settings.</summary>
+        public Action<SqlServerTableSettings, Table> ApplyTableSettings { get; set; } = null;
+
+        protected virtual SqlServerTableSettings GetTableSettings(Table obj)
+        {
+            var objSettings = Settings.Table;
+            if (ApplyTableSettings != null)
+            {
+                objSettings = objSettings.Clone();
+                ApplyTableSettings(objSettings, obj);
+            }
+            return objSettings;
+        }
+
+        /// <summary>Apply additional per object settings.</summary>
+        public Action<SqlServerViewSettings, View> ApplyViewSettings { get; set; } = null;
+
+        protected virtual SqlServerViewSettings GetViewSettings(View obj)
+        {
+            var objSettings = Settings.View;
+            if (ApplyViewSettings != null)
+            {
+                objSettings = objSettings.Clone();
+                ApplyViewSettings(objSettings, obj);
+            }
+            return objSettings;
+        }
+
+        /// <summary>Apply additional per object settings.</summary>
+        public Action<SqlServerTableFunctionSettings, TableFunction> ApplyTableFunctionSettings { get; set; } = null;
+
+        protected virtual SqlServerTableFunctionSettings GetTableFunctionSettings(TableFunction obj)
+        {
+            var objSettings = Settings.TableFunction;
+            if (ApplyTableFunctionSettings != null)
+            {
+                objSettings = objSettings.Clone();
+                ApplyTableFunctionSettings(objSettings, obj);
+            }
+            return objSettings;
+        }
+
+        /// <summary>Apply additional per object settings.</summary>
+        public Action<SqlServerTableTypeSettings, TableType> ApplyTableTypeSettings { get; set; } = null;
+
+        protected virtual SqlServerTableTypeSettings GetTableTypeSettings(TableType obj)
+        {
+            var objSettings = Settings.TableType;
+            if (ApplyTableTypeSettings != null)
+            {
+                objSettings = objSettings.Clone();
+                ApplyTableTypeSettings(objSettings, obj);
+            }
+            return objSettings;
+        }
+
+        /// <summary>Apply additional per object settings.</summary>
+        public Action<SqlServerStoredProcedureSettings, StoredProcedure> ApplyStoredProcedureSettings { get; set; } = null;
+
+        protected virtual SqlServerStoredProcedureSettings GetStoredProcedureSettings(StoredProcedure obj)
+        {
+            var objSettings = Settings.StoredProcedure;
+            if (ApplyStoredProcedureSettings != null)
+            {
+                objSettings = objSettings.Clone();
+                ApplyStoredProcedureSettings(objSettings, obj);
+            }
+            return objSettings;
+        }
+
+        #endregion
+
+        #region Build functions
+
+        protected virtual List<SqlServerTableCodeModel> BuildTables(IEnumerable<Table> dbTypes)
+        {
+            var configs = new List<SqlServerTableCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             if (Settings.ExcludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             foreach (var t in dbTypes)
             {
-                var objSettings = Settings.Table;
+                var objSettings = GetTableSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableConfiguration(t, DotNetGenerator, TypeMapper)
+                var o = new SqlServerTableCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     GenerateForeignKeys = objSettings.GenerateForeignKeys,
@@ -126,25 +359,14 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
-                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
-                }
-                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
-                }
-                else
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
-                }
-
-                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
+                o.ClassName = BuildObjectClassName(objSettings, t.Name);
+                o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Table columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnConfiguration(col);
+                    var c = new SqlServerColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -160,16 +382,15 @@ namespace GeneratR.Database.SqlServer
                 // Table foreign keys.
                 foreach (var fk in t.ForeignKeys)
                 {
-                    var f = new SqlServerForeignKeyConfiguration(fk)
+                    var f = new SqlServerForeignKeyCodeModel(fk)
                     {
                         DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ForeignKeys.Add(f);
                 }
-
                 foreach (var fk in t.ReferencingForeignKeys)
                 {
-                    var f = new SqlServerForeignKeyConfiguration(fk)
+                    var f = new SqlServerForeignKeyCodeModel(fk)
                     {
                         DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
@@ -191,26 +412,26 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerViewConfiguration> BuildViews(IEnumerable<Schema.View> dbTypes)
+        protected virtual List<SqlServerViewCodeModel> BuildViews(IEnumerable<View> dbTypes)
         {
-            var configs = new List<SqlServerViewConfiguration>();
+            var configs = new List<SqlServerViewCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             if (Settings.ExcludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             foreach (var t in dbTypes)
             {
-                var objSettings = Settings.View;
+                var objSettings = GetViewSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerViewConfiguration(t, DotNetGenerator, TypeMapper)
+                var o = new SqlServerViewCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -232,12 +453,13 @@ namespace GeneratR.Database.SqlServer
                     o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
                 }
 
-                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
+                o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // View columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnConfiguration(col);
+                    var c = new SqlServerColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -261,26 +483,26 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerTableTypeConfiguration> BuildTableTypes(IEnumerable<Schema.TableType> dbTypes)
+        protected virtual List<SqlServerTableTypeCodeModel> BuildTableTypes(IEnumerable<TableType> dbTypes)
         {
-            var configs = new List<SqlServerTableTypeConfiguration>();
+            var configs = new List<SqlServerTableTypeCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             if (Settings.ExcludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             foreach (var t in dbTypes)
             {
-                var objSettings = Settings.TableType;
+                var objSettings = GetTableTypeSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableTypeConfiguration(t, DotNetGenerator, TypeMapper)
+                var o = new SqlServerTableTypeCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -290,25 +512,14 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
-                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
-                }
-                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
-                }
-                else
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
-                }
-
-                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
+                o.ClassName = BuildObjectClassName(objSettings, t.Name);
+                o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnConfiguration(col);
+                    var c = new SqlServerColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -332,26 +543,26 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerTableFunctionConfiguration> BuildTableFunctions(IEnumerable<Schema.TableFunction> dbTypes)
+        protected virtual List<SqlServerTableFunctionCodeModel> BuildTableFunctions(IEnumerable<TableFunction> dbTypes)
         {
-            var configs = new List<SqlServerTableFunctionConfiguration>();
+            var configs = new List<SqlServerTableFunctionCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             if (Settings.ExcludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             foreach (var t in dbTypes)
             {
-                var objSettings = Settings.TableFunction;
+                var objSettings = GetTableFunctionSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableFunctionConfiguration(t, DotNetGenerator, TypeMapper)
+                var o = new SqlServerTableFunctionCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -360,30 +571,19 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
-                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(t.Name));
-                }
-                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(t.Name));
-                }
-                else
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(t.Name);
-                }
-
-                o.Namespace = objSettings.Namespace.Replace("{schema}", t.Schema).Replace("{object}", o.ClassName);
+                o.ClassName = BuildObjectClassName(objSettings, t.Name);
+                o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Function columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnConfiguration(col);
+                    var c = new SqlServerColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
                     {
-                        propertyName += "Column";
+                        propertyName += "Column"; // TODO: Make this configurable.
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
@@ -394,7 +594,7 @@ namespace GeneratR.Database.SqlServer
                 // Function parameters.
                 foreach (var param in t.Parameters)
                 {
-                    var p = new SqlServerParameterConfiguration(param);
+                    var p = new SqlServerParameterCodeModel(param);
                     p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
                     p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
                     o.Parameters.Add(p);
@@ -411,26 +611,26 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerStoredProcedureConfiguration> BuildStoredProcedures(IEnumerable<Schema.StoredProcedure> dbTypes)
+        protected virtual List<SqlServerStoredProcedureCodeModel> BuildStoredProcedures(IEnumerable<StoredProcedure> dbTypes)
         {
-            var configs = new List<SqlServerStoredProcedureConfiguration>();
+            var configs = new List<SqlServerStoredProcedureCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => Settings.IncludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             if (Settings.ExcludeObjects?.Any() == true)
             {
-                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => StringLike(x.FullName, i)));
+                dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
             foreach (var t in dbTypes)
             {
-                var objSettings = Settings.StoredProcedure;
+                var objSettings = GetStoredProcedureSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerStoredProcedureConfiguration(t, DotNetGenerator, TypeMapper)
+                var o = new SqlServerStoredProcedureCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -441,27 +641,16 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
                 };
 
-                if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(o.DbObject.Name));
-                }
-                else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(o.DbObject.Name));
-                }
-                else
-                {
-                    o.ClassName = DotNetGenerator.GetAsValidDotNetName(o.DbObject.Name);
-                }
-
-                o.Namespace = objSettings.Namespace.Replace("{schema}", o.DbObject.Schema).Replace("{object}", o.ClassName);
+                o.ClassName = BuildObjectClassName(objSettings, t.Name);
+                o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // StoredProcedure ResultColumns.
                 if (objSettings.GenerateResultSet)
                 {
                     foreach (var colr in t.ResultColumns)
                     {
-                        var c = new SqlServerStoredProcedureResultColumnConfiguration(colr);
+                        var c = new SqlServerStoredProcedureResultColumnCodeModel(colr);
                         c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
                         c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                         c.DotNetModifier = objSettings.ColumnModifiers;
@@ -472,7 +661,7 @@ namespace GeneratR.Database.SqlServer
                 // StoredProcedure parameters
                 foreach (var param in t.Parameters)
                 {
-                    var p = new SqlServerParameterConfiguration(param);
+                    var p = new SqlServerParameterCodeModel(param);
                     p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
                     p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
                     o.Parameters.Add(p);
@@ -489,7 +678,11 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual void AddTableDataAnnotationAttributes(SqlServerTableConfiguration config)
+        #endregion
+
+        #region AddDataAnnotations functions
+
+        protected virtual void AddTableDataAnnotationAttributes(SqlServerTableCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -502,7 +695,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddViewDataAnnotationAttributes(SqlServerViewConfiguration config)
+        protected virtual void AddViewDataAnnotationAttributes(SqlServerViewCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -515,7 +708,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddTableFunctionDataAnnotationAttributes(SqlServerTableFunctionConfiguration config)
+        protected virtual void AddTableFunctionDataAnnotationAttributes(SqlServerTableFunctionCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -528,7 +721,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddTableTypeDataAnnotationAttributes(SqlServerTableTypeConfiguration config)
+        protected virtual void AddTableTypeDataAnnotationAttributes(SqlServerTableTypeCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -541,7 +734,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddStoredProcedureDataAnnotationAttributes(SqlServerStoredProcedureConfiguration config)
+        protected virtual void AddStoredProcedureDataAnnotationAttributes(SqlServerStoredProcedureCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -559,7 +752,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddColumnDataAnnotationAttributes(SqlServerColumnConfiguration config)
+        protected virtual void AddColumnDataAnnotationAttributes(SqlServerColumnCodeModel config)
         {
             var col = config.DbObject;
 
@@ -643,11 +836,11 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddStoredProcedureParameterDataAnnotationAttributes(SqlServerParameterConfiguration col)
+        protected virtual void AddStoredProcedureParameterDataAnnotationAttributes(SqlServerParameterCodeModel col)
         {
         }
 
-        protected virtual void AddStoredProcedureColumnDataAnnotationAttributes(SqlServerStoredProcedureResultColumnConfiguration col)
+        protected virtual void AddStoredProcedureColumnDataAnnotationAttributes(SqlServerStoredProcedureResultColumnCodeModel col)
         {
             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
             if (hasNameDiff)
@@ -657,33 +850,26 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        /// <summary>
-        /// Compares the string against a given pattern.
-        /// </summary>
-        /// <param name="str">The string.</param>
-        /// <param name="pattern">The pattern to match, where "*" means any sequence of characters, and "?" means any single character.</param>
-        /// <returns><c>true</c> if the string matches the given pattern; otherwise <c>false</c>.</returns>
-        protected static bool StringLike(string str, string pattern)
+        #endregion
+
+        protected virtual string RemoveRelationalColumnSuffix(string columnName)
         {
-            return new Regex(
-                "^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline
-            ).IsMatch(str);
+            return RemoveRelationalColumnSuffixRegex.Replace(columnName, string.Empty);
         }
 
-        private void SetTableCollectionForeignKeyProperties(IEnumerable<SqlServerTableConfiguration> tables)
+        private void SetTableCollectionForeignKeyProperties(IEnumerable<SqlServerTableCodeModel> tables)
         {
             foreach (var t in tables)
             {
                 // TODO: Find a way to reuse possible per-object settings. Maybe set ForeignKeyCollectionType and ForeignKeyNamingStrategy on the table config?
-                var objSettings = Settings.Table;
+                var objSettings = GetTableSettings(t.DbObject);
 
                 var foreignKeyCollectionType = objSettings.ForeignKeyCollectionType;
                 var foreignKeyNamingStrategy = objSettings.ForeignKeyNamingStrategy;
 
                 // Remove all foreign keys from the collection if the table they reference to/from does not exist in the provided table collection.
-                var nonExistingFkRelations = new List<SqlServerForeignKeyConfiguration>();
-                var nonExistingReferencingFkRelations = new List<SqlServerForeignKeyConfiguration>();
+                var nonExistingFkRelations = new List<SqlServerForeignKeyCodeModel>();
+                var nonExistingReferencingFkRelations = new List<SqlServerForeignKeyCodeModel>();
                 foreach (var fk in t.ForeignKeys)
                 {
                     if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Any())
@@ -728,7 +914,7 @@ namespace GeneratR.Database.SqlServer
 
                     foreach (var fk in t.ReferencingForeignKeys)
                     {
-                        if (fk.DbObject.RelationshipType == Schema.ForeignKeyRelationshipType.OneToOne)
+                        if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToOne)
                         {
                             fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(fk.DbObject.FromName));
                             fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
@@ -826,7 +1012,7 @@ namespace GeneratR.Database.SqlServer
                         // Handle PropertyName/Type depending on type of relationship + clean names.
                         foreach (var fk in fks)
                         {
-                            if (fk.DbObject.RelationshipType == Schema.ForeignKeyRelationshipType.OneToOne)
+                            if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToOne)
                             {
                                 fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(fk.PropertyName));
                             }
@@ -845,16 +1031,11 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        private string ParseSelfReferencingForeignKeyName(Schema.ForeignKey fk)
+        private string ParseSelfReferencingForeignKeyName(ForeignKey fk)
         {
             var parsed = string.Concat(fk.FromColumns.Select(x => RemoveRelationalColumnSuffix(x.ColumnName)));
             parsed += fk.ToName;
             return parsed;
-        }
-
-        protected virtual string RemoveRelationalColumnSuffix(string columnName)
-        {
-            return RemoveRelationalColumnSuffixRegex.Replace(columnName, string.Empty);
         }
 
         protected virtual string CreateForeignKeyCollectionTypeDotNetString(ForeignKeyCollectionType collectionType, string elementType)
@@ -875,19 +1056,67 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected string ConvertDataTypeToDotNetType(string sqlDataType, bool nullable, bool isTableType = false)
-            => Settings.TypeMapper.ConvertDataTypeToDotNetType(sqlDataType, nullable, isTableType);
+        protected string BuildObjectClassName(CodeModelSettingsBase objSettings, string objectName)
+        {
+            if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+            {
+                return DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(objectName));
+            }
+            else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+            {
+                return DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(objectName));
+            }
+            else
+            {
+                return DotNetGenerator.GetAsValidDotNetName(objectName);
+            }
+        }
 
-        protected string ConvertDbParameterToDotNetType(Schema.Parameter p)
-            => Settings.TypeMapper.ConvertDbParameterToDotNetType(p);
+        protected string BuildObjectNamespace(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+        {
+            var ns = Settings.RootNamespace?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(objSettings.Namespace))
+            {
+                if (!objSettings.Namespace.StartsWith(".", StringComparison.OrdinalIgnoreCase))
+                {
+                    ns += ".";
+                }
+                ns += objSettings.Namespace.Trim();
+            }
 
-        protected string ConvertDataTypeToDbType(string sqlDataType, bool isTableType = false)
-            => Settings.TypeMapper.ConvertDataTypeToDbType(sqlDataType, isTableType);
+            if (className != null)
+            {
+                ns = ns.Replace("{object}", className);
+            }
 
-        protected string ConvertDataTypeToSqlDbType(string sqlDataType, bool isTableType = false)
-            => Settings.TypeMapper.ConvertDataTypeToSqlDbType(sqlDataType, isTableType);
+            if (schema != null)
+            {
+                ns = ns.Replace("{schema}", schema);
+            }
 
-        protected void ParseSqlServerDataType(string sqlDataType, bool nullable, out string dotNetType, out string dbType, out string sqlDbType)
-            => Settings.TypeMapper.ParseSqlServerDataType(sqlDataType, nullable, out dotNetType, out dbType, out sqlDbType);
+            return ns;
+        }
+
+        protected string BuildObjectOutputFolderPath(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+        {
+            // TODO: Consider supporting "rooted/absoluted" objSettings.OutputFolderPath
+            var path = Settings.RootOutputFolderPath?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(objSettings.OutputFolderPath))
+            {
+                path = Path.Combine(path, objSettings.OutputFolderPath);
+            }
+
+            if (className != null)
+            {
+                path = path.Replace("{object}", className);
+            }
+
+            if (schema != null)
+            {
+                path = path.Replace("{schema}", schema);
+            }
+
+            return path;
+        }
     }
 }

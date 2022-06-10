@@ -1,10 +1,9 @@
-﻿using GeneratR.DotNet;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerSchemaGeneratorSettings
+    public class SqlServerSchemaGenerationSettings
     {
         private SqlServerTableSettings _table;
         private SqlServerViewSettings _view;
@@ -13,26 +12,9 @@ namespace GeneratR.Database.SqlServer
         private SqlServerScalarFunctionSettings _scalarFunction;
         private SqlServerStoredProcedureSettings _storedProcedure;
 
-        public SqlServerSchemaGeneratorSettings(DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
-           : this(DotNetGenerator.Create(dotNetLanguage))
+        public SqlServerSchemaGenerationSettings()
         {
         }
-
-        public SqlServerSchemaGeneratorSettings(DotNetGenerator dotNetGenerator)
-        {
-            DotNetGenerator = dotNetGenerator;
-            TypeMapper = new SqlServerTypeMapper(dotNetGenerator);
-            Table = new SqlServerTableSettings();
-            View = new SqlServerViewSettings();
-            TableFunction = new SqlServerTableFunctionSettings();
-            ScalarFunction = new SqlServerScalarFunctionSettings();
-            StoredProcedure = new SqlServerStoredProcedureSettings();
-            TableType = new SqlServerTableTypeSettings();
-        }
-
-        public DotNetGenerator DotNetGenerator { get; }
-
-        public SqlServerTypeMapper TypeMapper { get; }
 
         /// <summary>
         /// Inherited from ConnectionString if not set.
@@ -51,6 +33,10 @@ namespace GeneratR.Database.SqlServer
         public ICollection<string> IncludeObjects { get; set; } = new List<string>();
 
         public ICollection<string> ExcludeObjects { get; set; } = new List<string>();
+
+        public string RootNamespace { get; set; } = string.Empty;
+
+        public string RootOutputFolderPath { get; set; } = string.Empty;
 
         public SqlServerTableSettings Table { get { return _table; } set { _table = value ?? new SqlServerTableSettings(); } }
 
