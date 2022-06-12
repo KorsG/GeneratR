@@ -6,11 +6,11 @@ namespace GeneratR.Database.SqlServer.Templates
 {
     public class TableTypeTemplate : StringTemplateBase
     {
-        private readonly SqlServerTableTypeCodeModel _model;
+        private readonly TableTypeCodeModel _model;
         private readonly DotNetGenerator _dotNet;
         private readonly SqlServerTypeMapper _typeMapper;
 
-        public TableTypeTemplate(SqlServerTableTypeCodeModel model)
+        public TableTypeTemplate(TableTypeCodeModel model)
         {
             _model = model;
             _dotNet = _model.DotNetGenerator;

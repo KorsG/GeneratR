@@ -5,12 +5,12 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerSchemaGenerationSettings
     {
-        private SqlServerTableSettings _table;
-        private SqlServerViewSettings _view;
-        private SqlServerTableFunctionSettings _tableFunction;
-        private SqlServerTableTypeSettings _tableType;
-        private SqlServerScalarFunctionSettings _scalarFunction;
-        private SqlServerStoredProcedureSettings _storedProcedure;
+        private TableSettings _table;
+        private ViewSettings _view;
+        private TableFunctionSettings _tableFunction;
+        private TableTypeSettings _tableType;
+        private FunctionSettings _scalarFunction;
+        private StoredProcedureSettings _storedProcedure;
 
         public SqlServerSchemaGenerationSettings()
         {
@@ -38,16 +38,16 @@ namespace GeneratR.Database.SqlServer
 
         public string RootOutputFolderPath { get; set; } = string.Empty;
 
-        public SqlServerTableSettings Table { get { return _table; } set { _table = value ?? new SqlServerTableSettings(); } }
+        public TableSettings Table { get { return _table; } set { _table = value ?? new TableSettings(); } }
 
-        public SqlServerViewSettings View { get { return _view; } set { _view = value ?? new SqlServerViewSettings(); } }
+        public ViewSettings View { get { return _view; } set { _view = value ?? new ViewSettings(); } }
 
-        public SqlServerTableFunctionSettings TableFunction { get { return _tableFunction; } set { _tableFunction = value ?? new SqlServerTableFunctionSettings(); } }
+        public TableFunctionSettings TableFunction { get { return _tableFunction; } set { _tableFunction = value ?? new TableFunctionSettings(); } }
 
-        public SqlServerScalarFunctionSettings ScalarFunction { get { return _scalarFunction; } set { _scalarFunction = value ?? new SqlServerScalarFunctionSettings(); } }
+        public FunctionSettings ScalarFunction { get { return _scalarFunction; } set { _scalarFunction = value ?? new FunctionSettings(); } }
 
-        public SqlServerStoredProcedureSettings StoredProcedure { get { return _storedProcedure; } set { _storedProcedure = value ?? new SqlServerStoredProcedureSettings(); } }
+        public StoredProcedureSettings StoredProcedure { get { return _storedProcedure; } set { _storedProcedure = value ?? new StoredProcedureSettings(); } }
 
-        public SqlServerTableTypeSettings TableType { get { return _tableType; } set { _tableType = value ?? new SqlServerTableTypeSettings(); } }
+        public TableTypeSettings TableType { get { return _tableType; } set { _tableType = value ?? new TableTypeSettings(); } }
     }
 }

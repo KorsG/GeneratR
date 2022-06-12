@@ -2,15 +2,15 @@
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerStoredProcedureSettings : CodeModelSettingsBase
+    public class StoredProcedureSettings : CodeModelSettingsBase
     {
-        public SqlServerStoredProcedureSettings()
+        public StoredProcedureSettings()
         {
         }
 
-        public SqlServerStoredProcedureSettings Clone()
+        public StoredProcedureSettings Clone()
         {
-            return (SqlServerStoredProcedureSettings)MemberwiseClone();
+            return (StoredProcedureSettings)MemberwiseClone();
         }
 
         /// <summary>

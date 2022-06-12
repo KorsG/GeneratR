@@ -4,25 +4,25 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerViewCodeModel : DbObjectClassCodeModel<Schema.View>
+    public class ViewCodeModel : DbObjectClassCodeModel<Schema.View>
     {
-        public SqlServerViewCodeModel(Schema.View dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
+        public ViewCodeModel(Schema.View dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
             : base(dbObject, dotNetGenerator)
         {
-            Columns = new List<SqlServerColumnCodeModel>();
+            Columns = new List<ColumnCodeModel>();
             TypeMapper = typeMapper;
         }
 
         public SqlServerTypeMapper TypeMapper { get; }
 
-        public List<SqlServerColumnCodeModel> Columns { get; set; }
+        public List<ColumnCodeModel> Columns { get; set; }
 
-        public SqlServerColumnCodeModel GetColumn(string name)
+        public ColumnCodeModel GetColumn(string name)
         {
             return Columns?.FirstOrDefault(x => x.DbObject.Name == name);
         }
 
-        public SqlServerViewCodeModel WithColumn(string name, Action<SqlServerColumnCodeModel> action)
+        public ViewCodeModel WithColumn(string name, Action<ColumnCodeModel> action)
         {
             if (action != null)
             {

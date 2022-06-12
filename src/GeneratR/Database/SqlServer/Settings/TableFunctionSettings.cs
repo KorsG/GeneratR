@@ -2,15 +2,15 @@
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerViewSettings : CodeModelSettingsBase
+    public class TableFunctionSettings : CodeModelSettingsBase
     {
-        public SqlServerViewSettings()
+        public TableFunctionSettings()
         {
         }
 
-        public SqlServerViewSettings Clone()
+        public TableFunctionSettings Clone()
         {
-            return (SqlServerViewSettings)MemberwiseClone();
+            return (TableFunctionSettings)MemberwiseClone();
         }
 
         public DotNetModifierKeyword ColumnModifiers { get; set; } = DotNetModifierKeyword.Public;

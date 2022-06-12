@@ -6,27 +6,27 @@ using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerTableFunctionCodeModel : DbObjectClassCodeModel<Schema.TableFunction>
+    public class TableFunctionCodeModel : DbObjectClassCodeModel<Schema.TableFunction>
     {
-        public SqlServerTableFunctionCodeModel(Schema.TableFunction dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
+        public TableFunctionCodeModel(Schema.TableFunction dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
             : base(dbObject, dotNetGenerator)
         {
-            Columns = new List<SqlServerColumnCodeModel>();
-            Parameters = new List<SqlServerParameterCodeModel>();
+            Columns = new List<ColumnCodeModel>();
+            Parameters = new List<ParameterCodeModel>();
             TypeMapper = typeMapper;
         }
         public SqlServerTypeMapper TypeMapper { get; }
 
-        public List<SqlServerColumnCodeModel> Columns { get; set; }
+        public List<ColumnCodeModel> Columns { get; set; }
 
-        public List<SqlServerParameterCodeModel> Parameters { get; set; }
+        public List<ParameterCodeModel> Parameters { get; set; }
 
-        public SqlServerColumnCodeModel GetColumn(string name)
+        public ColumnCodeModel GetColumn(string name)
         {
             return Columns?.FirstOrDefault(x => x.DbObject.Name == name);
         }
 
-        public SqlServerTableFunctionCodeModel WithColumn(string name, Action<SqlServerColumnCodeModel> action)
+        public TableFunctionCodeModel WithColumn(string name, Action<ColumnCodeModel> action)
         {
             if (action != null)
             {

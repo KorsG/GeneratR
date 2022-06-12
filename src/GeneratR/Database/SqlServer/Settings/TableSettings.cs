@@ -2,15 +2,15 @@
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerTableSettings : CodeModelSettingsBase
+    public class TableSettings : CodeModelSettingsBase
     {
-        public SqlServerTableSettings()
+        public TableSettings()
         {
         }
 
-        public SqlServerTableSettings Clone()
+        public TableSettings Clone()
         {
-            return (SqlServerTableSettings)MemberwiseClone();
+            return (TableSettings)MemberwiseClone();
         }
 
         public bool GenerateForeignKeys { get; set; }

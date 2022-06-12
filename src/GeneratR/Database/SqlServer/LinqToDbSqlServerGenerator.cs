@@ -163,7 +163,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        private void AddColumnAttributes(SqlServerColumnCodeModel col)
+        private void AddColumnAttributes(ColumnCodeModel col)
         {
             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
 

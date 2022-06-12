@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerParameterCodeModel : DbObjectPropertyCodeModel<Schema.Parameter>
+    public class ParameterCodeModel : DbObjectPropertyCodeModel<Schema.Parameter>
     {
-        public SqlServerParameterCodeModel(Schema.Parameter dbObject)
+        public ParameterCodeModel(Schema.Parameter dbObject)
             : base(dbObject)
         {
         }

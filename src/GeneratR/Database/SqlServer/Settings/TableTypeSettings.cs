@@ -2,15 +2,15 @@
 
 namespace GeneratR.Database.SqlServer
 {
-    public class SqlServerTableTypeSettings : CodeModelSettingsBase
+    public class TableTypeSettings : CodeModelSettingsBase
     {
-        public SqlServerTableTypeSettings()
+        public TableTypeSettings()
         {
         }
 
-        public SqlServerTableTypeSettings Clone()
+        public TableTypeSettings Clone()
         {
-            return (SqlServerTableTypeSettings)MemberwiseClone();
+            return (TableTypeSettings)MemberwiseClone();
         }
 
         public bool AddSqlDataRecordMappings { get; set; }

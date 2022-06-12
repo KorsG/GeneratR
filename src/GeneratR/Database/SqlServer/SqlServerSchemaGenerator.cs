@@ -191,9 +191,9 @@ namespace GeneratR.Database.SqlServer
 
         #region GenerateCode functions
 
-        public Func<SqlServerTableCodeModel, string> GenerateTableCodeFunc { get; set; } = null;
+        public Func<TableCodeModel, string> GenerateTableCodeFunc { get; set; } = null;
 
-        protected virtual string GenerateTableCode(SqlServerTableCodeModel model)
+        protected virtual string GenerateTableCode(TableCodeModel model)
         {
             var code = GenerateTableCodeFunc?.Invoke(model);
             if (code == null)
@@ -203,9 +203,9 @@ namespace GeneratR.Database.SqlServer
             return code;
         }
 
-        public Func<SqlServerViewCodeModel, string> GenerateViewCodeFunc { get; set; } = null;
+        public Func<ViewCodeModel, string> GenerateViewCodeFunc { get; set; } = null;
 
-        protected virtual string GenerateViewCode(SqlServerViewCodeModel model)
+        protected virtual string GenerateViewCode(ViewCodeModel model)
         {
             var code = GenerateViewCodeFunc?.Invoke(model);
             if (code == null)
@@ -215,9 +215,9 @@ namespace GeneratR.Database.SqlServer
             return code;
         }
 
-        public Func<SqlServerTableFunctionCodeModel, string> GenerateTableFunctionCodeFunc { get; set; } = null;
+        public Func<TableFunctionCodeModel, string> GenerateTableFunctionCodeFunc { get; set; } = null;
 
-        protected virtual string GenerateTableFunctionCode(SqlServerTableFunctionCodeModel model)
+        protected virtual string GenerateTableFunctionCode(TableFunctionCodeModel model)
         {
             var code = GenerateTableFunctionCodeFunc?.Invoke(model);
             if (code == null)
@@ -227,9 +227,9 @@ namespace GeneratR.Database.SqlServer
             return code;
         }
 
-        public Func<SqlServerTableTypeCodeModel, string> GenerateTableTypeCodeFunc { get; set; } = null;
+        public Func<TableTypeCodeModel, string> GenerateTableTypeCodeFunc { get; set; } = null;
 
-        protected virtual string GenerateTableTypeCode(SqlServerTableTypeCodeModel model)
+        protected virtual string GenerateTableTypeCode(TableTypeCodeModel model)
         {
             var code = GenerateTableTypeCodeFunc?.Invoke(model);
             if (code == null)
@@ -239,9 +239,9 @@ namespace GeneratR.Database.SqlServer
             return code;
         }
 
-        public Func<SqlServerStoredProcedureCodeModel, string> GenerateStoredProcedureCodeFunc { get; set; } = null;
+        public Func<StoredProcedureCodeModel, string> GenerateStoredProcedureCodeFunc { get; set; } = null;
 
-        protected virtual string GenerateStoredProcedureCode(SqlServerStoredProcedureCodeModel model)
+        protected virtual string GenerateStoredProcedureCode(StoredProcedureCodeModel model)
         {
             var code = GenerateStoredProcedureCodeFunc?.Invoke(model);
             if (code == null)
@@ -256,9 +256,9 @@ namespace GeneratR.Database.SqlServer
         #region Apply/Get settings
 
         /// <summary>Apply additional per object settings.</summary>
-        public Action<SqlServerTableSettings, Table> ApplyTableSettings { get; set; } = null;
+        public Action<TableSettings, Table> ApplyTableSettings { get; set; } = null;
 
-        protected virtual SqlServerTableSettings GetTableSettings(Table obj)
+        protected virtual TableSettings GetTableSettings(Table obj)
         {
             var objSettings = Settings.Table;
             if (ApplyTableSettings != null)
@@ -270,9 +270,9 @@ namespace GeneratR.Database.SqlServer
         }
 
         /// <summary>Apply additional per object settings.</summary>
-        public Action<SqlServerViewSettings, View> ApplyViewSettings { get; set; } = null;
+        public Action<ViewSettings, View> ApplyViewSettings { get; set; } = null;
 
-        protected virtual SqlServerViewSettings GetViewSettings(View obj)
+        protected virtual ViewSettings GetViewSettings(View obj)
         {
             var objSettings = Settings.View;
             if (ApplyViewSettings != null)
@@ -284,9 +284,9 @@ namespace GeneratR.Database.SqlServer
         }
 
         /// <summary>Apply additional per object settings.</summary>
-        public Action<SqlServerTableFunctionSettings, TableFunction> ApplyTableFunctionSettings { get; set; } = null;
+        public Action<TableFunctionSettings, TableFunction> ApplyTableFunctionSettings { get; set; } = null;
 
-        protected virtual SqlServerTableFunctionSettings GetTableFunctionSettings(TableFunction obj)
+        protected virtual TableFunctionSettings GetTableFunctionSettings(TableFunction obj)
         {
             var objSettings = Settings.TableFunction;
             if (ApplyTableFunctionSettings != null)
@@ -298,9 +298,9 @@ namespace GeneratR.Database.SqlServer
         }
 
         /// <summary>Apply additional per object settings.</summary>
-        public Action<SqlServerTableTypeSettings, TableType> ApplyTableTypeSettings { get; set; } = null;
+        public Action<TableTypeSettings, TableType> ApplyTableTypeSettings { get; set; } = null;
 
-        protected virtual SqlServerTableTypeSettings GetTableTypeSettings(TableType obj)
+        protected virtual TableTypeSettings GetTableTypeSettings(TableType obj)
         {
             var objSettings = Settings.TableType;
             if (ApplyTableTypeSettings != null)
@@ -312,9 +312,9 @@ namespace GeneratR.Database.SqlServer
         }
 
         /// <summary>Apply additional per object settings.</summary>
-        public Action<SqlServerStoredProcedureSettings, StoredProcedure> ApplyStoredProcedureSettings { get; set; } = null;
+        public Action<StoredProcedureSettings, StoredProcedure> ApplyStoredProcedureSettings { get; set; } = null;
 
-        protected virtual SqlServerStoredProcedureSettings GetStoredProcedureSettings(StoredProcedure obj)
+        protected virtual StoredProcedureSettings GetStoredProcedureSettings(StoredProcedure obj)
         {
             var objSettings = Settings.StoredProcedure;
             if (ApplyStoredProcedureSettings != null)
@@ -329,9 +329,9 @@ namespace GeneratR.Database.SqlServer
 
         #region Build functions
 
-        protected virtual List<SqlServerTableCodeModel> BuildTables(IEnumerable<Table> dbTypes)
+        protected virtual List<TableCodeModel> BuildTables(IEnumerable<Table> dbTypes)
         {
-            var configs = new List<SqlServerTableCodeModel>();
+            var models = new List<TableCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
@@ -348,7 +348,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     GenerateForeignKeys = objSettings.GenerateForeignKeys,
@@ -366,7 +366,7 @@ namespace GeneratR.Database.SqlServer
                 // Table columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnCodeModel(col);
+                    var c = new ColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -382,39 +382,40 @@ namespace GeneratR.Database.SqlServer
                 // Table foreign keys.
                 foreach (var fk in t.ForeignKeys)
                 {
-                    var f = new SqlServerForeignKeyCodeModel(fk)
+                    var f = new ForeignKeyCodeModel(fk)
                     {
                         DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ForeignKeys.Add(f);
                 }
+
                 foreach (var fk in t.ReferencingForeignKeys)
                 {
-                    var f = new SqlServerForeignKeyCodeModel(fk)
+                    var f = new ForeignKeyCodeModel(fk)
                     {
                         DotNetModifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ReferencingForeignKeys.Add(f);
                 }
 
-                configs.Add(o);
+                models.Add(o);
             }
 
             // Foreign key properties and relations must be handled after tables have been parsed, because it needs info from all tables in the collection to parse correctly.
-            SetTableCollectionForeignKeyProperties(configs);
+            SetTableCollectionForeignKeyProperties(models);
 
             // Add after foreign key parsing.
-            foreach (var o in configs.Where(x => x.AddDataAnnotationAttributes))
+            foreach (var o in models.Where(x => x.AddDataAnnotationAttributes))
             {
                 AddTableDataAnnotationAttributes(o);
             }
 
-            return configs;
+            return models;
         }
 
-        protected virtual List<SqlServerViewCodeModel> BuildViews(IEnumerable<View> dbTypes)
+        protected virtual List<ViewCodeModel> BuildViews(IEnumerable<View> dbTypes)
         {
-            var configs = new List<SqlServerViewCodeModel>();
+            var configs = new List<ViewCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
@@ -431,7 +432,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetViewSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerViewCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new ViewCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -459,7 +460,7 @@ namespace GeneratR.Database.SqlServer
                 // View columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnCodeModel(col);
+                    var c = new ColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -483,9 +484,9 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerTableTypeCodeModel> BuildTableTypes(IEnumerable<TableType> dbTypes)
+        protected virtual List<TableTypeCodeModel> BuildTableTypes(IEnumerable<TableType> dbTypes)
         {
-            var configs = new List<SqlServerTableTypeCodeModel>();
+            var configs = new List<TableTypeCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
@@ -502,7 +503,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableTypeSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableTypeCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableTypeCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -519,7 +520,7 @@ namespace GeneratR.Database.SqlServer
                 // Columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnCodeModel(col);
+                    var c = new ColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -543,9 +544,9 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerTableFunctionCodeModel> BuildTableFunctions(IEnumerable<TableFunction> dbTypes)
+        protected virtual List<TableFunctionCodeModel> BuildTableFunctions(IEnumerable<TableFunction> dbTypes)
         {
-            var configs = new List<SqlServerTableFunctionCodeModel>();
+            var configs = new List<TableFunctionCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
@@ -562,7 +563,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableFunctionSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerTableFunctionCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableFunctionCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -578,7 +579,7 @@ namespace GeneratR.Database.SqlServer
                 // Function columns.
                 foreach (var col in t.Columns)
                 {
-                    var c = new SqlServerColumnCodeModel(col);
+                    var c = new ColumnCodeModel(col);
 
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
@@ -594,7 +595,7 @@ namespace GeneratR.Database.SqlServer
                 // Function parameters.
                 foreach (var param in t.Parameters)
                 {
-                    var p = new SqlServerParameterCodeModel(param);
+                    var p = new ParameterCodeModel(param);
                     p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
                     p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
                     o.Parameters.Add(p);
@@ -611,9 +612,9 @@ namespace GeneratR.Database.SqlServer
             return configs;
         }
 
-        protected virtual List<SqlServerStoredProcedureCodeModel> BuildStoredProcedures(IEnumerable<StoredProcedure> dbTypes)
+        protected virtual List<StoredProcedureCodeModel> BuildStoredProcedures(IEnumerable<StoredProcedure> dbTypes)
         {
-            var configs = new List<SqlServerStoredProcedureCodeModel>();
+            var configs = new List<StoredProcedureCodeModel>();
 
             if (Settings.IncludeObjects?.Any() == true)
             {
@@ -630,7 +631,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetStoredProcedureSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new SqlServerStoredProcedureCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new StoredProcedureCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
@@ -650,7 +651,7 @@ namespace GeneratR.Database.SqlServer
                 {
                     foreach (var colr in t.ResultColumns)
                     {
-                        var c = new SqlServerStoredProcedureResultColumnCodeModel(colr);
+                        var c = new StoredProcedureResultColumnCodeModel(colr);
                         c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
                         c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                         c.DotNetModifier = objSettings.ColumnModifiers;
@@ -661,7 +662,7 @@ namespace GeneratR.Database.SqlServer
                 // StoredProcedure parameters
                 foreach (var param in t.Parameters)
                 {
-                    var p = new SqlServerParameterCodeModel(param);
+                    var p = new ParameterCodeModel(param);
                     p.PropertyName = DotNetGenerator.GetAsValidDotNetName(p.DbObject.Name);
                     p.PropertyType = TypeMapper.ConvertDbParameterToDotNetType(p.DbObject);
                     o.Parameters.Add(p);
@@ -682,7 +683,7 @@ namespace GeneratR.Database.SqlServer
 
         #region AddDataAnnotations functions
 
-        protected virtual void AddTableDataAnnotationAttributes(SqlServerTableCodeModel config)
+        protected virtual void AddTableDataAnnotationAttributes(TableCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -695,7 +696,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddViewDataAnnotationAttributes(SqlServerViewCodeModel config)
+        protected virtual void AddViewDataAnnotationAttributes(ViewCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -708,7 +709,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddTableFunctionDataAnnotationAttributes(SqlServerTableFunctionCodeModel config)
+        protected virtual void AddTableFunctionDataAnnotationAttributes(TableFunctionCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -721,7 +722,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddTableTypeDataAnnotationAttributes(SqlServerTableTypeCodeModel config)
+        protected virtual void AddTableTypeDataAnnotationAttributes(TableTypeCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -734,7 +735,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddStoredProcedureDataAnnotationAttributes(SqlServerStoredProcedureCodeModel config)
+        protected virtual void AddStoredProcedureDataAnnotationAttributes(StoredProcedureCodeModel config)
         {
             if (!config.DbObject.Name.Equals(config.ClassName, StringComparison.Ordinal) || !config.DbObject.Schema.Equals("dbo", StringComparison.Ordinal))
             {
@@ -752,7 +753,7 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddColumnDataAnnotationAttributes(SqlServerColumnCodeModel config)
+        protected virtual void AddColumnDataAnnotationAttributes(ColumnCodeModel config)
         {
             var col = config.DbObject;
 
@@ -836,11 +837,11 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected virtual void AddStoredProcedureParameterDataAnnotationAttributes(SqlServerParameterCodeModel col)
+        protected virtual void AddStoredProcedureParameterDataAnnotationAttributes(ParameterCodeModel col)
         {
         }
 
-        protected virtual void AddStoredProcedureColumnDataAnnotationAttributes(SqlServerStoredProcedureResultColumnCodeModel col)
+        protected virtual void AddStoredProcedureColumnDataAnnotationAttributes(StoredProcedureResultColumnCodeModel col)
         {
             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
             if (hasNameDiff)
@@ -857,7 +858,7 @@ namespace GeneratR.Database.SqlServer
             return RemoveRelationalColumnSuffixRegex.Replace(columnName, string.Empty);
         }
 
-        private void SetTableCollectionForeignKeyProperties(IEnumerable<SqlServerTableCodeModel> tables)
+        private void SetTableCollectionForeignKeyProperties(IEnumerable<TableCodeModel> tables)
         {
             foreach (var t in tables)
             {
@@ -868,8 +869,8 @@ namespace GeneratR.Database.SqlServer
                 var foreignKeyNamingStrategy = objSettings.ForeignKeyNamingStrategy;
 
                 // Remove all foreign keys from the collection if the table they reference to/from does not exist in the provided table collection.
-                var nonExistingFkRelations = new List<SqlServerForeignKeyCodeModel>();
-                var nonExistingReferencingFkRelations = new List<SqlServerForeignKeyCodeModel>();
+                var nonExistingFkRelations = new List<ForeignKeyCodeModel>();
+                var nonExistingReferencingFkRelations = new List<ForeignKeyCodeModel>();
                 foreach (var fk in t.ForeignKeys)
                 {
                     if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Any())

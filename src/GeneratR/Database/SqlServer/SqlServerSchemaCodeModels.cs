@@ -8,22 +8,22 @@ namespace GeneratR.Database.SqlServer
     {
         public SqlServerSchemaCodeModels()
         {
-            Tables = new List<SqlServerTableCodeModel>();
-            Views = new List<SqlServerViewCodeModel>();
-            TableFunctions = new List<SqlServerTableFunctionCodeModel>();
-            StoredProcedures = new List<SqlServerStoredProcedureCodeModel>();
-            TableTypes = new List<SqlServerTableTypeCodeModel>();
+            Tables = new List<TableCodeModel>();
+            Views = new List<ViewCodeModel>();
+            TableFunctions = new List<TableFunctionCodeModel>();
+            StoredProcedures = new List<StoredProcedureCodeModel>();
+            TableTypes = new List<TableTypeCodeModel>();
         }
 
-        public List<SqlServerTableCodeModel> Tables { get; }
+        public List<TableCodeModel> Tables { get; }
 
-        public List<SqlServerViewCodeModel> Views { get; }
+        public List<ViewCodeModel> Views { get; }
 
-        public List<SqlServerTableFunctionCodeModel> TableFunctions { get; }
+        public List<TableFunctionCodeModel> TableFunctions { get; }
 
-        public List<SqlServerStoredProcedureCodeModel> StoredProcedures { get; }
+        public List<StoredProcedureCodeModel> StoredProcedures { get; }
 
-        public List<SqlServerTableTypeCodeModel> TableTypes { get; }
+        public List<TableTypeCodeModel> TableTypes { get; }
 
         /// <summary>
         /// Get distinct collection of Schema names from currently loaded collections.
@@ -53,17 +53,17 @@ namespace GeneratR.Database.SqlServer
                 .ToList();
         }
 
-        public SqlServerTableCodeModel GetTable(string schema, string name)
+        public TableCodeModel GetTable(string schema, string name)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
         }
 
-        public SqlServerTableCodeModel GetTable(string fullName)
+        public TableCodeModel GetTable(string fullName)
         {
             return Tables?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerSchemaCodeModels WithTable(string fullName, Action<SqlServerTableCodeModel> action)
+        public SqlServerSchemaCodeModels WithTable(string fullName, Action<TableCodeModel> action)
         {
             if (action != null)
             {
@@ -76,7 +76,7 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerSchemaCodeModels WithTable(string schema, string name, Action<SqlServerTableCodeModel> action)
+        public SqlServerSchemaCodeModels WithTable(string schema, string name, Action<TableCodeModel> action)
         {
             if (action != null)
             {
@@ -89,12 +89,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerViewCodeModel GetView(string fullName)
+        public ViewCodeModel GetView(string fullName)
         {
             return Views?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerSchemaCodeModels WithView(string fullName, Action<SqlServerViewCodeModel> action)
+        public SqlServerSchemaCodeModels WithView(string fullName, Action<ViewCodeModel> action)
         {
             if (action != null)
             {
@@ -107,12 +107,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerTableFunctionCodeModel GetTableFunction(string fullName)
+        public TableFunctionCodeModel GetTableFunction(string fullName)
         {
             return TableFunctions?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerSchemaCodeModels WithTableFunction(string fullName, Action<SqlServerTableFunctionCodeModel> action)
+        public SqlServerSchemaCodeModels WithTableFunction(string fullName, Action<TableFunctionCodeModel> action)
         {
             if (action != null)
             {
@@ -125,12 +125,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerStoredProcedureCodeModel GetStoredProcedure(string fullName)
+        public StoredProcedureCodeModel GetStoredProcedure(string fullName)
         {
             return StoredProcedures?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerSchemaCodeModels WithStoredProcedure(string fullName, Action<SqlServerStoredProcedureCodeModel> action)
+        public SqlServerSchemaCodeModels WithStoredProcedure(string fullName, Action<StoredProcedureCodeModel> action)
         {
             if (action != null)
             {
@@ -143,12 +143,12 @@ namespace GeneratR.Database.SqlServer
             return this;
         }
 
-        public SqlServerTableTypeCodeModel GetTableType(string fullName)
+        public TableTypeCodeModel GetTableType(string fullName)
         {
             return TableTypes?.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
-        public SqlServerSchemaCodeModels WithTableType(string fullName, Action<SqlServerTableTypeCodeModel> action)
+        public SqlServerSchemaCodeModels WithTableType(string fullName, Action<TableTypeCodeModel> action)
         {
             if (action != null)
             {
