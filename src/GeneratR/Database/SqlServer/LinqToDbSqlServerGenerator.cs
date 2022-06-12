@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using GeneratR;
-using GeneratR.Database.SqlServer;
 using GeneratR.Database.SqlServer.Schema;
 using GeneratR.DotNet;
 
@@ -34,14 +32,14 @@ namespace GeneratR.Database.SqlServer
                 return baseFiles;
             }
 
-            var dataContextCode = new SourceCodeFile()
+            var codeFile = new SourceCodeFile()
             {
                 FileName = $"{_settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
-                FolderPath = BuildObjectOutputFolderPath(_settings.DataConnection),
+                FolderPath = BuildObjectOutputFolderPath(_settings.DataConnection.OutputFolderPath),
                 Code = GenerateDataConnectionCode(schemaModels),
             };
 
-            return baseFiles.Concat(new[] { dataContextCode });
+            return baseFiles.Concat(new[] { codeFile });
         }
 
         public override void WriteCodeFiles(IEnumerable<SourceCodeFile> codeFiles)
@@ -54,9 +52,11 @@ namespace GeneratR.Database.SqlServer
             var templateModel = new LinqToDbDataConnectionCodeModel(DotNetGenerator, schemaModels)
             {
                 ClassName = _settings.DataConnection.ClassName,
-                Namespace = BuildObjectNamespace(_settings.DataConnection, _settings.DataConnection.ClassName),
-                InheritClassName = _settings.DataConnection.InheritClassName,
-                ImplementInterfaces = _settings.DataConnection.ImplementInterfaces,
+                Namespace = BuildObjectNamespace(_settings.DataConnection.Namespace, _settings.DataConnection.ClassName),
+                InheritClassName = _settings.DataConnection.InheritClass,
+                ImplementInterfaces = _settings.DataConnection.ImplementInterfaces ?? new List<string>(),
+                AddConstructor = _settings.DataConnection.AddConstructor,
+                DotNetModifier = _settings.DataConnection.Modifiers,
             };
 
             var template = new LinqToDbDataConnectionTemplate(templateModel);

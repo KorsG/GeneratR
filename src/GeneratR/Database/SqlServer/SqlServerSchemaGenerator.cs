@@ -1073,16 +1073,19 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected string BuildObjectNamespace(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+        private string BuildObjectNamespace(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+            => BuildObjectNamespace(objSettings.Namespace, className, schema);
+
+        protected string BuildObjectNamespace(string objNamespace, string className = null, string schema = null)
         {
             var ns = Settings.RootNamespace?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(objSettings.Namespace))
+            if (!string.IsNullOrWhiteSpace(objNamespace))
             {
-                if (!objSettings.Namespace.StartsWith(".", StringComparison.OrdinalIgnoreCase))
+                if (!objNamespace.StartsWith(".", StringComparison.OrdinalIgnoreCase))
                 {
                     ns += ".";
                 }
-                ns += objSettings.Namespace.Trim();
+                ns += objNamespace.Trim();
             }
 
             if (className != null)
@@ -1098,13 +1101,16 @@ namespace GeneratR.Database.SqlServer
             return ns;
         }
 
-        protected string BuildObjectOutputFolderPath(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+        private string BuildObjectOutputFolderPath(CodeModelSettingsBase objSettings, string className = null, string schema = null)
+            => BuildObjectOutputFolderPath(objSettings.OutputFolderPath, className, schema);
+
+        protected string BuildObjectOutputFolderPath(string objOutputFolderPath, string className = null, string schema = null)
         {
             // TODO: Consider supporting "rooted/absoluted" objSettings.OutputFolderPath
             var path = Settings.RootOutputFolderPath?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(objSettings.OutputFolderPath))
+            if (!string.IsNullOrWhiteSpace(objOutputFolderPath))
             {
-                path = Path.Combine(path, objSettings.OutputFolderPath);
+                path = Path.Combine(path, objOutputFolderPath);
             }
 
             if (className != null)
