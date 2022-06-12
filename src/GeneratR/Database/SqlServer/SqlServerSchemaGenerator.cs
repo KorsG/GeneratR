@@ -356,7 +356,7 @@ namespace GeneratR.Database.SqlServer
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
-                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
+                    ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
@@ -438,7 +438,7 @@ namespace GeneratR.Database.SqlServer
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
-                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
+                    ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
@@ -510,7 +510,7 @@ namespace GeneratR.Database.SqlServer
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     AddSqlDataRecordMappings = objSettings.AddSqlDataRecordMappings,
-                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
+                    ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
@@ -569,7 +569,7 @@ namespace GeneratR.Database.SqlServer
                     AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
-                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
+                    ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
@@ -639,7 +639,7 @@ namespace GeneratR.Database.SqlServer
                     InheritClassName = objSettings.InheritClass,
                     GenerateOutputParameters = objSettings.GenerateOutputParameters,
                     GenerateResultSet = objSettings.GenerateResultSet,
-                    ImplementInterfaces = objSettings.ImplementInterfaces ?? new List<string>(),
+                    ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
