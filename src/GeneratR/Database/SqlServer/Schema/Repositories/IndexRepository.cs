@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
 using Dapper;
 
 namespace GeneratR.Database.SqlServer.Schema
@@ -43,11 +41,9 @@ namespace GeneratR.Database.SqlServer.Schema
             }
 
             var sqlText = $"SELECT * FROM ({SqlQueries.SelectIndexes}) [t] {whereSql} ORDER BY [t].[ParentSchema], [t].[ParentName], [t].[ColumnOrdinalPosition]";
-            using (var conn = _schemaContext.GetConnection())
-            {
-                var data = conn.Query<Index>(sqlText, whereParams);
-                return data;
-            }
+            using var conn = _schemaContext.GetConnection();
+            var data = conn.Query<Index>(sqlText, whereParams);
+            return data;
         }
     }
 }

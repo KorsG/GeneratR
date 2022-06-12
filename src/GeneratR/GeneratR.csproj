@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452;net462;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,21 +19,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.60.6" />
+    <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-  </ItemGroup>
-
-  <!-- Conditionally obtain references for the .NET Framework 4.5.2 target -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
-  </ItemGroup>
-
-  <!-- Conditionally obtain references for the .NET Framework 4.6.2 target -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
-  </ItemGroup>
-
-  <!-- Conditionally obtain references for the .NET Standard 2.0 target -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+	<PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+	<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
   
 </Project>
