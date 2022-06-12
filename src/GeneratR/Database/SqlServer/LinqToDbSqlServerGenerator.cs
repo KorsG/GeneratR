@@ -32,11 +32,13 @@ namespace GeneratR.Database.SqlServer
                 return baseFiles;
             }
 
+            var codeModel = BuildDataConnectionCodeModel(schemaModels);
+
             var codeFile = new SourceCodeFile()
             {
                 FileName = $"{_settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
                 FolderPath = BuildObjectOutputFolderPath(_settings.DataConnection.OutputFolderPath),
-                Code = GenerateDataConnectionCode(schemaModels),
+                Code = GenerateDataConnectionCode(codeModel),
             };
 
             return baseFiles.Concat(new[] { codeFile });
@@ -47,9 +49,9 @@ namespace GeneratR.Database.SqlServer
             base.WriteCodeFiles(codeFiles);
         }
 
-        public virtual string GenerateDataConnectionCode(SqlServerSchemaCodeModels schemaModels)
+        protected virtual LinqToDbDataConnectionCodeModel BuildDataConnectionCodeModel(SqlServerSchemaCodeModels schemaModels)
         {
-            var templateModel = new LinqToDbDataConnectionCodeModel(DotNetGenerator, schemaModels)
+            var model = new LinqToDbDataConnectionCodeModel(DotNetGenerator, schemaModels)
             {
                 ClassName = _settings.DataConnection.ClassName,
                 Namespace = BuildObjectNamespace(_settings.DataConnection.Namespace, _settings.DataConnection.ClassName),
@@ -59,9 +61,19 @@ namespace GeneratR.Database.SqlServer
                 DotNetModifier = _settings.DataConnection.Modifiers,
             };
 
-            var template = new LinqToDbDataConnectionTemplate(templateModel);
+            return model;
+        }
 
-            return template.Generate();
+        public Func<LinqToDbDataConnectionCodeModel, string> GenerateDataConnectionCodeFunc { get; set; } = null;
+
+        public virtual string GenerateDataConnectionCode(LinqToDbDataConnectionCodeModel model)
+        {
+            var code = GenerateDataConnectionCodeFunc?.Invoke(model);
+            if (code == null)
+            {
+                code = new LinqToDbDataConnectionTemplate(model).Generate();
+            }
+            return code;
         }
 
         private void EnrichCodeModel(SqlServerSchemaCodeModels model)
