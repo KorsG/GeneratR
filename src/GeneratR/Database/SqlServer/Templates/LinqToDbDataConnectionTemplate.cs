@@ -41,6 +41,10 @@ namespace GeneratR.Database.SqlServer
                 WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, inheritClassName, _model.ImplementInterfaces));
                 using (IndentScope())
                 {
+                    if (_model.AddConstructor)
+                    {
+                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
+                    }
 
                     WriteLine("#region Tables");
                     foreach (var item in _schemaModels.Tables)
