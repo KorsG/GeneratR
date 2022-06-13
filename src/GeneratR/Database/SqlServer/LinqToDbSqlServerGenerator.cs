@@ -218,7 +218,7 @@ namespace GeneratR.Database.SqlServer
                     .SetOptionalArg("Precision", col.DbObject.Precision)
                     .SetOptionalArg("Scale", col.DbObject.Scale);
             }
-            else if (TypeMapper.DataTypeIsDateTime(col.DbObject))
+            else if (TypeMapper.DataTypeIsDateTimeWithScale(col.DbObject))
             {
                 columnAttr = columnAttr.SetOptionalArg("Scale", col.DbObject.Scale);
             }
