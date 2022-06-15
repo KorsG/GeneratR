@@ -16,6 +16,7 @@ namespace GeneratR.Database.SqlServer
     {
         protected static Regex RemoveRelationalColumnSuffixRegex = new Regex(@"(Id|No|Key|Code)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly SqlConnectionStringBuilder _connectionStringBuilder;
+        protected readonly SqlServerSchemaContext _schemaContext;
 
         public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
         {
@@ -29,6 +30,12 @@ namespace GeneratR.Database.SqlServer
             }
 
             DatabaseName = _connectionStringBuilder.InitialCatalog;
+
+            _schemaContext = new SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)
+            {
+                IncludeSchemas = Settings.IncludeSchemas ?? new HashSet<string>(),
+                ExcludeSchemas = Settings.ExcludeSchemas ?? new HashSet<string>(),
+            };
         }
 
         public DotNetGenerator DotNetGenerator { get; }
@@ -40,85 +47,77 @@ namespace GeneratR.Database.SqlServer
         public string DatabaseName { get; }
 
         /// <summary>
-        /// Execute generator steps: 1. LoadCodeModels -> 2. GenerateSourceCode -> 3. WriteCodeFiles
+        /// Execute generator steps: 1. LoadSchema -> 2. BuildCodeModels -> 3. GenerateSourceCode -> 4. WriteCodeFiles
         /// </summary>
         public virtual void Execute()
         {
-            var model = LoadCodeModels();
+            var schema = LoadSchema();
+            var model = BuildCodeModel(schema);
             var files = GenerateCodeFiles(model);
             WriteCodeFiles(files);
         }
 
-        public virtual SqlServerSchemaCodeModels LoadCodeModels()
+        public virtual SqlServerSchema LoadSchema()
         {
-            var schema = new SqlServerSchemaCodeModels();
+            var schema = _schemaContext.GetSchema(
+                includeTables: Settings.Table.Generate,
+                includeViews: Settings.View.Generate,
+                includeTableFunctions: Settings.TableFunction.Generate,
+                includeScalarFunctions: Settings.ScalarFunction.Generate,
+                includeStoredProcedures: Settings.StoredProcedure.Generate,
+                includeStoredProcedureResultColumns: Settings.StoredProcedure.GenerateResultSet,
+                includeTableTypes: Settings.TableType.Generate
+                );
 
-            var schemaContext = new SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)
-            {
-                IncludeSchemas = Settings.IncludeSchemas ?? new HashSet<string>(),
-                ExcludeSchemas = Settings.ExcludeSchemas ?? new HashSet<string>(),
-            };
-
-            // Tables.
-            if (Settings.Table.Generate)
-            {
-                var dbTables = schemaContext.Tables.GetAll();
-                if (dbTables.Any())
-                {
-                    schema.Tables.AddRange(BuildTables(dbTables));
-                }
-            }
-
-            // Views.
-            if (Settings.View.Generate)
-            {
-                var dbViews = schemaContext.Views.GetAll();
-                if (dbViews.Any())
-                {
-                    schema.Views.AddRange(BuildViews(dbViews));
-                }
-            }
-
-            // TableFunctions.
-            if (Settings.TableFunction.Generate)
-            {
-                var dbFuncs = schemaContext.TableFunctions.GetAll();
-                if (dbFuncs.Any())
-                {
-                    schema.TableFunctions.AddRange(BuildTableFunctions(dbFuncs));
-                }
-            }
-
-            // StoredProcedures.
-            if (Settings.StoredProcedure.Generate)
-            {
-                var dbProcs = schemaContext.StoredProcedures.GetAll(Settings.StoredProcedure.GenerateResultSet);
-                if (dbProcs.Any())
-                {
-                    schema.StoredProcedures.AddRange(BuildStoredProcedures(dbProcs));
-                }
-            }
-
-            // TableTypes.
-            if (Settings.TableType.Generate)
-            {
-                var dbTypes = schemaContext.TableTypes.GetAll();
-                if (dbTypes.Any())
-                {
-                    schema.TableTypes.AddRange(BuildTableTypes(dbTypes));
-                }
-            }
-
-            OnCodeModelsLoadedFunc(schema);
+            OnSchemaLoadedFunc?.Invoke(schema);
 
             return schema;
         }
 
-        public virtual IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels schemaModels)
+        public virtual SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
+        {
+            var codeModels = new SqlServerSchemaCodeModels();
+
+            // Tables.
+            if (schema.Tables.Any())
+            {
+                codeModels.Tables.AddRange(BuildTables(schema.Tables));
+            }
+
+            // Views.
+            if (schema.Views.Any())
+            {
+                codeModels.Views.AddRange(BuildViews(schema.Views));
+            }
+
+            // TableFunctions.
+            if (schema.TableFunctions.Any())
+            {
+                codeModels.TableFunctions.AddRange(BuildTableFunctions(schema.TableFunctions));
+            }
+
+            // StoredProcedures.
+            if (schema.StoredProcedures.Any())
+            {
+                codeModels.StoredProcedures.AddRange(BuildStoredProcedures(schema.StoredProcedures));
+            }
+
+            // TableTypes.
+            if (schema.TableTypes.Any())
+            {
+                codeModels.TableTypes.AddRange(BuildTableTypes(schema.TableTypes));
+            }
+
+            OnCodeModelsLoadedFunc?.Invoke(codeModels);
+
+            return codeModels;
+        }
+
+        public virtual IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
         {
             // TODO: FileName generation should be configurable/overrideable (func?)
 
-            foreach (var obj in schemaModels.Tables)
+            foreach (var obj in codeModels.Tables)
             {
                 yield return new SourceCodeFile()
                 {
@@ -128,7 +127,7 @@ namespace GeneratR.Database.SqlServer
                 };
             }
 
-            foreach (var obj in schemaModels.Views)
+            foreach (var obj in codeModels.Views)
             {
                 yield return new SourceCodeFile()
                 {
@@ -138,7 +137,7 @@ namespace GeneratR.Database.SqlServer
                 };
             }
 
-            foreach (var obj in schemaModels.TableFunctions)
+            foreach (var obj in codeModels.TableFunctions)
             {
                 yield return new SourceCodeFile()
                 {
@@ -148,7 +147,7 @@ namespace GeneratR.Database.SqlServer
                 };
             }
 
-            foreach (var obj in schemaModels.TableTypes)
+            foreach (var obj in codeModels.TableTypes)
             {
                 yield return new SourceCodeFile()
                 {
@@ -158,7 +157,7 @@ namespace GeneratR.Database.SqlServer
                 };
             }
 
-            foreach (var obj in schemaModels.StoredProcedures)
+            foreach (var obj in codeModels.StoredProcedures)
             {
                 yield return new SourceCodeFile()
                 {
@@ -186,6 +185,8 @@ namespace GeneratR.Database.SqlServer
                 File.WriteAllText(outputFilePath, cf.Code);
             }
         }
+
+        public Action<SqlServerSchema> OnSchemaLoadedFunc { get; set; } = null;
 
         public Action<SqlServerSchemaCodeModels> OnCodeModelsLoadedFunc { get; set; } = null;
 

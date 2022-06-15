@@ -5,12 +5,12 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerSchemaGenerationSettings
     {
-        private TableSettings _table;
-        private ViewSettings _view;
-        private TableFunctionSettings _tableFunction;
-        private TableTypeSettings _tableType;
-        private FunctionSettings _scalarFunction;
-        private StoredProcedureSettings _storedProcedure;
+        private TableSettings _table = new();
+        private ViewSettings _view = new();
+        private TableFunctionSettings _tableFunction = new();
+        private TableTypeSettings _tableType = new();
+        private FunctionSettings _scalarFunction = new();
+        private StoredProcedureSettings _storedProcedure = new();
 
         public SqlServerSchemaGenerationSettings()
         {

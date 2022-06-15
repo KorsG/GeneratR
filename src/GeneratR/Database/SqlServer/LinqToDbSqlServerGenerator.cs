@@ -16,23 +16,29 @@ namespace GeneratR.Database.SqlServer
             _settings = settings;
         }
 
-        public override SqlServerSchemaCodeModels LoadCodeModels()
+        public override SqlServerSchema LoadSchema()
         {
-            var schema = base.LoadCodeModels();
-            EnrichCodeModel(schema);
+            var schema = base.LoadSchema();
             return schema;
         }
 
-        public override IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels schemaModels)
+        public override SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
         {
-            var baseFiles = base.GenerateCodeFiles(schemaModels);
+            var codeModels = base.BuildCodeModel(schema);
+            EnrichCodeModel(codeModels);
+            return codeModels;
+        }
+
+        public override IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
+        {
+            var baseFiles = base.GenerateCodeFiles(codeModels);
 
             if (!_settings.DataConnection.Generate)
             {
                 return baseFiles;
             }
 
-            var codeModel = BuildDataConnectionCodeModel(schemaModels);
+            var codeModel = BuildDataConnectionCodeModel(codeModels);
 
             var codeFile = new SourceCodeFile()
             {

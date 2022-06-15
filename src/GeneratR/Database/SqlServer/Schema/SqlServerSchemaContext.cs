@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Schema
 {
@@ -25,6 +26,44 @@ namespace GeneratR.Database.SqlServer.Schema
         }
 
         public SqlConnection GetConnection() => new(_connectionString);
+
+        public SqlServerSchema GetSchema(bool includeTables = true, bool includeViews = true, bool includeTableFunctions = true, bool includeScalarFunctions = true, bool includeStoredProcedures = true, bool includeStoredProcedureResultColumns = true, bool includeTableTypes = true)
+        {
+            var schema = new SqlServerSchema();
+
+            if (includeTables)
+            {
+                schema.Tables = Tables.GetAll().ToList();
+            }
+
+            if (includeViews)
+            {
+                schema.Views = Views.GetAll().ToList();
+            }
+
+            if (includeTableFunctions)
+            {
+                schema.TableFunctions = TableFunctions.GetAll().ToList();
+            }
+
+            if (includeStoredProcedures)
+            {
+                schema.StoredProcedures = StoredProcedures.GetAll(includeStoredProcedureResultColumns).ToList();
+            }
+
+            if (includeTableTypes)
+            {
+                schema.TableTypes = TableTypes.GetAll().ToList();
+            }
+
+            if (includeScalarFunctions)
+            {
+                // TODO: Include scalar functions.
+            }
+
+
+            return schema;
+        }
 
         public ICollection<string> IncludeSchemas { get; set; } = new HashSet<string>();
 
