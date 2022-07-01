@@ -91,6 +91,7 @@ namespace GeneratR.Database.SqlServer
                     t.AddAttribute(DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Table")
                         .SetOptionalArg("Name", t.DbObject.Name, true)
                         .SetOptionalArg("Schema", t.DbObject.Schema, true)
+                        .SetOptionalArg("IsColumnAttributeRequired", false)
                         );
 
                     foreach (var col in t.Columns)
