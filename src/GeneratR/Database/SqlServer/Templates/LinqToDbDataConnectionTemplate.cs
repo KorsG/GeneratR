@@ -7,14 +7,15 @@ namespace GeneratR.Database.SqlServer
     {
         private readonly DotNetGenerator _dotNet;
         private readonly SqlServerSchemaCodeModels _schemaModels;
-        private readonly LinqToDbDataConnectionCodeModel _model;
 
         public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model)
         {
-            _model = model;
+            Model = model;
             _dotNet = model.DotNetGenerator;
             _schemaModels = model.SchemaModels;
         }
+
+        protected LinqToDbDataConnectionCodeModel Model { get; }
 
         public string Generate()
         {
@@ -31,20 +32,16 @@ namespace GeneratR.Database.SqlServer
             }
 
             WriteLine();
-            WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
+            WriteLine(_dotNet.CreateNamespaceStart(Model.Namespace));
             using (IndentScope())
             {
-                var classAsAbstract = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-                var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
-
-                var inheritClassName = string.IsNullOrWhiteSpace(_model.InheritClassName) ? "DataConnection" : _model.InheritClassName;
-                WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, inheritClassName, _model.ImplementInterfaces));
+                var classAsAbstract = Model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
+                var classAsPartial = Model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
+                var inheritClassName = string.IsNullOrWhiteSpace(Model.InheritClassName) ? "DataConnection" : Model.InheritClassName;
+                WriteLine(_dotNet.CreateClassStart(Model.ClassName, classAsPartial, classAsAbstract, inheritClassName, Model.ImplementInterfaces));
                 using (IndentScope())
                 {
-                    if (_model.AddConstructor)
-                    {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
-                    }
+                    WriteConstructors();
 
                     WriteLine("#region Tables");
                     foreach (var item in _schemaModels.Tables)
@@ -100,6 +97,14 @@ namespace GeneratR.Database.SqlServer
             WriteLine(_dotNet.CreateNamespaceEnd());
 
             return TemplateBuilder.ToString();
+        }
+
+        public virtual void WriteConstructors()
+        {
+            if (Model.AddConstructor)
+            {
+                WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, Model.ClassName));
+            }
         }
     }
 }
