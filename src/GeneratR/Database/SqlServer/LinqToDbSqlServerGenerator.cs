@@ -8,13 +8,16 @@ namespace GeneratR.Database.SqlServer
 {
     public class LinqToDbSqlServerGenerator : SqlServerSchemaGenerator
     {
-        private readonly LinqToDbSqlServerGeneratorSettings _settings;
-
         public LinqToDbSqlServerGenerator(LinqToDbSqlServerGeneratorSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
            : base(settings, dotNetLanguage)
         {
-            _settings = settings;
         }
+
+#if NET5_0_OR_GREATER
+        public override LinqToDbSqlServerGeneratorSettings Settings => (LinqToDbSqlServerGeneratorSettings)base.Settings;
+#else
+        public new LinqToDbSqlServerGeneratorSettings Settings => (LinqToDbSqlServerGeneratorSettings)base.Settings;
+#endif
 
         public override SqlServerSchema LoadSchema()
         {
@@ -33,7 +36,7 @@ namespace GeneratR.Database.SqlServer
         {
             var baseFiles = base.GenerateCodeFiles(codeModels);
 
-            if (!_settings.DataConnection.Generate)
+            if (!Settings.DataConnection.Generate)
             {
                 return baseFiles;
             }
@@ -42,8 +45,8 @@ namespace GeneratR.Database.SqlServer
 
             var codeFile = new SourceCodeFile()
             {
-                FileName = $"{_settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
-                FolderPath = BuildObjectOutputFolderPath(_settings.DataConnection.OutputFolderPath),
+                FileName = $"{Settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
+                FolderPath = BuildObjectOutputFolderPath(Settings.DataConnection.OutputFolderPath),
                 Code = GenerateDataConnectionCode(codeModel),
             };
 
@@ -55,16 +58,16 @@ namespace GeneratR.Database.SqlServer
             base.WriteCodeFiles(codeFiles);
         }
 
-        protected virtual LinqToDbDataConnectionCodeModel BuildDataConnectionCodeModel(SqlServerSchemaCodeModels schemaModels)
+        public virtual LinqToDbDataConnectionCodeModel BuildDataConnectionCodeModel(SqlServerSchemaCodeModels schemaModels)
         {
             var model = new LinqToDbDataConnectionCodeModel(DotNetGenerator, schemaModels)
             {
-                ClassName = _settings.DataConnection.ClassName,
-                Namespace = BuildObjectNamespace(_settings.DataConnection.Namespace, _settings.DataConnection.ClassName),
-                InheritClassName = _settings.DataConnection.InheritClass,
-                ImplementInterfaces = _settings.DataConnection.ImplementInterfaces ?? new List<string>(),
-                AddConstructor = _settings.DataConnection.AddConstructor,
-                DotNetModifier = _settings.DataConnection.Modifiers,
+                ClassName = Settings.DataConnection.ClassName,
+                Namespace = BuildObjectNamespace(Settings.DataConnection.Namespace, Settings.DataConnection.ClassName),
+                InheritClassName = Settings.DataConnection.InheritClass,
+                ImplementInterfaces = Settings.DataConnection.ImplementInterfaces ?? new List<string>(),
+                AddConstructor = Settings.DataConnection.AddConstructor,
+                DotNetModifier = Settings.DataConnection.Modifiers,
             };
 
             return model;
@@ -84,7 +87,7 @@ namespace GeneratR.Database.SqlServer
 
         private void EnrichCodeModel(SqlServerSchemaCodeModels model)
         {
-            if (_settings.AddLinqToDbMappingAttributes)
+            if (Settings.AddLinqToDbMappingAttributes)
             {
                 foreach (var t in model.Tables)
                 {

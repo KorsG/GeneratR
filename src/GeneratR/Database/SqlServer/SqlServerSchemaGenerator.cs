@@ -40,9 +40,9 @@ namespace GeneratR.Database.SqlServer
 
         public DotNetGenerator DotNetGenerator { get; }
 
-        public SqlServerTypeMapper TypeMapper { get; }
+        public virtual SqlServerTypeMapper TypeMapper { get; }
 
-        public SqlServerSchemaGenerationSettings Settings { get; }
+        public virtual SqlServerSchemaGenerationSettings Settings { get; }
 
         public string DatabaseName { get; }
 
