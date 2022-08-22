@@ -41,6 +41,16 @@ namespace GeneratR.DotNet
             throw new NotImplementedException();
         }
 
+        public override string CreateConstructorStart(DotNetModifierKeyword modifiers, string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string CreateConstructorEnd()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string CreateProperty(DotNetModifierKeyword modifiers, string propertyName, string propertyTypeName, bool readOnly)
         {
             throw new NotImplementedException();

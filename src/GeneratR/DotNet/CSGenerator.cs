@@ -62,6 +62,11 @@ namespace GeneratR.DotNet
 
         public override string CreateConstructor(DotNetModifierKeyword modifiers, string name)
         {
+            return CreateConstructorStart(modifiers, name) + CreateConstructorEnd();
+        }
+
+        public override string CreateConstructorStart(DotNetModifierKeyword modifiers, string name)
+        {
             if (string.IsNullOrWhiteSpace(name)) { throw new ArgumentException(nameof(name)); }
 
             var sb = new StringBuilder();
@@ -74,10 +79,12 @@ namespace GeneratR.DotNet
 
             sb.AppendLine(name + "()");
             sb.AppendLine("{");
-            sb.Append("}");
+            sb.Append(CreateConstructorEnd());
 
             return sb.ToString();
         }
+
+        public override string CreateConstructorEnd() => "}";
 
         public override string CreateProperty(DotNetModifierKeyword modifiers, string propertyName, string propertyTypeName, bool readOnly)
         {

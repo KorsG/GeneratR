@@ -71,6 +71,8 @@ namespace GeneratR.DotNet
         public abstract string CreateNamespaceEnd();
 
         public abstract string CreateConstructor(DotNetModifierKeyword modifiers, string name);
+        public abstract string CreateConstructorStart(DotNetModifierKeyword modifiers, string name);
+        public abstract string CreateConstructorEnd();
 
         public abstract string CreateProperty(DotNetModifierKeyword modifiers, string propertyName, string propertyTypeName, bool readOnly);
 
