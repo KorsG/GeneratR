@@ -25,6 +25,9 @@ namespace GeneratR.Database
 
         public DotNetModifierKeyword DotNetModifier { get; set; }
 
+        /// <summary>
+        /// Add default parameterless constructor.
+        /// </summary>
         public bool AddConstructor { get; set; }
 
         public bool AddDataAnnotationAttributes { get; set; }

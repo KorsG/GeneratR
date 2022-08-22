@@ -79,7 +79,6 @@ namespace GeneratR.DotNet
 
             sb.AppendLine(name + "()");
             sb.AppendLine("{");
-            sb.Append(CreateConstructorEnd());
 
             return sb.ToString();
         }
