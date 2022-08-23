@@ -25,14 +25,14 @@ namespace GeneratR.Database.SqlServer
             return schema;
         }
 
-        public override SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
+        public virtual new SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
         {
             var codeModels = base.BuildCodeModel(schema);
             EnrichCodeModel(codeModels);
             return codeModels;
         }
 
-        public override IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
+        public virtual new IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
         {
             var baseFiles = base.GenerateCodeFiles(codeModels);
 
@@ -53,7 +53,7 @@ namespace GeneratR.Database.SqlServer
             return baseFiles.Concat(new[] { codeFile });
         }
 
-        public override void WriteCodeFiles(IEnumerable<SourceCodeFile> codeFiles)
+        public virtual new void WriteCodeFiles(IEnumerable<SourceCodeFile> codeFiles)
         {
             base.WriteCodeFiles(codeFiles);
         }
