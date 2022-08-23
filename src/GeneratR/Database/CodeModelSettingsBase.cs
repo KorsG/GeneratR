@@ -15,8 +15,6 @@ namespace GeneratR.Database
 
         public bool AddConstructor { get; set; }
 
-        public bool AddDataAnnotationAttributes { get; set; }
-
         public virtual NamingStrategy NamingStrategy { get; set; } = NamingStrategy.KeepOriginal;
 
         public virtual DotNetModifierKeyword Modifiers { get; set; } = DotNetModifierKeyword.Public | DotNetModifierKeyword.Partial;

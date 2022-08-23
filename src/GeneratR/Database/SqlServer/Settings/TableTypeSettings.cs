@@ -12,6 +12,8 @@ namespace GeneratR.Database.SqlServer
         {
             return (TableTypeSettings)MemberwiseClone();
         }
+        
+        public bool AddDataAnnotationAttributes { get; set; }
 
         public bool AddSqlDataRecordMappings { get; set; }
 

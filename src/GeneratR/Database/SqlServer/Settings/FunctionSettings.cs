@@ -13,6 +13,8 @@ namespace GeneratR.Database.SqlServer
             return (FunctionSettings)MemberwiseClone();
         }
 
+        public bool AddDataAnnotationAttributes { get; set; }
+
         public DotNetModifierKeyword ColumnModifiers { get; set; } = DotNetModifierKeyword.Public;
     }
 }

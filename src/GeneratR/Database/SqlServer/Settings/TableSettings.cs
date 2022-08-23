@@ -13,6 +13,8 @@ namespace GeneratR.Database.SqlServer
             return (TableSettings)MemberwiseClone();
         }
 
+        public bool AddDataAnnotationAttributes { get; set; }
+
         public bool GenerateForeignKeys { get; set; }
         public bool GenerateReferencingForeignKeys { get; set; }
 

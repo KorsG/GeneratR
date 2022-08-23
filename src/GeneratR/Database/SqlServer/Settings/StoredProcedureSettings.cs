@@ -13,6 +13,8 @@ namespace GeneratR.Database.SqlServer
             return (StoredProcedureSettings)MemberwiseClone();
         }
 
+        public bool AddDataAnnotationAttributes { get; set; }
+
         /// <summary>
         /// Only works with SQL Server 2012+.
         /// </summary>
