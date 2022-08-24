@@ -115,6 +115,20 @@ namespace GeneratR.Database.SqlServer
 
         public virtual IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
         {
+            var files = GenerateCodeFilesInternal(codeModels);
+
+            if (OnCodeFilesGeneratedFunc != null)
+            {
+                var filesList = files.ToList();
+                OnCodeFilesGeneratedFunc.Invoke(codeModels, filesList);
+                return filesList;
+            }
+
+            return files;
+        }
+
+        private IEnumerable<SourceCodeFile> GenerateCodeFilesInternal(SqlServerSchemaCodeModels codeModels)
+        {
             // TODO: FileName generation should be configurable/overrideable (func?)
 
             foreach (var obj in codeModels.Tables)
@@ -189,6 +203,8 @@ namespace GeneratR.Database.SqlServer
         public Action<SqlServerSchema> OnSchemaLoadedFunc { get; set; } = null;
 
         public Action<SqlServerSchemaCodeModels> OnCodeModelsLoadedFunc { get; set; } = null;
+
+        public Action<SqlServerSchemaCodeModels, List<SourceCodeFile>> OnCodeFilesGeneratedFunc { get; set; } = null;
 
         #region GenerateCode functions
 
