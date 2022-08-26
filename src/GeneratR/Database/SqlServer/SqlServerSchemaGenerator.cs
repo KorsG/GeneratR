@@ -119,9 +119,9 @@ namespace GeneratR.Database.SqlServer
 
             if (OnCodeFilesGeneratedFunc != null)
             {
-                var filesList = files.ToList();
-                OnCodeFilesGeneratedFunc.Invoke(codeModels, filesList);
-                return filesList;
+                var context= new CodeFilesGeneratedContext(this, codeModels, files.ToList());
+                OnCodeFilesGeneratedFunc.Invoke(context);
+                return context.CodeFiles;
             }
 
             return files;
@@ -204,7 +204,21 @@ namespace GeneratR.Database.SqlServer
 
         public Action<SqlServerSchemaCodeModels> OnCodeModelsLoadedFunc { get; set; } = null;
 
-        public Action<SqlServerSchemaCodeModels, List<SourceCodeFile>> OnCodeFilesGeneratedFunc { get; set; } = null;
+        public Action<CodeFilesGeneratedContext> OnCodeFilesGeneratedFunc { get; set; } = null;
+
+        public class CodeFilesGeneratedContext
+        {
+            public CodeFilesGeneratedContext(SqlServerSchemaGenerator generator, SqlServerSchemaCodeModels codeModels, List<SourceCodeFile> codeFiles)
+            {
+                Generator = generator;
+                CodeModels = codeModels;
+                CodeFiles = codeFiles;
+            }
+
+            public SqlServerSchemaGenerator Generator { get; }
+            public SqlServerSchemaCodeModels CodeModels { get; }
+            public List<SourceCodeFile> CodeFiles { get;  }
+        }
 
         #region GenerateCode functions
 
@@ -378,7 +392,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Table columns.
                 foreach (var col in t.Columns)
@@ -472,7 +486,7 @@ namespace GeneratR.Database.SqlServer
                 }
 
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // View columns.
                 foreach (var col in t.Columns)
@@ -532,7 +546,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Columns.
                 foreach (var col in t.Columns)
@@ -591,7 +605,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Function columns.
                 foreach (var col in t.Columns)
@@ -661,7 +675,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // StoredProcedure ResultColumns.
                 if (objSettings.GenerateResultSet)
@@ -1118,16 +1132,19 @@ namespace GeneratR.Database.SqlServer
             return ns;
         }
 
-        private string BuildObjectOutputFolderPath(CodeModelSettingsBase objSettings, string className = null, string schema = null)
-            => BuildObjectOutputFolderPath(objSettings.OutputFolderPath, className, schema);
+        /// <summary>
+        /// Builds the output folder path, which will combine it with the RootOutputFolderPath and other formatting.
+        /// </summary>
+        public virtual string BuildOutputFolderPath(CodeModelSettingsBase codeModelSettings, string className = null, string schema = null)
+            => BuildOutputFolderPath(codeModelSettings.OutputFolderPath, className, schema);
 
-        protected string BuildObjectOutputFolderPath(string objOutputFolderPath, string className = null, string schema = null)
+        private string BuildOutputFolderPath(string outputFolderPath, string className = null, string schema = null)
         {
             // TODO: Consider supporting "rooted/absoluted" objSettings.OutputFolderPath
             var path = Settings.RootOutputFolderPath?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(objOutputFolderPath))
+            if (!string.IsNullOrWhiteSpace(outputFolderPath))
             {
-                path = Path.Combine(path, objOutputFolderPath);
+                path = Path.Combine(path, outputFolderPath);
             }
 
             if (className != null)
