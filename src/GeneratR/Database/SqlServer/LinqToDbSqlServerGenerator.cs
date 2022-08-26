@@ -46,7 +46,7 @@ namespace GeneratR.Database.SqlServer
             var codeFile = new SourceCodeFile()
             {
                 FileName = $"{Settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
-                FolderPath = BuildOutputFolderPath(Settings.DataConnection),
+                FolderPath = BuildObjectOutputFolderPath(Settings.DataConnection),
                 Code = GenerateDataConnectionCode(codeModel),
             };
 

@@ -119,7 +119,7 @@ namespace GeneratR.Database.SqlServer
 
             if (OnCodeFilesGeneratedFunc != null)
             {
-                var context= new CodeFilesGeneratedContext(this, codeModels, files.ToList());
+                var context = new CodeFilesGeneratedContext(this, codeModels, files.ToList());
                 OnCodeFilesGeneratedFunc.Invoke(context);
                 return context.CodeFiles;
             }
@@ -217,7 +217,7 @@ namespace GeneratR.Database.SqlServer
 
             public SqlServerSchemaGenerator Generator { get; }
             public SqlServerSchemaCodeModels CodeModels { get; }
-            public List<SourceCodeFile> CodeFiles { get;  }
+            public List<SourceCodeFile> CodeFiles { get; }
         }
 
         #region GenerateCode functions
@@ -392,7 +392,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Table columns.
                 foreach (var col in t.Columns)
@@ -486,7 +486,7 @@ namespace GeneratR.Database.SqlServer
                 }
 
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // View columns.
                 foreach (var col in t.Columns)
@@ -546,7 +546,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Columns.
                 foreach (var col in t.Columns)
@@ -605,7 +605,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // Function columns.
                 foreach (var col in t.Columns)
@@ -675,7 +675,7 @@ namespace GeneratR.Database.SqlServer
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
-                o.OutputFolderPath = BuildOutputFolderPath(objSettings, o.ClassName, t.Schema);
+                o.OutputFolderPath = BuildObjectOutputFolderPath(objSettings, o.ClassName, t.Schema);
 
                 // StoredProcedure ResultColumns.
                 if (objSettings.GenerateResultSet)
@@ -1088,13 +1088,13 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        protected string BuildObjectClassName(CodeModelSettingsBase objSettings, string objectName)
+        protected string BuildObjectClassName(CodeModelSettingsBase objectSettings, string objectName)
         {
-            if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
+            if (objectSettings.NamingStrategy == NamingStrategy.Pluralize)
             {
                 return DotNetGenerator.GetAsValidDotNetName(Inflector.MakePlural(objectName));
             }
-            else if (objSettings.NamingStrategy == NamingStrategy.Singularize)
+            else if (objectSettings.NamingStrategy == NamingStrategy.Singularize)
             {
                 return DotNetGenerator.GetAsValidDotNetName(Inflector.MakeSingular(objectName));
             }
@@ -1104,8 +1104,11 @@ namespace GeneratR.Database.SqlServer
             }
         }
 
-        private string BuildObjectNamespace(CodeModelSettingsBase objSettings, string className = null, string schema = null)
-            => BuildObjectNamespace(objSettings.Namespace, className, schema);
+        /// <summary>
+        /// Build the namespace of an object which will combine it with the RootNamespace and other formatting.
+        /// </summary>
+        public virtual string BuildObjectNamespace(CodeModelSettingsBase objectSettings, string className = null, string schema = null)
+            => BuildObjectNamespace(objectSettings.Namespace, className, schema);
 
         protected string BuildObjectNamespace(string objNamespace, string className = null, string schema = null)
         {
@@ -1133,12 +1136,12 @@ namespace GeneratR.Database.SqlServer
         }
 
         /// <summary>
-        /// Builds the output folder path, which will combine it with the RootOutputFolderPath and other formatting.
+        /// Build the output folder path of an object, which will combine it with the RootOutputFolderPath and other formatting.
         /// </summary>
-        public virtual string BuildOutputFolderPath(CodeModelSettingsBase codeModelSettings, string className = null, string schema = null)
-            => BuildOutputFolderPath(codeModelSettings.OutputFolderPath, className, schema);
+        public virtual string BuildObjectOutputFolderPath(CodeModelSettingsBase objectSettings, string className = null, string schema = null)
+            => BuildObjectOutputFolderPath(objectSettings.OutputFolderPath, className, schema);
 
-        private string BuildOutputFolderPath(string outputFolderPath, string className = null, string schema = null)
+        private string BuildObjectOutputFolderPath(string outputFolderPath, string className = null, string schema = null)
         {
             // TODO: Consider supporting "rooted/absoluted" objSettings.OutputFolderPath
             var path = Settings.RootOutputFolderPath?.Trim() ?? string.Empty;
