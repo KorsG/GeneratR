@@ -15,6 +15,8 @@ namespace GeneratR.Database
 
         public DotNetModifierKeyword DotNetModifier { get; set; }
 
+        public bool IsReadOnly { get; set; }
+
         ///<summary>
         /// List of attributes added to the property.
         ///</summary>

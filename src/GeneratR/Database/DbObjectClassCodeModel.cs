@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using GeneratR.DotNet;
+﻿using GeneratR.DotNet;
 
 namespace GeneratR.Database
 {
@@ -16,6 +14,8 @@ namespace GeneratR.Database
         /// The underlying database object.
         /// </summary>
         public T DbObject { get; }
+
+        public bool AddDataAnnotationAttributes { get; set; }
 
         public new DbObjectClassCodeModel<T> AddAttribute(DotNetAttribute attribute)
         {

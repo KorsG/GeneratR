@@ -51,8 +51,12 @@ namespace GeneratR.DotNet
             return this;
         }
 
-        public DotNetTemplate WriteProperty(DotNetModifierKeyword modifiers, string name, string type, bool readOnly = false)
+        public DotNetTemplate WriteProperty(DotNetModifierKeyword modifiers, string name, string type, bool readOnly = false, DotNetAttributeCollection attributes = null)
         {
+            if (attributes?.Any() == true)
+            {
+                Write(attributes.ToMultilineString());
+            }
             var value = Generator.CreateProperty(modifiers, name, type, readOnly);
             WriteLine(value);
             return this;

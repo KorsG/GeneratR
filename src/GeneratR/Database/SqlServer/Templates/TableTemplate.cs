@@ -1,15 +1,15 @@
 ﻿using GeneratR.DotNet;
-using GeneratR.Templating;
 using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableTemplate : StringTemplateBase
+    public class TableTemplate : DotNetTemplate
     {
         private readonly TableCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
         public TableTemplate(TableCodeModel model)
+            : base(model.DotNetGenerator)
         {
             _model = model;
             _dotNet = model.DotNetGenerator;
@@ -41,7 +41,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 {
                     if (_model.AddConstructor)
                     {
-                        WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, _model.ClassName));
+                        WriteConstructor(DotNetModifierKeyword.Public, _model.ClassName);
                     }
 
                     foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
@@ -57,7 +57,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         {
                             Write(col.Attributes.ToMultilineString());
                         }
-                        WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
+                        WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, col.IsReadOnly));
                     }
 
                     if (_model.GenerateForeignKeys)
@@ -73,7 +73,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             // TODO: Make it configurable if this comment should be made.
                             //WriteLine($"{_dotNet.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
                         }
                     }
 
@@ -91,15 +91,25 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             // TODO: Make it configurable if this comment should be made.
                             //WriteLine($"{_dotNet.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, false));
+                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
                         }
                     }
+
+                    if (_model.Properties?.Any() == true)
+                    {
+                        foreach (var p in _model.Properties)
+                        {
+                            WriteLine();
+                            WriteProperty(p.DotNetModifier, p.PropertyName, p.PropertyType, p.IsReadOnly, p.Attributes);
+                        }
+                    }
+
                 }
                 WriteLine(_dotNet.CreateClassEnd());
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
 
-            return TemplateBuilder.ToString();
+            return base.ToString();
         }
     }
 }

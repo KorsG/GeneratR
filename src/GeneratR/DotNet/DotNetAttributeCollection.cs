@@ -88,12 +88,17 @@ namespace GeneratR.DotNet
 
         public string ToMultilineString()
         {
-            var sb = new StringBuilder();
-            foreach (var a in this)
+            if (this.Any())
             {
-                sb.AppendLine(a.ToString());
+                var sb = new StringBuilder();
+                foreach (var a in this)
+                {
+                    sb.AppendLine(a.ToString());
+                }
+                return sb.ToString();
             }
-            return sb.ToString();
+
+            return string.Empty;
         }
     }
 }

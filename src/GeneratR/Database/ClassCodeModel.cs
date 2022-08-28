@@ -8,10 +8,9 @@ namespace GeneratR.Database
         public ClassCodeModel(DotNetGenerator dotNetGenerator)
         {
             DotNetGenerator = dotNetGenerator;
-            Attributes = new DotNetAttributeCollection();
         }
 
-        public DotNetGenerator DotNetGenerator { get; set; }
+        public DotNetGenerator DotNetGenerator { get; }
 
         public string OutputFolderPath { get; set; }
 
@@ -30,12 +29,12 @@ namespace GeneratR.Database
         /// </summary>
         public bool AddConstructor { get; set; }
 
-        public bool AddDataAnnotationAttributes { get; set; }
+        public virtual List<PropertyCodeModel> Properties { get; set; } = new List<PropertyCodeModel>();
 
         ///<summary>
         /// List of attributes added to the class.
         ///</summary>
-        public DotNetAttributeCollection Attributes { get; set; }
+        public DotNetAttributeCollection Attributes { get; set; } = new DotNetAttributeCollection();
 
         public ClassCodeModel AddAttribute(DotNetAttribute attribute)
         {
