@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using GeneratR.DotNet;
 
-namespace GeneratR.Database
+namespace GeneratR.DotNet
 {
     public class ClassCodeModel
     {

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GeneratR.DotNet
@@ -78,6 +79,7 @@ namespace GeneratR.DotNet
         public abstract string CreateConstructorEnd();
 
         public abstract string CreateProperty(DotNetModifierKeyword modifiers, string propertyName, string propertyTypeName, bool readOnly);
+        public abstract string CreateProperty(PropertyCodeModel codeModel);
 
         #region Type names ToString.
 
@@ -122,8 +124,7 @@ namespace GeneratR.DotNet
         {
             if (kw == DotNetModifierKeyword.None) { return string.Empty; }
 
-            string keywordString = "";
-            if (this.DotNetModifierKeywordMap.TryGetValue(kw, out keywordString))
+            if (DotNetModifierKeywordMap.TryGetValue(kw, out var keywordString))
             {
                 return keywordString;
             }
@@ -137,38 +138,38 @@ namespace GeneratR.DotNet
         /// Get as string
         /// </summary>
         /// <param name="kw"></param>
-        /// <exception cref="System.NotSupportedException"></exception>
+        /// <exception cref="NotSupportedException"></exception>
         public string GetAccessModifierKeywordAsString(DotNetAccessModifierKeyword kw)
         {
-            if (kw == DotNetAccessModifierKeyword.None) { return ""; }
-           
-            DotNetModifierKeyword modifier;
-            switch (kw)
+            if (kw == DotNetAccessModifierKeyword.None) { return string.Empty; }
+
+            var accessModifiers = Enum.GetValues(kw.GetType()).Cast<DotNetAccessModifierKeyword>().Where(x => x != 0 && kw.HasFlag(x));
+
+            var accessModifierStrings = new List<string>();
+
+            foreach (var am in accessModifiers)
             {
-                case DotNetAccessModifierKeyword.Public:
-                    modifier = DotNetModifierKeyword.Public;
-                    break;
-                case DotNetAccessModifierKeyword.Private:
-                    modifier = DotNetModifierKeyword.Private;
-                    break;
-                case DotNetAccessModifierKeyword.Internal:
-                    modifier = DotNetModifierKeyword.Internal;
-                    break;
-                case DotNetAccessModifierKeyword.Protected:
-                    modifier = DotNetModifierKeyword.Protected;
-                    break;
-                default:
+                var modifier = am switch
+                {
+                    DotNetAccessModifierKeyword.Public => DotNetModifierKeyword.Public,
+                    DotNetAccessModifierKeyword.Private => DotNetModifierKeyword.Private,
+                    DotNetAccessModifierKeyword.Internal => DotNetModifierKeyword.Internal,
+                    DotNetAccessModifierKeyword.Protected => DotNetModifierKeyword.Protected,
+                    DotNetAccessModifierKeyword.None => DotNetModifierKeyword.None,
+                    _ => throw new NotSupportedException(string.Format("No mapping exists for Keyword: '{0}'", kw.ToString())),
+                };
+
+                if (DotNetModifierKeywordMap.TryGetValue(modifier, out var keywordString))
+                {
+                    accessModifierStrings.Add(keywordString);
+                }
+                else
+                {
                     throw new NotSupportedException(string.Format("No mapping exists for Keyword: '{0}'", kw.ToString()));
+                }
             }
-            string keywordString = "";
-            if (this.DotNetModifierKeywordMap.TryGetValue(modifier, out keywordString))
-            {
-                return keywordString;
-            }
-            else
-            {
-                throw new NotSupportedException(string.Format("No mapping exists for Keyword: '{0}'", kw.ToString()));
-            }
+
+            return string.Join(" ", accessModifierStrings);
         }
 
         public abstract Dictionary<DotNetModifierKeyword, string> DotNetModifierKeywordMap { get; }
@@ -191,7 +192,7 @@ namespace GeneratR.DotNet
 
         private readonly DotNetLanguageType _DotNetLanguageType;
         private readonly DotNetAttributeFactory _attributeFactory;
-        
+
         #endregion
 
     }

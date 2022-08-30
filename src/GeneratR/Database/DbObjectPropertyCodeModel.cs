@@ -1,4 +1,6 @@
-﻿namespace GeneratR.Database
+﻿using GeneratR.DotNet;
+
+namespace GeneratR.Database
 {
     public class DbObjectPropertyCodeModel<T> : PropertyCodeModel where T : class
     {

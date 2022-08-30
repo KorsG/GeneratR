@@ -57,7 +57,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         {
                             Write(col.Attributes.ToMultilineString());
                         }
-                        WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, col.IsReadOnly));
+                        WriteLine(_dotNet.CreateProperty(col.Modifier, col.PropertyName, col.PropertyType, col.IsReadOnly));
                     }
 
                     if (_model.GenerateForeignKeys)
@@ -73,7 +73,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             // TODO: Make it configurable if this comment should be made.
                             //WriteLine($"{_dotNet.CommentOperator} FK - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
+                            WriteLine(_dotNet.CreateProperty(fk.Modifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
                         }
                     }
 
@@ -91,7 +91,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             // TODO: Make it configurable if this comment should be made.
                             //WriteLine($"{_dotNet.CommentOperator} FK(reverse) - [FromTable]: {fk.DbObject.FromFullName}, [ToTable]: {fk.DbObject.ToFullName}, [FromColumns]: {string.Join(",", fk.DbObject.FromColumns.Select(x => x.ColumnName))}, [ToColumns]: {string.Join(",", fk.DbObject.ToColumns.Select(x => x.ColumnName))}, [Name]: {fk.DbObject.ForeignKeyName}, [IsOptional]: {fk.DbObject.IsOptional}");
-                            WriteLine(_dotNet.CreateProperty(fk.DotNetModifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
+                            WriteLine(_dotNet.CreateProperty(fk.Modifier, fk.PropertyName, fk.PropertyType, fk.IsReadOnly));
                         }
                     }
 
@@ -100,7 +100,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         foreach (var p in _model.Properties)
                         {
                             WriteLine();
-                            WriteProperty(p.DotNetModifier, p.PropertyName, p.PropertyType, p.IsReadOnly, p.Attributes);
+                            WriteProperty(p);
                         }
                     }
 

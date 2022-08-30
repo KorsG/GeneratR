@@ -3,7 +3,7 @@
 namespace GeneratR.DotNet
 {
     [Flags]
-    public enum DotNetAccessModifierKeyword
+    public enum DotNetAccessModifierKeyword : short
     {
         @None = 0,
         @Public = 2,

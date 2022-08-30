@@ -66,6 +66,11 @@ namespace GeneratR.DotNet
             throw new NotImplementedException();
         }
 
+        public override string CreateProperty(PropertyCodeModel codeModel)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Dictionary<Type, string> TypeStringMap { get; } =
             new Dictionary<Type, string>() {
                 {typeof(object), "Object"},

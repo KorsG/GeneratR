@@ -72,5 +72,12 @@ namespace GeneratR.DotNet
             WriteLine(value);
             return this;
         }
+
+        public DotNetTemplate WriteProperty(PropertyCodeModel model)
+        {
+            var value = Generator.CreateProperty(model);
+            WriteLine(value);
+            return this;
+        }
     }
 }

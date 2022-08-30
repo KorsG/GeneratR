@@ -66,7 +66,7 @@ namespace GeneratR.Database.SqlServer.Templates
                         {
                             Write(col.Attributes.ToMultilineString());
                         }
-                        WriteLine(_dotNet.CreateProperty(col.DotNetModifier, col.PropertyName, col.PropertyType, false));
+                        WriteLine(_dotNet.CreateProperty(col.Modifier, col.PropertyName, col.PropertyType, false));
                     }
                     WriteLine();
 

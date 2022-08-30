@@ -411,7 +411,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.ColumnModifiers;
+                    c.Modifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -420,7 +420,7 @@ namespace GeneratR.Database.SqlServer
                 {
                     var f = new ForeignKeyCodeModel(fk)
                     {
-                        DotNetModifier = objSettings.ForeignKeyModifiers,
+                        Modifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ForeignKeys.Add(f);
                 }
@@ -429,7 +429,7 @@ namespace GeneratR.Database.SqlServer
                 {
                     var f = new ForeignKeyCodeModel(fk)
                     {
-                        DotNetModifier = objSettings.ForeignKeyModifiers,
+                        Modifier = objSettings.ForeignKeyModifiers,
                     };
                     o.ReferencingForeignKeys.Add(f);
                 }
@@ -505,7 +505,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.ColumnModifiers;
+                    c.Modifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -565,7 +565,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = objSettings.ColumnModifiers;
+                    c.Modifier = objSettings.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -624,7 +624,7 @@ namespace GeneratR.Database.SqlServer
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                    c.DotNetModifier = Settings.TableFunction.ColumnModifiers;
+                    c.Modifier = Settings.TableFunction.ColumnModifiers;
                     o.Columns.Add(c);
                 }
 
@@ -690,7 +690,7 @@ namespace GeneratR.Database.SqlServer
                         var c = new StoredProcedureResultColumnCodeModel(colr);
                         c.PropertyName = DotNetGenerator.GetAsValidDotNetName(c.DbObject.Name);
                         c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
-                        c.DotNetModifier = objSettings.ColumnModifiers;
+                        c.Modifier = objSettings.ColumnModifiers;
                         o.ResultColumns.Add(c);
                     }
                 }

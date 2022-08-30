@@ -97,10 +97,30 @@ namespace GeneratR.DotNet
 
         public override string CreateProperty(DotNetModifierKeyword modifiers, string propertyName, string propertyTypeName, bool readOnly)
         {
+            return CreateProperty(new PropertyCodeModel()
+            {
+                PropertyName = propertyName,
+                PropertyType = propertyTypeName,
+                IsReadOnly = readOnly,
+                Modifier = modifiers,
+            });
+        }
+
+        public override string CreateProperty(PropertyCodeModel model)
+        {
+            var propertyName = model.PropertyName;
+            var propertyTypeName = model.PropertyType;
+            var modifiers = model.Modifier;
+
             if (string.IsNullOrWhiteSpace(propertyName)) { throw new ArgumentException(nameof(propertyName)); }
             if (string.IsNullOrWhiteSpace(propertyTypeName)) { throw new ArgumentException(nameof(propertyTypeName)); }
 
             var sb = new StringBuilder();
+
+            if (model.Attributes?.Any() == true)
+            {
+                sb.AppendLine(model.Attributes.ToMultilineString());
+            }
 
             var modifierCollection = Enum.GetValues(modifiers.GetType()).Cast<DotNetModifierKeyword>().Where(x => modifiers.HasFlag(x) && Convert.ToInt64(x) != 0);
             foreach (var modifier in modifierCollection)
@@ -111,14 +131,47 @@ namespace GeneratR.DotNet
             sb.Append(propertyTypeName + " ");
             sb.Append(propertyName);
 
-            if (readOnly)
+            var getterHasBody = !string.IsNullOrWhiteSpace(model.GetterBody);
+            var getterAccess = GetAccessModifierKeywordAsString(model.GetterModifier);
+
+            var setterHasBody = !string.IsNullOrWhiteSpace(model.SetterBody);
+            var setterAccess = GetAccessModifierKeywordAsString(model.SetterModifier);
+
+            var hasBody = getterHasBody || setterHasBody;
+
+            sb.Append(" {");
+            if (!string.IsNullOrWhiteSpace(getterAccess))
             {
-                sb.Append(" { get; }");
+                sb.Append($" {getterAccess}");
+            }
+            sb.Append(" get");
+            if (hasBody)
+            {
+                sb.Append($" {{ {model.GetterBody} }}");
             }
             else
             {
-                sb.Append(" { get; set; }");
+                sb.Append(";");
             }
+
+            if (!model.IsReadOnly)
+            {
+                if (!string.IsNullOrWhiteSpace(setterAccess))
+                {
+                    sb.Append($" {setterAccess}");
+                }
+                sb.Append(" set");
+                if (hasBody)
+                {
+                    sb.Append($" {{ {model.SetterBody} }}");
+                }
+                else
+                {
+                    sb.Append(";");
+                }
+            }
+
+            sb.Append(" }");
 
             return sb.ToString();
         }
@@ -159,16 +212,17 @@ namespace GeneratR.DotNet
         public override Dictionary<DotNetModifierKeyword, string> DotNetModifierKeywordMap { get; } =
             new Dictionary<DotNetModifierKeyword, string>() {
                 {DotNetModifierKeyword.Public, "public" },
-                {DotNetModifierKeyword.Private,  "private" },
-                {DotNetModifierKeyword.Protected,  "protected" },
-                {DotNetModifierKeyword.Partial,  "partial" },
-                {DotNetModifierKeyword.Virtual,  "virtual" },
-                {DotNetModifierKeyword.Static,  "static" },
-                {DotNetModifierKeyword.Override,  "override" },
-                {DotNetModifierKeyword.Abstract,  "abstract" },
-                {DotNetModifierKeyword.Sealed,  "sealed" },
-                {DotNetModifierKeyword.ReadOnly,  "readonly"},
-                {DotNetModifierKeyword.Const,  "const"},
+                {DotNetModifierKeyword.Private, "private" },
+                {DotNetModifierKeyword.Protected, "protected" },
+                {DotNetModifierKeyword.Partial, "partial" },
+                {DotNetModifierKeyword.Virtual, "virtual" },
+                {DotNetModifierKeyword.Static, "static" },
+                {DotNetModifierKeyword.Override, "override" },
+                {DotNetModifierKeyword.Abstract, "abstract" },
+                {DotNetModifierKeyword.Sealed, "sealed" },
+                {DotNetModifierKeyword.ReadOnly, "readonly"},
+                {DotNetModifierKeyword.Const, "const"},
+                {DotNetModifierKeyword.Internal, "internal" },
             };
 
         public override string GetAsValidDotNetName(string value)
