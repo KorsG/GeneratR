@@ -17,6 +17,18 @@ namespace GeneratR.DotNet
 
         public DotNetGenerator Generator { get; }
 
+        public DotNetTemplate WriteImportNamespace(string name)
+        {
+            WriteLine(Generator.CreateImportNamespace(name));
+            return this;
+        }
+
+        public DotNetTemplate WriteImportNamespaces(IEnumerable<string> names)
+        {
+            WriteLine(Generator.CreateImportNamespaces(names));
+            return this;
+        }
+
         public DotNetTemplate WriteNamespaceStart(string name)
         {
             WriteLine(Generator.CreateNamespaceStart(name));

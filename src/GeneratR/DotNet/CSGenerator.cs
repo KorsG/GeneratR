@@ -22,6 +22,16 @@ namespace GeneratR.DotNet
 
         public override string FalseValue => "false";
 
+        public override string CreateImportNamespace(string name)
+        {
+            return $"using {name};";
+        }
+
+        public override string CreateImportNamespaces(IEnumerable<string> names)
+        {
+            return string.Join(Environment.NewLine, names.Distinct().Select(x => CreateImportNamespace(x)));
+        }
+
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
             => CreateClassStart(name, partialClass, abstractClass, inheritClass, implementInterfaces.AsEnumerable());
 

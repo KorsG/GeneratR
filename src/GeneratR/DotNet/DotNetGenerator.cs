@@ -60,6 +60,9 @@ namespace GeneratR.DotNet
         /// </summary>
         public abstract string FalseValue { get; }
 
+        public abstract string CreateImportNamespace(string name);
+        public abstract string CreateImportNamespaces(IEnumerable<string> names);
+
         /// <summary> 
         /// This method creates the signature for the class in provided DotNet syntax.
         /// </summary>
