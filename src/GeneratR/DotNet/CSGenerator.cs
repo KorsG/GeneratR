@@ -119,7 +119,7 @@ namespace GeneratR.DotNet
 
             if (model.Attributes?.Any() == true)
             {
-                sb.AppendLine(model.Attributes.ToMultilineString());
+                sb.Append(model.Attributes.ToMultilineString());
             }
 
             var modifierCollection = Enum.GetValues(modifiers.GetType()).Cast<DotNetModifierKeyword>().Where(x => modifiers.HasFlag(x) && Convert.ToInt64(x) != 0);
