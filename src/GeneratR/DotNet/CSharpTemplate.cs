@@ -3,67 +3,66 @@ using System.Linq;
 
 namespace GeneratR.DotNet
 {
-    public class DotNetTemplate : Templating.StringTemplateBase
+    public class CSharpTemplate : Templating.StringTemplateBase
     {
-        public DotNetTemplate(DotNetLanguageType dotNetLanguage)
+        public CSharpTemplate(DotNetLanguageType dotNetLanguage) : this(DotNetGenerator.Create(dotNetLanguage))
         {
-            Generator = DotNetGenerator.Create(dotNetLanguage);
         }
 
-        public DotNetTemplate(DotNetGenerator dotNetGenerator)
+        public CSharpTemplate(DotNetGenerator dotNetGenerator)
         {
             Generator = dotNetGenerator;
         }
 
         public DotNetGenerator Generator { get; }
 
-        public DotNetTemplate WriteImportNamespace(string name)
+        public CSharpTemplate WriteUsing(string @namespace)
         {
-            WriteLine(Generator.CreateImportNamespace(name));
+            WriteLine(Generator.CreateImportNamespace(@namespace));
             return this;
         }
 
-        public DotNetTemplate WriteImportNamespaces(IEnumerable<string> names)
+        public CSharpTemplate WriteUsings(IEnumerable<string> namespaces)
         {
-            WriteLine(Generator.CreateImportNamespaces(names));
+            WriteLine(Generator.CreateImportNamespaces(namespaces));
             return this;
         }
 
-        public DotNetTemplate WriteNamespaceStart(string name)
+        public CSharpTemplate WriteNamespaceStart(string name)
         {
             WriteLine(Generator.CreateNamespaceStart(name));
             return this;
         }
 
-        public DotNetTemplate WriteNamespaceEnd()
+        public CSharpTemplate WriteNamespaceEnd()
         {
             WriteLine(Generator.CreateNamespaceEnd());
             return this;
         }
 
-        public DotNetTemplate WriteClassStart(DotNetModifierKeyword modifiers, string name, string inheritClass, params string[] implementInterfaces)
+        public CSharpTemplate WriteClassStart(DotNetModifierKeyword modifiers, string name, string inheritClass, params string[] implementInterfaces)
             => WriteClassStart(modifiers, name, inheritClass, implementInterfaces.AsEnumerable());
 
-        public DotNetTemplate WriteClassStart(DotNetModifierKeyword modifiers, string name, string inheritClass, IEnumerable<string> implementInterfaces)
+        public CSharpTemplate WriteClassStart(DotNetModifierKeyword modifiers, string name, string inheritClass, IEnumerable<string> implementInterfaces)
         {
             var value = Generator.CreateClassStart(name, modifiers.HasFlag(DotNetModifierKeyword.Partial), modifiers.HasFlag(DotNetModifierKeyword.Abstract), inheritClass, implementInterfaces);
             WriteLine(value);
             return this;
         }
 
-        public DotNetTemplate WriteClassEnd()
+        public CSharpTemplate WriteClassEnd()
         {
             WriteLine(Generator.CreateClassEnd());
             return this;
         }
 
-        public DotNetTemplate WriteConstructor(DotNetModifierKeyword modifiers, string name)
+        public CSharpTemplate WriteConstructor(DotNetModifierKeyword modifiers, string name)
         {
             WriteLine(Generator.CreateConstructor(modifiers, name));
             return this;
         }
 
-        public DotNetTemplate WriteProperty(DotNetModifierKeyword modifiers, string name, string type, bool readOnly = false, DotNetAttributeCollection attributes = null)
+        public CSharpTemplate WriteProperty(DotNetModifierKeyword modifiers, string name, string type, bool readOnly = false, DotNetAttributeCollection attributes = null)
         {
             if (attributes?.Any() == true)
             {

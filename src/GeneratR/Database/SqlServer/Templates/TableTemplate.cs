@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableTemplate : DotNetTemplate
+    public class TableTemplate : CSharpTemplate
     {
         private readonly TableCodeModel _model;
         private readonly DotNetGenerator _dotNet;
