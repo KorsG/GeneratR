@@ -9,7 +9,12 @@ namespace GeneratR.Database.SqlServer
     public class LinqToDbSqlServerGenerator : SqlServerSchemaGenerator
     {
         public LinqToDbSqlServerGenerator(LinqToDbSqlServerGeneratorSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
-           : base(settings, dotNetLanguage)
+            : base(settings, dotNetLanguage)
+        {
+        }
+
+        public LinqToDbSqlServerGenerator(LinqToDbSqlServerGeneratorSettings settings, DotNetGenerator dotNetGenerator)
+            : base(settings, dotNetGenerator)
         {
         }
 

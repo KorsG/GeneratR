@@ -19,9 +19,14 @@ namespace GeneratR.Database.SqlServer
         protected readonly SqlServerSchemaContext _schemaContext;
 
         public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
+            : this(settings, DotNetGenerator.Create(dotNetLanguage))
+        {
+        }
+
+        public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetGenerator dotNetGenerator)
         {
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            DotNetGenerator = DotNetGenerator.Create(dotNetLanguage);
+            DotNetGenerator = dotNetGenerator;
             TypeMapper = new SqlServerTypeMapper(DotNetGenerator);
             _connectionStringBuilder = new SqlConnectionStringBuilder(Settings.ConnectionString);
             if (!string.IsNullOrWhiteSpace(settings.DatabaseName))
