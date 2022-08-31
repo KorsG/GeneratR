@@ -51,6 +51,8 @@ namespace GeneratR.DotNet
 
         public abstract string CommentOperator { get; }
 
+        public abstract string DocumentationOperator { get; }
+
         /// <summary>
         /// Get boolean "true" as string.
         /// </summary>
@@ -61,8 +63,10 @@ namespace GeneratR.DotNet
         /// </summary>
         public abstract string FalseValue { get; }
 
-        public abstract string CreateImportNamespace(string name);
-        public abstract string CreateImportNamespaces(IEnumerable<string> names);
+        public abstract string CreateNamespaceImports(IEnumerable<string> names);
+        public abstract string CreateNamespaceImport(string name, string alias = null);
+        public abstract string CreateNamespaceImports(IEnumerable<NamespaceImportCodeModel> models);
+        public abstract string CreateNamespaceImport(NamespaceImportCodeModel model);
 
         /// <summary> 
         /// This method creates the signature for the class in provided DotNet syntax.

@@ -11,32 +11,44 @@ namespace GeneratR.DotNet
 
         public DotNetTemplate(DotNetGenerator dotNetGenerator)
         {
-            Generator = dotNetGenerator;
+            DotNetGenerator = dotNetGenerator;
         }
 
-        public DotNetGenerator Generator { get; }
+        public DotNetGenerator DotNetGenerator { get; }
 
-        public DotNetTemplate WriteImportNamespace(string @namespace)
+        public DotNetTemplate WriteNamespaceImport(string @namespace, string alias = null)
         {
-            WriteLine(Generator.CreateImportNamespace(@namespace));
+            WriteLine(DotNetGenerator.CreateNamespaceImport(@namespace, alias));
             return this;
         }
 
-        public DotNetTemplate WriteImportNamespaces(IEnumerable<string> namespaces)
+        public DotNetTemplate WriteNamespaceImports(IEnumerable<string> namespaces)
         {
-            WriteLine(Generator.CreateImportNamespaces(namespaces));
+            WriteLine(DotNetGenerator.CreateNamespaceImports(namespaces));
+            return this;
+        }
+
+        public DotNetTemplate WriteNamespaceImport(NamespaceImportCodeModel model)
+        {
+            WriteLine(DotNetGenerator.CreateNamespaceImport(model));
+            return this;
+        }
+
+        public DotNetTemplate WriteNamespaceImports(IEnumerable<NamespaceImportCodeModel> models)
+        {
+            WriteLine(DotNetGenerator.CreateNamespaceImports(models));
             return this;
         }
 
         public DotNetTemplate WriteNamespaceStart(string name)
         {
-            WriteLine(Generator.CreateNamespaceStart(name));
+            WriteLine(DotNetGenerator.CreateNamespaceStart(name));
             return this;
         }
 
         public DotNetTemplate WriteNamespaceEnd()
         {
-            WriteLine(Generator.CreateNamespaceEnd());
+            WriteLine(DotNetGenerator.CreateNamespaceEnd());
             return this;
         }
 
@@ -45,20 +57,20 @@ namespace GeneratR.DotNet
 
         public DotNetTemplate WriteClassStart(DotNetModifierKeyword modifiers, string name, string inheritClass, IEnumerable<string> implementInterfaces)
         {
-            var value = Generator.CreateClassStart(name, modifiers.HasFlag(DotNetModifierKeyword.Partial), modifiers.HasFlag(DotNetModifierKeyword.Abstract), inheritClass, implementInterfaces);
+            var value = DotNetGenerator.CreateClassStart(name, modifiers.HasFlag(DotNetModifierKeyword.Partial), modifiers.HasFlag(DotNetModifierKeyword.Abstract), inheritClass, implementInterfaces);
             WriteLine(value);
             return this;
         }
 
         public DotNetTemplate WriteClassEnd()
         {
-            WriteLine(Generator.CreateClassEnd());
+            WriteLine(DotNetGenerator.CreateClassEnd());
             return this;
         }
 
         public DotNetTemplate WriteConstructor(DotNetModifierKeyword modifiers, string name)
         {
-            WriteLine(Generator.CreateConstructor(modifiers, name));
+            WriteLine(DotNetGenerator.CreateConstructor(modifiers, name));
             return this;
         }
 
@@ -66,16 +78,16 @@ namespace GeneratR.DotNet
         {
             if (attributes?.Any() == true)
             {
-                Write(attributes.ToMultilineString());
+                Write(attributes.Build());
             }
-            var value = Generator.CreateProperty(modifiers, name, type, readOnly);
+            var value = DotNetGenerator.CreateProperty(modifiers, name, type, readOnly);
             WriteLine(value);
             return this;
         }
 
         public DotNetTemplate WriteProperty(PropertyCodeModel model)
         {
-            var value = Generator.CreateProperty(model);
+            var value = DotNetGenerator.CreateProperty(model);
             WriteLine(value);
             return this;
         }

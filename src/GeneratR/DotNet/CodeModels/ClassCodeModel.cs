@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneratR.DotNet
 {
     public class ClassCodeModel
     {
+        private List<PropertyCodeModel> _properties = new();
+
         public ClassCodeModel(DotNetGenerator dotNetGenerator)
         {
             DotNetGenerator = dotNetGenerator;
@@ -12,6 +15,8 @@ namespace GeneratR.DotNet
         public DotNetGenerator DotNetGenerator { get; }
 
         public string OutputFolderPath { get; set; }
+
+        public List<NamespaceImportCodeModel> NamespaceImports { get; set; } = new List<NamespaceImportCodeModel>();
 
         public string Namespace { get; set; }
 
@@ -28,10 +33,20 @@ namespace GeneratR.DotNet
         /// </summary>
         public bool AddConstructor { get; set; }
 
-        public virtual List<PropertyCodeModel> Properties { get; set; } = new List<PropertyCodeModel>();
+        public virtual List<PropertyCodeModel> Properties
+        {
+            get => _properties;
+            set { _properties = value ?? new List<PropertyCodeModel>(); }
+        }
+
+        public ClassCodeModel AddProperty(PropertyCodeModel property)
+        {
+            Properties.Add(property);
+            return this;
+        }
 
         ///<summary>
-        /// List of attributes added to the class.
+        /// Attributes added to the class.
         ///</summary>
         public DotNetAttributeCollection Attributes { get; set; } = new DotNetAttributeCollection();
 
@@ -45,6 +60,24 @@ namespace GeneratR.DotNet
         public ClassCodeModel RemoveAttribute(string attributeName)
         {
             Attributes?.Remove(attributeName);
+            return this;
+        }
+
+        public ClassCodeModel AddNamespaceImport(string @namespace, string alias = null)
+        {
+            NamespaceImports.Add(new NamespaceImportCodeModel(@namespace, alias));
+            return this;
+        }
+
+        public ClassCodeModel AddNamespaceImports(IEnumerable<string> namespaces)
+        {
+            NamespaceImports.AddRange(namespaces.Select(x => new NamespaceImportCodeModel(x)));
+            return this;
+        }
+
+        public ClassCodeModel AddNamespaceImports(params string[] namespaces)
+        {
+            NamespaceImports.AddRange(namespaces.Select(x => new NamespaceImportCodeModel(x)));
             return this;
         }
 

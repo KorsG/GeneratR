@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
 namespace GeneratR.ExtensionMethods
 {
@@ -16,6 +17,14 @@ namespace GeneratR.ExtensionMethods
                 "^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
                 RegexOptions.IgnoreCase | RegexOptions.Singleline
             ).IsMatch(value);
+        }
+
+        /// <summary>
+        /// Ensures that a string ends with a given suffix.
+        /// </summary>
+        public static string EnsureEndsWith(this string value, string suffix, StringComparison comparisonType = StringComparison.Ordinal)
+        {
+            return value.EndsWith(suffix, comparisonType) ? value : value += suffix;
         }
     }
 }

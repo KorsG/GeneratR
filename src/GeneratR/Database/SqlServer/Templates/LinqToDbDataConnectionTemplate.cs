@@ -3,15 +3,13 @@ using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
 {
-    public class LinqToDbDataConnectionTemplate : Templating.StringTemplateBase
+    public class LinqToDbDataConnectionTemplate
     {
-        private readonly DotNetGenerator _dotNet;
         private readonly SqlServerSchemaCodeModels _schemaModels;
 
         public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model)
         {
             Model = model;
-            _dotNet = model.DotNetGenerator;
             _schemaModels = model.SchemaModels;
         }
 
@@ -19,91 +17,86 @@ namespace GeneratR.Database.SqlServer
 
         public string Generate()
         {
-            WriteLine("using System;");
-            WriteLine("using System.Collections.Generic;");
-            WriteLine("using System.Reflection;");
-            WriteLine("using LinqToDB;");
-            WriteLine("using LinqToDB.Configuration;");
-            WriteLine("using LinqToDB.Data;");
+            var t = new DotNetTemplate(Model.DotNetGenerator);
 
-            foreach (var ns in _schemaModels.GetNamespaces())
-            {
-                WriteLine($"using {ns};");
-            }
+            t.WriteNamespaceImports(Model.NamespaceImports);
+            t.WriteLine();
 
-            WriteLine();
-            WriteLine(_dotNet.CreateNamespaceStart(Model.Namespace));
-            using (IndentScope())
+            t.WriteNamespaceStart(Model.Namespace);
+            using (t.IndentScope())
             {
-                var classAsAbstract = Model.DotNetModifier.HasFlag(DotNetModifierKeyword.Abstract);
-                var classAsPartial = Model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 var inheritClassName = string.IsNullOrWhiteSpace(Model.InheritClassName) ? "DataConnection" : Model.InheritClassName;
-                WriteLine(_dotNet.CreateClassStart(Model.ClassName, classAsPartial, classAsAbstract, inheritClassName, Model.ImplementInterfaces));
-                using (IndentScope())
+                t.WriteClassStart(Model.DotNetModifier, Model.ClassName, inheritClassName, Model.ImplementInterfaces);
+                using (t.IndentScope())
                 {
-                    WriteConstructors();
+                    WriteConstructors(t);
 
-                    WriteLine("#region Tables");
+                    t.WriteLine("#region Tables");
                     foreach (var item in _schemaModels.Tables)
                     {
-                        WriteLine();
-                        WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
+                        t.WriteLine();
+                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
                     }
-                    WriteLine();
-                    WriteLine("#endregion Tables");
+                    t.WriteLine();
+                    t.WriteLine("#endregion Tables");
 
-                    WriteLine();
+                    t.WriteLine();
 
-                    WriteLine("#region Views");
+                    t.WriteLine("#region Views");
                     foreach (var item in _schemaModels.Views)
                     {
-                        WriteLine();
-                        WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
+                        t.WriteLine();
+                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
                     }
-                    WriteLine();
-                    WriteLine("#endregion Views");
+                    t.WriteLine();
+                    t.WriteLine("#endregion Views");
 
-                    WriteLine();
+                    t.WriteLine();
 
-                    WriteLine("#region TableFunctions");
+                    t.WriteLine("#region TableFunctions");
                     foreach (var item in _schemaModels.TableFunctions)
                     {
-                        WriteLine();
+                        t.WriteLine();
 
                         var args = item.Parameters.Select(x => $"{x.PropertyType} {Inflector.MakeInitialLowerCase(x.PropertyName)}");
-                        WriteLine($@"[Sql.TableFunction(Schema = ""{item.DbObject.Schema}"", Name = ""{item.DbObject.Name}"")]");
-                        WriteLine($"public virtual ITable<{item.ClassName}> {item.ClassName} ({string.Join(", ", args)})");
-                        WriteLine("{");
-                        using (IndentScope())
+                        t.WriteLine($@"[Sql.TableFunction(Schema = ""{item.DbObject.Schema}"", Name = ""{item.DbObject.Name}"")]");
+                        t.WriteLine($"public virtual ITable<{item.ClassName}> {item.ClassName} ({string.Join(", ", args)})");
+                        t.WriteLine("{");
+                        using (t.IndentScope())
                         {
                             if (item.Parameters.Any())
                             {
                                 var argNames = item.Parameters.Select(x => Inflector.MakeInitialLowerCase(x.PropertyName));
-                                WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod(), {string.Join(",", argNames)});");
+                                t.WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod(), {string.Join(",", argNames)});");
                             }
                             else
                             {
-                                WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod());");
+                                t.WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod());");
                             }
                         }
-                        WriteLine("}");
+                        t.WriteLine("}");
                     }
-                    WriteLine();
-                    WriteLine("#endregion TableFunctions");
+                    t.WriteLine();
+                    t.WriteLine("#endregion TableFunctions");
 
+                    foreach (var p in Model.Properties)
+                    {
+                        t.WriteLine();
+                        t.WriteProperty(p);
+                    }
                 }
-                WriteLine(_dotNet.CreateClassEnd());
+                t.WriteClassEnd();
             }
-            WriteLine(_dotNet.CreateNamespaceEnd());
+            t.WriteNamespaceEnd();
 
-            return TemplateBuilder.ToString();
+            return base.ToString();
         }
 
-        public virtual void WriteConstructors()
+        public virtual void WriteConstructors(DotNetTemplate writer)
         {
             if (Model.AddConstructor)
             {
-                WriteLine(_dotNet.CreateConstructor(DotNetModifierKeyword.Public, Model.ClassName));
+                writer.WriteConstructor(DotNetModifierKeyword.Public, Model.ClassName);
             }
         }
     }

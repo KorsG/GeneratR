@@ -1,15 +1,15 @@
 ﻿using GeneratR.DotNet;
-using GeneratR.Templating;
 using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class TableFunctionTemplate : StringTemplateBase
+    public class TableFunctionTemplate : DotNetTemplate
     {
         private readonly TableFunctionCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
-        public TableFunctionTemplate(TableFunctionCodeModel model)
+        public TableFunctionTemplate(TableFunctionCodeModel model) 
+            : base(model.DotNetGenerator)
         {
             _model = model;
             _dotNet = model.DotNetGenerator;
@@ -17,14 +17,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public string Generate()
         {
-            WriteLine("using System;");
-            WriteLine("using System.Collections.Generic;");
-            if (_model.AddDataAnnotationAttributes)
-            {
-                WriteLine("using System.ComponentModel.DataAnnotations;");
-                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-            }
-
+            WriteNamespaceImports(_model.NamespaceImports);
             WriteLine();
             WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
             using (IndentScope())
@@ -33,7 +26,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 if (_model.Attributes.Any())
                 {
-                    Write(_model.Attributes.ToMultilineString());
+                    Write(_model.Attributes.Build());
                 }
                 WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, _model.InheritClassName, _model.ImplementInterfaces));
                 using (IndentScope())
@@ -46,16 +39,13 @@ namespace GeneratR.Database.SqlServer.Templates
                     foreach (var col in _model.Columns.OrderBy(x => x.DbObject.Position))
                     {
                         WriteLine();
-                        if (!string.IsNullOrWhiteSpace(col.DbObject.Description))
-                        {
-                            WriteLine($@"/// <summary>{col.DbObject.Description}</summary>");
-                        }
-                        
-                        if (col.Attributes.Any())
-                        {
-                            Write(col.Attributes.ToMultilineString());
-                        }
-                        WriteLine(_dotNet.CreateProperty(col.Modifier, col.PropertyName, col.PropertyType, false));
+                        WriteProperty(col);
+                    }
+
+                    foreach (var p in _model.Properties)
+                    {
+                        WriteLine();
+                        WriteProperty(p);
                     }
 
                 }
@@ -63,7 +53,7 @@ namespace GeneratR.Database.SqlServer.Templates
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
 
-            return TemplateBuilder.ToString();
+            return base.ToString();
         }
     }
 }

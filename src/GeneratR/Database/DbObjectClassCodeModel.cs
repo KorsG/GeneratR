@@ -15,7 +15,11 @@ namespace GeneratR.Database
         /// </summary>
         public T DbObject { get; }
 
-        public bool AddDataAnnotationAttributes { get; set; }
+        public new DbObjectClassCodeModel<T> AddProperty(PropertyCodeModel property)
+        {
+            base.AddProperty(property);
+            return this;
+        }
 
         public new DbObjectClassCodeModel<T> AddAttribute(DotNetAttribute attribute)
         {

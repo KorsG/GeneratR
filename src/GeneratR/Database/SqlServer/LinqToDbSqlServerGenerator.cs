@@ -1,8 +1,8 @@
-﻿using System;
+﻿using GeneratR.Database.SqlServer.Schema;
+using GeneratR.DotNet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using GeneratR.Database.SqlServer.Schema;
-using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
 {
@@ -75,6 +75,9 @@ namespace GeneratR.Database.SqlServer
                 DotNetModifier = Settings.DataConnection.Modifiers,
             };
 
+            model.AddNamespaceImports("System", "System.Collections.Generic", "System.Reflection", "LinqToDB", "LinqToDB.Configuration", "LinqToDB.Data");
+            model.AddNamespaceImports(codeModels.GetNamespaces());
+
             return model;
         }
 
@@ -107,42 +110,22 @@ namespace GeneratR.Database.SqlServer
                         AddColumnAttributes(col);
                     }
 
-                    foreach (var fk in t.ForeignKeys)
+                    foreach (var fk in t.ForeignKeys.Where(x => !x.IsInverse))
                     {
                         var attr = DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Association")
                             .SetOptionalArg("ThisKey", string.Join(",", fk.DbObject.FromColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("OtherKey", string.Join(",", fk.DbObject.ToColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
-                            .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional)
-                            .SetOptionalArg("KeyName", fk.DbObject.ForeignKeyName, wrapValueInQuotes: true);
-
-                        if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToOne)
-                        {
-                            attr = attr.SetOptionalArg("Relationship", "LinqToDB.Mapping.Relationship.OneToOne");
-                        }
-                        else if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToMany)
-                        {
-                            attr = attr.SetOptionalArg("Relationship", "LinqToDB.Mapping.Relationship.OneToMany");
-                        }
+                            .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional);
 
                         fk.Attributes.Add(attr);
                     }
 
-                    foreach (var fk in t.ReferencingForeignKeys)
+                    foreach (var fk in t.ForeignKeys.Where(x => x.IsInverse))
                     {
                         var attr = DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Association")
                             .SetOptionalArg("ThisKey", string.Join(",", fk.DbObject.ToColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("OtherKey", string.Join(",", fk.DbObject.FromColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
-                            .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional)
-                            .SetOptionalArg("KeyName", fk.DbObject.ForeignKeyName, wrapValueInQuotes: true);
-
-                        if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToOne)
-                        {
-                            attr = attr.SetOptionalArg("Relationship", "LinqToDB.Mapping.Relationship.OneToOne");
-                        }
-                        else if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToMany)
-                        {
-                            attr = attr.SetOptionalArg("Relationship", "LinqToDB.Mapping.Relationship.ManyToOne");
-                        }
+                            .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional);
 
                         fk.Attributes.Add(attr);
                     }

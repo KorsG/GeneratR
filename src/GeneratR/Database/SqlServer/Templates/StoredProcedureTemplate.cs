@@ -1,17 +1,17 @@
 ﻿using GeneratR.Database.SqlServer.Schema;
 using GeneratR.DotNet;
-using GeneratR.Templating;
 using System;
 using System.Linq;
 
 namespace GeneratR.Database.SqlServer.Templates
 {
-    public class StoredProcedureTemplate : StringTemplateBase
+    public class StoredProcedureTemplate : DotNetTemplate
     {
         private readonly StoredProcedureCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
         public StoredProcedureTemplate(StoredProcedureCodeModel model)
+            : base(model.DotNetGenerator)
         {
             _model = model;
             _dotNet = model.DotNetGenerator;
@@ -19,15 +19,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
         public virtual string Generate()
         {
-            WriteLine("using System;");
-            WriteLine("using System.Collections.Generic;");
-            WriteLine("using System.ComponentModel;");
-            if (_model.AddDataAnnotationAttributes)
-            {
-                WriteLine("using System.ComponentModel.DataAnnotations;");
-                WriteLine("using System.ComponentModel.DataAnnotations.Schema;");
-            }
-
+            WriteNamespaceImports(_model.NamespaceImports);
             WriteLine();
             WriteLine(_dotNet.CreateNamespaceStart(_model.Namespace));
             using (IndentScope())
@@ -36,7 +28,7 @@ namespace GeneratR.Database.SqlServer.Templates
                 var classAsPartial = _model.DotNetModifier.HasFlag(DotNetModifierKeyword.Partial);
                 if (_model.Attributes.Any())
                 {
-                    Write(_model.Attributes.ToMultilineString());
+                    Write(_model.Attributes.Build());
                 }
                 // Generate result class that contains Return value, and if any, output parameters and column resultset.
                 WriteLine(_dotNet.CreateClassStart(_model.ClassName, classAsPartial, classAsAbstract, _model.InheritClassName, _model.ImplementInterfaces));
@@ -94,7 +86,7 @@ namespace GeneratR.Database.SqlServer.Templates
                             {
                                 if (p.Attributes.Any())
                                 {
-                                    Write(p.Attributes.ToMultilineString());
+                                    Write(p.Attributes.Build());
                                 }
                                 WriteLine($"public {p.PropertyType} {p.PropertyName} {{ get; set; }}");
                             }
@@ -117,11 +109,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                             foreach (var col in _model.ResultColumns)
                             {
-                                if (col.Attributes.Any())
-                                {
-                                    Write(col.Attributes.ToMultilineString());
-                                }
-                                WriteLine($"public {col.PropertyType} {col.PropertyName} {{ get; set; }}");
+                                WriteProperty(col);
                             }
                         }
                         WriteLine(_dotNet.CreateClassEnd());
@@ -132,7 +120,7 @@ namespace GeneratR.Database.SqlServer.Templates
             }
             WriteLine(_dotNet.CreateNamespaceEnd());
 
-            return TemplateBuilder.ToString();
+            return base.ToString();
         }
     }
 }

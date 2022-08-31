@@ -11,7 +11,6 @@ namespace GeneratR.Database.SqlServer
         {
             Columns = new List<ColumnCodeModel>();
             ForeignKeys = new List<ForeignKeyCodeModel>();
-            ReferencingForeignKeys = new List<ForeignKeyCodeModel>();
             TypeMapper = typeMapper;
         }
 
@@ -19,17 +18,18 @@ namespace GeneratR.Database.SqlServer
 
         public List<ColumnCodeModel> Columns { get; set; }
 
-        public bool GenerateForeignKeys { get; set; }
-
         public List<ForeignKeyCodeModel> ForeignKeys { get; set; }
 
-        public List<ForeignKeyCodeModel> ReferencingForeignKeys { get; set; }
-
-        public bool GenerateReferencingForeignKeys { get; set; }
+        public TableCodeModel AddColumn(ColumnCodeModel model)
+        {
+            if (Columns == null) { Columns = new List<ColumnCodeModel>(); }
+            Columns.Add(model);
+            return this;
+        }
 
         public ColumnCodeModel GetColumn(string name)
         {
-            return Columns?.FirstOrDefault(x => x.DbObject.Name == name);
+            return Columns.FirstOrDefault(x => x.DbObject.Name == name);
         }
 
         public TableCodeModel WithColumn(string name, Action<ColumnCodeModel> action)

@@ -5,6 +5,10 @@
         public ColumnCodeModel(Schema.Column dbObject)
             : base(dbObject)
         {
+            if (!string.IsNullOrWhiteSpace(dbObject.Description))
+            {
+                XmlDocumentation.AddSummaryLine(dbObject.Description.Trim());
+            }
         }
     }
 }

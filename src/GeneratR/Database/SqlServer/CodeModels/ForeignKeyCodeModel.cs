@@ -6,5 +6,7 @@
             : base(dbObject)
         {
         }
+
+        public bool IsInverse { get; set; }
     }
 }

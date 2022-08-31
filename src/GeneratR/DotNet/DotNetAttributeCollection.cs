@@ -11,11 +11,11 @@ namespace GeneratR.DotNet
         {
         }
 
-        ///<summary>
+        /// <summary>
         /// Add an attribute to the collection. 
         /// Replaces any existing attribute with the same name.
-        ///</summary>
-        new public void Add(DotNetAttribute DotNetAttribute)
+        /// </summary>
+        public new void Add(DotNetAttribute DotNetAttribute)
         {
             var item = GetByName(DotNetAttribute.Name, StringComparison.OrdinalIgnoreCase);
             if (item != null)
@@ -86,7 +86,7 @@ namespace GeneratR.DotNet
             return this.Where(q => q.Name.Equals(attributeName, comparison)).SingleOrDefault();
         }
 
-        public string ToMultilineString()
+        public string Build()
         {
             if (this.Any())
             {

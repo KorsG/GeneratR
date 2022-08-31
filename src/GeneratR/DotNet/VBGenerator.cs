@@ -18,19 +18,11 @@ namespace GeneratR.DotNet
 
         public override string CommentOperator => "'";
 
+        public override string DocumentationOperator => "'''";
+
         public override string TrueValue => "True";
 
         public override string FalseValue => "False";
-
-        public override string CreateImportNamespace(string name)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override string CreateImportNamespaces(IEnumerable<string> names)
-        {
-            throw new NotImplementedException();
-        }
 
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
             => CreateClassStart(name, partialClass, abstractClass, inheritClass, implementInterfaces.AsEnumerable());
@@ -132,6 +124,26 @@ namespace GeneratR.DotNet
                 value = string.Format("[{0}]", value);
             }
             return value;
+        }
+
+        public override string CreateNamespaceImports(IEnumerable<string> names)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string CreateNamespaceImport(string name, string alias = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string CreateNamespaceImports(IEnumerable<NamespaceImportCodeModel> models)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string CreateNamespaceImport(NamespaceImportCodeModel model)
+        {
+            throw new NotImplementedException();
         }
 
         public override HashSet<string> ReservedDotNetNames { get; } =

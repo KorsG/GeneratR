@@ -18,18 +18,32 @@ namespace GeneratR.DotNet
 
         public override string CommentOperator => "//";
 
+        public override string DocumentationOperator => "///";
+
         public override string TrueValue => "true";
 
         public override string FalseValue => "false";
 
-        public override string CreateImportNamespace(string name)
+        public override string CreateNamespaceImports(IEnumerable<string> names) => CreateNamespaceImports(names.Select(x => new NamespaceImportCodeModel(x)));
+
+        public override string CreateNamespaceImport(string name, string alias = null) => CreateNamespaceImport(new NamespaceImportCodeModel(name));
+
+        public override string CreateNamespaceImports(IEnumerable<NamespaceImportCodeModel> models)
         {
-            return $"using {name};";
+            var imports = models.GroupBy(x => x.Namespace).Select(x => CreateNamespaceImport(x.First()));
+            return string.Join(Environment.NewLine, imports);
         }
 
-        public override string CreateImportNamespaces(IEnumerable<string> names)
+        public override string CreateNamespaceImport(NamespaceImportCodeModel model)
         {
-            return string.Join(Environment.NewLine, names.Distinct().Select(x => CreateImportNamespace(x)));
+            if (model.HasAlias)
+            {
+                return $"using {model.Alias} = {model.Namespace};";
+            }
+            else
+            {
+                return $"using {model.Namespace};";
+            }
         }
 
         public override string CreateClassStart(string name, bool partialClass, bool abstractClass, string inheritClass, params string[] implementInterfaces)
@@ -117,9 +131,15 @@ namespace GeneratR.DotNet
 
             var sb = new StringBuilder();
 
+            if (model.XmlDocumentation.HasContents)
+            {
+                var xmlDoc = model.XmlDocumentation.Build(this);
+                sb.AppendLine(xmlDoc);
+            }
+
             if (model.Attributes?.Any() == true)
             {
-                sb.Append(model.Attributes.ToMultilineString());
+                sb.Append(model.Attributes.Build());
             }
 
             var modifierCollection = Enum.GetValues(modifiers.GetType()).Cast<DotNetModifierKeyword>().Where(x => modifiers.HasFlag(x) && Convert.ToInt64(x) != 0);

@@ -1,10 +1,11 @@
-﻿namespace GeneratR.DotNet
+﻿using System;
+
+namespace GeneratR.DotNet
 {
     public class PropertyCodeModel
     {
         public PropertyCodeModel()
         {
-            Attributes = new DotNetAttributeCollection();
         }
 
         public string PropertyName { get; set; }
@@ -23,10 +24,12 @@
 
         public string SetterBody { get; set; }
 
+        public XmlDocumentationCodeModel XmlDocumentation { get; } = new XmlDocumentationCodeModel();
+
         ///<summary>
         /// List of attributes added to the property.
         ///</summary>
-        public DotNetAttributeCollection Attributes { get; set; }
+        public DotNetAttributeCollection Attributes { get; set; } = new DotNetAttributeCollection();
 
         public PropertyCodeModel AddAttribute(DotNetAttribute attribute)
         {
@@ -46,6 +49,12 @@
         {
             SetterModifier = modifier;
             SetterBody = body;
+            return this;
+        }
+
+        public PropertyCodeModel WithXmlDocumentation(Action<XmlDocumentationCodeModel> action)
+        {
+            action?.Invoke(XmlDocumentation);
             return this;
         }
     }

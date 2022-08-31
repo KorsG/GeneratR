@@ -379,6 +379,8 @@ namespace GeneratR.Database.SqlServer
                 dbTypes = dbTypes.Where(x => !Settings.ExcludeObjects.Any(i => x.FullName.Like(i)));
             }
 
+            var addDataAnnotationsToModels = new List<TableCodeModel>();
+
             foreach (var t in dbTypes)
             {
                 var objSettings = GetTableSettings(t);
@@ -387,13 +389,17 @@ namespace GeneratR.Database.SqlServer
                 var o = new TableCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
-                    GenerateForeignKeys = objSettings.GenerateForeignKeys,
-                    GenerateReferencingForeignKeys = objSettings.GenerateReferencingForeignKeys,
-                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
+
+                o.AddNamespaceImports("System", "System.Collections.Generic");
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    addDataAnnotationsToModels.Add(o);
+                }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
@@ -407,31 +413,54 @@ namespace GeneratR.Database.SqlServer
                     var propertyName = c.DbObject.Name;
                     if (string.Equals(propertyName, o.ClassName, StringComparison.OrdinalIgnoreCase))
                     {
+                        // TODO: Make this configurable.
                         propertyName += "Column";
                     }
                     c.PropertyName = DotNetGenerator.GetAsValidDotNetName(propertyName);
                     c.PropertyType = TypeMapper.ConvertDataTypeToDotNetType(c.DbObject.DataType, c.DbObject.IsNullable);
                     c.Modifier = objSettings.ColumnModifiers;
-                    o.Columns.Add(c);
+                    o.AddColumn(c);
                 }
 
                 // Table foreign keys.
-                foreach (var fk in t.ForeignKeys)
+                if (objSettings.GenerateForeignKeys)
                 {
-                    var f = new ForeignKeyCodeModel(fk)
+                    foreach (var fk in t.ForeignKeys)
                     {
-                        Modifier = objSettings.ForeignKeyModifiers,
-                    };
-                    o.ForeignKeys.Add(f);
+                        var f = new ForeignKeyCodeModel(fk)
+                        {
+                            Modifier = objSettings.ForeignKeyModifiers,
+                            IsInverse = false,
+                        };
+
+                        /*
+                        f.WithXmlDocumentation(doc => doc
+                            .AddSummaryLine($"ForeignKey - [Name]: {fk.ForeignKeyName}, [Type]: {fk.RelationshipType}, [Optional]: {fk.IsOptional}.")
+                        );
+                        */
+
+                        o.ForeignKeys.Add(f);
+                    }
                 }
 
-                foreach (var fk in t.ReferencingForeignKeys)
+                if (objSettings.GenerateReferencingForeignKeys)
                 {
-                    var f = new ForeignKeyCodeModel(fk)
+                    foreach (var fk in t.ReferencingForeignKeys.Where(x => !x.IsSelfReferencing))
                     {
-                        Modifier = objSettings.ForeignKeyModifiers,
-                    };
-                    o.ReferencingForeignKeys.Add(f);
+                        var f = new ForeignKeyCodeModel(fk)
+                        {
+                            Modifier = objSettings.ForeignKeyModifiers,
+                            IsInverse = true,
+                        };
+
+                        /*
+                        f.WithXmlDocumentation(doc => doc
+                            .AddSummaryLine($"ForeignKey (Inverse) - [Name]: {fk.ForeignKeyName}, [Type]: {fk.RelationshipType}, [Optional]: {fk.IsOptional}.")
+                        );
+                        */
+
+                        o.ForeignKeys.Add(f);
+                    }
                 }
 
                 models.Add(o);
@@ -441,7 +470,7 @@ namespace GeneratR.Database.SqlServer
             SetTableCollectionForeignKeyProperties(models);
 
             // Add after foreign key parsing.
-            foreach (var o in models.Where(x => x.AddDataAnnotationAttributes))
+            foreach (var o in addDataAnnotationsToModels)
             {
                 AddTableDataAnnotationAttributes(o);
             }
@@ -471,11 +500,16 @@ namespace GeneratR.Database.SqlServer
                 var o = new ViewCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
-                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
+
+                o.AddNamespaceImports("System", "System.Collections.Generic");
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
                 {
@@ -542,12 +576,21 @@ namespace GeneratR.Database.SqlServer
                 var o = new TableTypeCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
-                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     AddSqlDataRecordMappings = objSettings.AddSqlDataRecordMappings,
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
+
+                o.AddNamespaceImports("System", "System.Collections.Generic");
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                }
+                if (objSettings.AddSqlDataRecordMappings)
+                {
+                    o.AddNamespaceImports("System.Data", "Microsoft.SqlServer.Server");
+                }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
@@ -602,11 +645,16 @@ namespace GeneratR.Database.SqlServer
                 var o = new TableFunctionCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
-                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
+
+                o.AddNamespaceImports("System", "System.Collections.Generic");
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
@@ -670,13 +718,18 @@ namespace GeneratR.Database.SqlServer
                 var o = new StoredProcedureCodeModel(t, DotNetGenerator, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
-                    AddDataAnnotationAttributes = objSettings.AddDataAnnotationAttributes,
                     AddConstructor = objSettings.AddConstructor,
                     InheritClassName = objSettings.InheritClass,
                     GenerateOutputParameters = objSettings.GenerateOutputParameters,
                     GenerateResultSet = objSettings.GenerateResultSet,
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
+
+                o.AddNamespaceImports("System", "System.Collections.Generic");
+                if (objSettings.AddDataAnnotationAttributes)
+                {
+                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
                 o.Namespace = BuildObjectNamespace(objSettings, o.ClassName, t.Schema);
@@ -898,6 +951,11 @@ namespace GeneratR.Database.SqlServer
         {
             foreach (var t in tables)
             {
+                if (!t.ForeignKeys.Any())
+                {
+                    continue;
+                }
+
                 // TODO: Find a way to reuse possible per-object settings. Maybe set ForeignKeyCollectionType and ForeignKeyNamingStrategy on the table config?
                 var objSettings = GetTableSettings(t.DbObject);
 
@@ -906,40 +964,32 @@ namespace GeneratR.Database.SqlServer
 
                 // Remove all foreign keys from the collection if the table they reference to/from does not exist in the provided table collection.
                 var nonExistingFkRelations = new List<ForeignKeyCodeModel>();
-                var nonExistingReferencingFkRelations = new List<ForeignKeyCodeModel>();
                 foreach (var fk in t.ForeignKeys)
                 {
-                    if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Any())
+                    var lookupObjectId = fk.IsInverse ? fk.DbObject.FromObjectID : fk.DbObject.ToObjectID;
+                    if (!tables.Any(x => x.DbObject.ObjectID == lookupObjectId))
                     {
                         nonExistingFkRelations.Add(fk);
                     }
                 }
-                foreach (var fk in t.ReferencingForeignKeys)
+
+                if (nonExistingFkRelations.Any())
                 {
-                    if (!tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Any())
-                    {
-                        nonExistingReferencingFkRelations.Add(fk);
-                    }
+                    t.ForeignKeys.RemoveAll(q => nonExistingFkRelations.Contains(q));
                 }
-                t.ForeignKeys.RemoveAll(q => nonExistingFkRelations.Contains(q));
-                t.ReferencingForeignKeys.RemoveAll(q => nonExistingReferencingFkRelations.Contains(q));
 
                 if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.ForeignKeyName)
                 {
                     foreach (var fk in t.ForeignKeys)
                     {
                         fk.PropertyName = fk.DbObject.ForeignKeyName;
-                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
-                    }
-                    foreach (var fk in t.ReferencingForeignKeys)
-                    {
-                        fk.PropertyName = fk.DbObject.ForeignKeyName;
-                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.FromObjectID).Single().ClassName;
+                        var lookupObjectId = fk.IsInverse ? fk.DbObject.FromObjectID : fk.DbObject.ToObjectID;
+                        fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == lookupObjectId).Single().ClassName;
                     }
                 }
                 else if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.ReferencingTableName)
                 {
-                    foreach (var fk in t.ForeignKeys)
+                    foreach (var fk in t.ForeignKeys.Where(x => !x.IsInverse))
                     {
                         fk.PropertyName = DotNetGenerator.GetAsValidDotNetName(fk.DbObject.ToName);
                         if (fk.DbObject.IsSelfReferencing)
@@ -949,7 +999,7 @@ namespace GeneratR.Database.SqlServer
                         fk.PropertyType = tables.Where(x => x.DbObject.ObjectID == fk.DbObject.ToObjectID).Single().ClassName;
                     }
 
-                    foreach (var fk in t.ReferencingForeignKeys)
+                    foreach (var fk in t.ForeignKeys.Where(x => x.IsInverse))
                     {
                         if (fk.DbObject.RelationshipType == ForeignKeyRelationshipType.OneToOne)
                         {
@@ -964,12 +1014,11 @@ namespace GeneratR.Database.SqlServer
                     }
 
                     // Handle relational properties with same name.
-                    var multiples = t.ForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList();
-                    multiples.AddRange(t.ReferencingForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList());
-                    foreach (var nm in multiples.Select(x => x.PropertyName).Distinct().ToList())
+                    var duplicates = t.ForeignKeys.GroupBy(x => x.PropertyName).Where(x => x.Count() > 1).SelectMany(x => x).ToList();
+                    foreach (var nm in duplicates.Select(x => x.PropertyName).Distinct().ToList())
                     {
                         var counter = 1;
-                        foreach (var fk in multiples.Where(x => x.PropertyName == nm))
+                        foreach (var fk in duplicates.Where(x => x.PropertyName == nm))
                         {
                             fk.PropertyName += counter.ToString();
                             counter++;
@@ -979,7 +1028,7 @@ namespace GeneratR.Database.SqlServer
                 }
                 else if (foreignKeyNamingStrategy == ForeignKeyNamingStrategy.Intelligent)
                 {
-                    foreach (var tblName in t.ForeignKeys.Select(x => x.DbObject.FromName).Distinct().ToList())
+                    foreach (var tblName in t.ForeignKeys.Where(x => !x.IsInverse).Select(x => x.DbObject.FromName).Distinct().ToList())
                     {
                         var fks = t.ForeignKeys.Where(x => x.DbObject.FromName == tblName).ToList();
 
@@ -1018,10 +1067,11 @@ namespace GeneratR.Database.SqlServer
                         }
 
                     }
-                    // Referencing/Reverse.
-                    foreach (var tblName in t.ReferencingForeignKeys.Select(x => x.DbObject.ToName).Distinct().ToList())
+
+                    // Inverse.
+                    foreach (var tblName in t.ForeignKeys.Where(x => x.IsInverse).Select(x => x.DbObject.ToName).Distinct().ToList())
                     {
-                        var fks = t.ReferencingForeignKeys.Where(x => x.DbObject.ToName == tblName).ToList();
+                        var fks = t.ForeignKeys.Where(x => x.DbObject.ToName == tblName).ToList();
 
                         // Handle scenarios where this table only have one fk to a table.
                         var singleRelations = fks.GroupBy(x => x.DbObject.FromName).Where(x => x.Count() == 1).SelectMany(x => x).ToList();
