@@ -4,8 +4,7 @@ namespace GeneratR.Database
 {
     public class DbObjectClassCodeModel<T> : ClassCodeModel where T : class
     {
-        public DbObjectClassCodeModel(T dbObject, DotNetGenerator dotNetGenerator)
-            : base(dotNetGenerator)
+        public DbObjectClassCodeModel(T dbObject)
         {
             DbObject = dbObject;
         }

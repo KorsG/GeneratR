@@ -6,10 +6,12 @@ namespace GeneratR.Database.SqlServer
     public class LinqToDbDataConnectionTemplate
     {
         private readonly SqlServerSchemaCodeModels _schemaModels;
+        private readonly DotNetGenerator _dotNetGenerator;
 
-        public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model)
+        public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model, DotNetGenerator dotNetGenerator)
         {
             Model = model;
+            _dotNetGenerator = dotNetGenerator;
             _schemaModels = model.SchemaModels;
         }
 
@@ -17,7 +19,7 @@ namespace GeneratR.Database.SqlServer
 
         public string Generate()
         {
-            var t = new DotNetTemplate(Model.DotNetGenerator);
+            var t = new DotNetTemplate(_dotNetGenerator);
 
             t.WriteNamespaceImports(Model.NamespaceImports);
             t.WriteLine();

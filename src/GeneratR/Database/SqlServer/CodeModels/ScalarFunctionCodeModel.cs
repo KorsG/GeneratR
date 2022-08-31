@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace GeneratR.Database.SqlServer
 {
     public class ScalarFunctionCodeModel : DbObjectClassCodeModel<Schema.ScalarFunction>
     {
-        public ScalarFunctionCodeModel(Schema.ScalarFunction dbObject, DotNet.DotNetGenerator dotNetGenerator)
-            : base(dbObject, dotNetGenerator)
+        public ScalarFunctionCodeModel(Schema.ScalarFunction dbObject)
+            : base(dbObject)
         {
             Parameters = new List<ParameterCodeModel>();
         }

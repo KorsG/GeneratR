@@ -4,8 +4,7 @@ namespace GeneratR.Database.SqlServer
 {
     public class LinqToDbDataConnectionCodeModel : ClassCodeModel
     {
-        public LinqToDbDataConnectionCodeModel(DotNetGenerator dotNetGenerator, SqlServerSchemaCodeModels schemaModels)
-            : base(dotNetGenerator)
+        public LinqToDbDataConnectionCodeModel(SqlServerSchemaCodeModels schemaModels)
         {
             SchemaModels = schemaModels;
         }

@@ -6,8 +6,8 @@ namespace GeneratR.Database.SqlServer
 {
     public class TableTypeCodeModel : DbObjectClassCodeModel<Schema.TableType>
     {
-        public TableTypeCodeModel(Schema.TableType dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
-            : base(dbObject, dotNetGenerator)
+        public TableTypeCodeModel(Schema.TableType dbObject, SqlServerTypeMapper typeMapper)
+            : base(dbObject)
         {
             Columns = new List<ColumnCodeModel>();
             TypeMapper = typeMapper;

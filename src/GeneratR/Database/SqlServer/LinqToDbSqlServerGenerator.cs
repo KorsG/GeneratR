@@ -65,7 +65,7 @@ namespace GeneratR.Database.SqlServer
 
         public virtual LinqToDbDataConnectionCodeModel BuildDataConnectionCodeModel(SqlServerSchemaCodeModels codeModels)
         {
-            var model = new LinqToDbDataConnectionCodeModel(DotNetGenerator, codeModels)
+            var model = new LinqToDbDataConnectionCodeModel(codeModels)
             {
                 ClassName = Settings.DataConnection.ClassName,
                 Namespace = BuildObjectNamespace(Settings.DataConnection.Namespace, Settings.DataConnection.ClassName),
@@ -88,7 +88,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateDataConnectionCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new LinqToDbDataConnectionTemplate(model).Generate();
+                code = new LinqToDbDataConnectionTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }

@@ -7,12 +7,9 @@ namespace GeneratR.DotNet
     {
         private List<PropertyCodeModel> _properties = new();
 
-        public ClassCodeModel(DotNetGenerator dotNetGenerator)
+        public ClassCodeModel()
         {
-            DotNetGenerator = dotNetGenerator;
         }
-
-        public DotNetGenerator DotNetGenerator { get; }
 
         public string OutputFolderPath { get; set; }
 

@@ -8,8 +8,8 @@ namespace GeneratR.Database.SqlServer
 {
     public class TableFunctionCodeModel : DbObjectClassCodeModel<Schema.TableFunction>
     {
-        public TableFunctionCodeModel(Schema.TableFunction dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
-            : base(dbObject, dotNetGenerator)
+        public TableFunctionCodeModel(Schema.TableFunction dbObject, SqlServerTypeMapper typeMapper)
+            : base(dbObject)
         {
             Columns = new List<ColumnCodeModel>();
             Parameters = new List<ParameterCodeModel>();

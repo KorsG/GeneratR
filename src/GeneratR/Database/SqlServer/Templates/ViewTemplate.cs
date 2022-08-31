@@ -8,11 +8,11 @@ namespace GeneratR.Database.SqlServer.Templates
         private readonly ViewCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
-        public ViewTemplate(ViewCodeModel model)
-            : base(model.DotNetGenerator)
+        public ViewTemplate(ViewCodeModel model, DotNetGenerator dotNetGenerator)
+            : base(dotNetGenerator)
         {
             _model = model;
-            _dotNet = _model.DotNetGenerator;
+            _dotNet = dotNetGenerator;
         }
 
         public string Generate()

@@ -4,8 +4,8 @@ namespace GeneratR.Database.SqlServer
 {
     public class StoredProcedureCodeModel : DbObjectClassCodeModel<Schema.StoredProcedure>
     {
-        public StoredProcedureCodeModel(Schema.StoredProcedure dbObject, DotNet.DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper)
-            : base(dbObject, dotNetGenerator)
+        public StoredProcedureCodeModel(Schema.StoredProcedure dbObject, SqlServerTypeMapper typeMapper)
+            : base(dbObject)
         {
             ResultColumns = new List<StoredProcedureResultColumnCodeModel>();
             Parameters = new List<ParameterCodeModel>();

@@ -8,11 +8,11 @@ namespace GeneratR.Database.SqlServer.Templates
         private readonly TableFunctionCodeModel _model;
         private readonly DotNetGenerator _dotNet;
 
-        public TableFunctionTemplate(TableFunctionCodeModel model) 
-            : base(model.DotNetGenerator)
+        public TableFunctionTemplate(TableFunctionCodeModel model, DotNetGenerator dotNetGenerator) 
+            : base(dotNetGenerator)
         {
             _model = model;
-            _dotNet = model.DotNetGenerator;
+            _dotNet = dotNetGenerator;
         }
 
         public string Generate()

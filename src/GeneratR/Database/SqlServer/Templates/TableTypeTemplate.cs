@@ -9,11 +9,11 @@ namespace GeneratR.Database.SqlServer.Templates
         private readonly DotNetGenerator _dotNet;
         private readonly SqlServerTypeMapper _typeMapper;
 
-        public TableTypeTemplate(TableTypeCodeModel model)
-            : base(model.DotNetGenerator)
+        public TableTypeTemplate(TableTypeCodeModel model, DotNetGenerator dotNetGenerator)
+            : base(dotNetGenerator)
         {
             _model = model;
-            _dotNet = _model.DotNetGenerator;
+            _dotNet = dotNetGenerator;
             _typeMapper = _model.TypeMapper;
         }
 

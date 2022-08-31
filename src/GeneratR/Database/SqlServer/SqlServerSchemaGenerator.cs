@@ -234,7 +234,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateTableCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new TableTemplate(model).Generate();
+                code = new TableTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -246,7 +246,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateViewCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new ViewTemplate(model).Generate();
+                code = new ViewTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -258,7 +258,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateTableFunctionCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new TableFunctionTemplate(model).Generate();
+                code = new TableFunctionTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -270,7 +270,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateTableTypeCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new TableTypeTemplate(model).Generate();
+                code = new TableTypeTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -282,7 +282,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateStoredProcedureCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new StoredProcedureTemplate(model).Generate();
+                code = new StoredProcedureTemplate(model, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -386,7 +386,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new TableCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableCodeModel(t, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddConstructor = objSettings.AddConstructor,
@@ -497,7 +497,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetViewSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new ViewCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new ViewCodeModel(t, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddConstructor = objSettings.AddConstructor,
@@ -573,7 +573,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableTypeSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new TableTypeCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableTypeCodeModel(t, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddConstructor = objSettings.AddConstructor,
@@ -642,7 +642,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetTableFunctionSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new TableFunctionCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new TableFunctionCodeModel(t, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddConstructor = objSettings.AddConstructor,
@@ -715,7 +715,7 @@ namespace GeneratR.Database.SqlServer
                 var objSettings = GetStoredProcedureSettings(t);
                 if (!objSettings.Generate) { continue; }
 
-                var o = new StoredProcedureCodeModel(t, DotNetGenerator, TypeMapper)
+                var o = new StoredProcedureCodeModel(t, TypeMapper)
                 {
                     DotNetModifier = objSettings.Modifiers,
                     AddConstructor = objSettings.AddConstructor,
