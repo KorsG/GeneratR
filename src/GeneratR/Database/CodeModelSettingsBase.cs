@@ -5,6 +5,10 @@ namespace GeneratR.Database
 {
     public abstract class CodeModelSettingsBase
     {
+        public CodeModelSettingsBase()
+        {
+        }
+
         public bool Generate { get; set; }
 
         public string Namespace { get; set; } = string.Empty;

@@ -253,7 +253,7 @@ namespace GeneratR.DotNet
             {
                 value = "_" + value;
             }
-            if (ReservedDotNetNames.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (ReservedDotNetNames.Contains(value, StringComparer.Ordinal))
             {
                 value = string.Format("@{0}", value);
             }

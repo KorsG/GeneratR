@@ -34,6 +34,11 @@ namespace GeneratR.Database.SqlServer
                 _connectionStringBuilder.InitialCatalog = settings.DatabaseName;
             }
 
+            if (!string.IsNullOrWhiteSpace(settings.AttachDbFilePath))
+            {
+                _connectionStringBuilder.AttachDBFilename = settings.AttachDbFilePath;
+            }
+
             DatabaseName = _connectionStringBuilder.InitialCatalog;
 
             _schemaContext = new SqlServerSchemaContext(_connectionStringBuilder.ConnectionString)

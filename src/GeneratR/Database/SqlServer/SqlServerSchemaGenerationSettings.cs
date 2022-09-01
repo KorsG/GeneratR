@@ -23,8 +23,7 @@ namespace GeneratR.Database.SqlServer
 
         public string ConnectionString { get; set; }
 
-        [Obsolete("Not supported")]
-        public string ConnectionStringName { get; set; }
+        public string AttachDbFilePath { get; set; }
 
         public ICollection<string> IncludeSchemas { get; set; } = new List<string>();
 
