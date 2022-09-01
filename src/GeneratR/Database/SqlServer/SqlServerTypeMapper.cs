@@ -7,6 +7,7 @@ namespace GeneratR.Database.SqlServer
 {
     public class SqlServerTypeMapper
     {
+        protected static readonly HashSet<string> _integerTypes = new(StringComparer.OrdinalIgnoreCase) { "byte", "tinyint", "smallint", "int", "bigint", };
         protected static readonly HashSet<string> _variableStringTypes = new(StringComparer.OrdinalIgnoreCase) { "varchar", "nvarchar", };
         protected static readonly HashSet<string> _fixedStringTypes = new(StringComparer.OrdinalIgnoreCase) { "char", "nchar", };
         protected static readonly HashSet<string> _ansiStringTypes = new(StringComparer.OrdinalIgnoreCase) { "char", "varchar", };
@@ -261,6 +262,9 @@ namespace GeneratR.Database.SqlServer
 
             return col.DataType.ToLowerInvariant();
         }
+
+        public virtual bool DataTypeIsInteger(Schema.Column column) => DataTypeIsInteger(column.DataType);
+        public virtual bool DataTypeIsInteger(string dataType) => _integerTypes.Contains(dataType);
 
         public virtual bool DataTypeIsVariableStringLength(Schema.Column column) => DataTypeIsVariableStringLength(column.DataType);
         public virtual bool DataTypeIsVariableStringLength(string dataType) => _variableStringTypes.Contains(dataType);

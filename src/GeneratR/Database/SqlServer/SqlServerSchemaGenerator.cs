@@ -56,6 +56,8 @@ namespace GeneratR.Database.SqlServer
 
         public string DatabaseName { get; }
 
+        protected readonly HashSet<string> DataAnnotationNamespaces = new() { "System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema", };
+
         /// <summary>
         /// Execute generator steps: 1. LoadSchema -> 2. BuildCodeModels -> 3. GenerateSourceCode -> 4. WriteCodeFiles
         /// </summary>
@@ -402,7 +404,7 @@ namespace GeneratR.Database.SqlServer
                 o.AddNamespaceImports("System", "System.Collections.Generic");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
-                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    o.AddNamespaceImports(DataAnnotationNamespaces);
                     addDataAnnotationsToModels.Add(o);
                 }
 
@@ -513,7 +515,7 @@ namespace GeneratR.Database.SqlServer
                 o.AddNamespaceImports("System", "System.Collections.Generic");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
-                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    o.AddNamespaceImports(DataAnnotationNamespaces);
                 }
 
                 if (objSettings.NamingStrategy == NamingStrategy.Pluralize)
@@ -590,7 +592,7 @@ namespace GeneratR.Database.SqlServer
                 o.AddNamespaceImports("System", "System.Collections.Generic");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
-                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    o.AddNamespaceImports(DataAnnotationNamespaces);
                 }
                 if (objSettings.AddSqlDataRecordMappings)
                 {
@@ -658,7 +660,7 @@ namespace GeneratR.Database.SqlServer
                 o.AddNamespaceImports("System", "System.Collections.Generic");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
-                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    o.AddNamespaceImports(DataAnnotationNamespaces);
                 }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);
@@ -733,7 +735,7 @@ namespace GeneratR.Database.SqlServer
                 o.AddNamespaceImports("System", "System.Collections.Generic");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
-                    o.AddNamespaceImports("System.ComponentModel.DataAnnotations", "System.ComponentModel.DataAnnotations.Schema");
+                    o.AddNamespaceImports(DataAnnotationNamespaces);
                 }
 
                 o.ClassName = BuildObjectClassName(objSettings, t.Name);

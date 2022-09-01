@@ -99,7 +99,9 @@ namespace GeneratR.Database.SqlServer
             {
                 foreach (var t in model.Tables)
                 {
-                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Table")
+                    var attributeNames = PrepareLinqToDbAttributeNames(t);
+
+                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create(attributeNames.Table)
                         .SetOptionalArg("Name", t.DbObject.Name, true)
                         .SetOptionalArg("Schema", t.DbObject.Schema, true)
                         .SetOptionalArg("IsColumnAttributeRequired", false)
@@ -107,12 +109,12 @@ namespace GeneratR.Database.SqlServer
 
                     foreach (var col in t.Columns)
                     {
-                        AddColumnAttributes(col);
+                        AddColumnAttributes(col, attributeNames.Column);
                     }
 
                     foreach (var fk in t.ForeignKeys.Where(x => !x.IsInverse))
                     {
-                        var attr = DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Association")
+                        var attr = DotNetGenerator.AttributeFactory.Create(attributeNames.Association)
                             .SetOptionalArg("ThisKey", string.Join(",", fk.DbObject.FromColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("OtherKey", string.Join(",", fk.DbObject.ToColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional);
@@ -122,7 +124,7 @@ namespace GeneratR.Database.SqlServer
 
                     foreach (var fk in t.ForeignKeys.Where(x => x.IsInverse))
                     {
-                        var attr = DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Association")
+                        var attr = DotNetGenerator.AttributeFactory.Create(attributeNames.Association)
                             .SetOptionalArg("ThisKey", string.Join(",", fk.DbObject.ToColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("OtherKey", string.Join(",", fk.DbObject.FromColumns.Select(c => c.ColumnName)), wrapValueInQuotes: true)
                             .SetOptionalArg("CanBeNull", fk.DbObject.IsOptional);
@@ -133,7 +135,9 @@ namespace GeneratR.Database.SqlServer
 
                 foreach (var t in model.Views)
                 {
-                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Table")
+                    var attributeNames = PrepareLinqToDbAttributeNames(t);
+
+                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create(attributeNames.Table)
                         .SetOptionalArg("Name", t.DbObject.Name, true)
                         .SetOptionalArg("Schema", t.DbObject.Schema, true)
                         .SetOptionalArg("IsView", true)
@@ -141,43 +145,61 @@ namespace GeneratR.Database.SqlServer
 
                     foreach (var col in t.Columns)
                     {
-                        AddColumnAttributes(col);
+                        AddColumnAttributes(col, attributeNames.Column);
                     }
                 }
 
                 foreach (var t in model.TableFunctions)
                 {
-                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Table")
+                    var attributeNames = PrepareLinqToDbAttributeNames(t);
+
+                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create(attributeNames.Table)
                         .SetOptionalArg("Name", t.DbObject.Name, true)
                         .SetOptionalArg("Schema", t.DbObject.Schema, true)
                         );
 
                     foreach (var col in t.Columns)
                     {
-                        AddColumnAttributes(col);
+                        AddColumnAttributes(col, attributeNames.Column);
                     }
                 }
 
                 foreach (var t in model.TableTypes)
                 {
-                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Table")
+                    var attributeNames = PrepareLinqToDbAttributeNames(t);
+
+                    t.AddAttribute(DotNetGenerator.AttributeFactory.Create(attributeNames.Table)
                         .SetOptionalArg("Name", t.DbObject.Name, true)
                         .SetOptionalArg("Schema", t.DbObject.Schema, true)
                         );
 
                     foreach (var col in t.Columns)
                     {
-                        AddColumnAttributes(col);
+                        AddColumnAttributes(col, attributeNames.Column);
                     }
                 }
             }
         }
 
-        private void AddColumnAttributes(ColumnCodeModel col)
+        private (string Table, string Column, string Association) PrepareLinqToDbAttributeNames(ClassCodeModel codeModel)
+        {
+            const string mappingNs = "LinqToDB.Mapping";
+            if (codeModel.NamespaceImports.Any(x => DataAnnotationNamespaces.Contains(x.Namespace)))
+            {
+                return ($"{mappingNs}.Table", $"{mappingNs}.Column", $"{mappingNs}.Association");
+            }
+            else
+            {
+                codeModel.AddNamespaceImport(mappingNs);
+                return ("Table", "Column", "Association");
+            }
+        }
+
+        private void AddColumnAttributes(ColumnCodeModel col, string columnAttributeName)
         {
             var hasNameDiff = !string.Equals(col.DbObject.Name, col.PropertyName, StringComparison.OrdinalIgnoreCase);
 
-            var columnAttr = DotNetGenerator.AttributeFactory.Create("LinqToDB.Mapping.Column");
+            var columnAttr = DotNetGenerator.AttributeFactory.Create(columnAttributeName);
 
             if (hasNameDiff)
             {
@@ -189,6 +211,11 @@ namespace GeneratR.Database.SqlServer
                 columnAttr = columnAttr
                     .SetOptionalArg("IsPrimaryKey", true)
                     .SetOptionalArg("PrimaryKeyOrder", col.DbObject.PrimaryKeyPosition);
+
+                if (!col.DbObject.IsIdentity && TypeMapper.DataTypeIsInteger(col.DbObject))
+                {
+                    columnAttr = columnAttr.SetOptionalArg("IsIdentity", false);
+                }
             }
 
             if (col.DbObject.IsIdentity)
@@ -196,13 +223,13 @@ namespace GeneratR.Database.SqlServer
                 columnAttr = columnAttr.SetOptionalArg("IsIdentity", true);
             }
 
-            columnAttr = columnAttr.SetOptionalArg("DataType", GetLinqToDbColumnDataType(col.DbObject));
-
             var dbType = TypeMapper.GetFullColumnDataType(col.DbObject);
             if (!string.IsNullOrWhiteSpace(dbType))
             {
                 columnAttr = columnAttr.SetOptionalArg("DbType", dbType, true);
             }
+
+            columnAttr = columnAttr.SetOptionalArg("DataType", GetLinqToDbColumnDataType(col.DbObject));
 
             if (TypeMapper.DataTypeIsString(col.DbObject))
             {
