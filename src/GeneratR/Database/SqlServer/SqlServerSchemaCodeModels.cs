@@ -55,12 +55,12 @@ namespace GeneratR.Database.SqlServer
 
         public TableCodeModel GetTable(string schema, string name)
         {
-            return Tables?.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
+            return Tables.FirstOrDefault(x => x.DbObject.Schema == schema && x.DbObject.Name == name);
         }
 
         public TableCodeModel GetTable(string fullName)
         {
-            return Tables?.FirstOrDefault(x => x.DbObject.FullName == fullName);
+            return Tables.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
         public SqlServerSchemaCodeModels WithTable(string fullName, Action<TableCodeModel> action)
@@ -91,7 +91,7 @@ namespace GeneratR.Database.SqlServer
 
         public ViewCodeModel GetView(string fullName)
         {
-            return Views?.FirstOrDefault(x => x.DbObject.FullName == fullName);
+            return Views.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
         public SqlServerSchemaCodeModels WithView(string fullName, Action<ViewCodeModel> action)
@@ -109,7 +109,7 @@ namespace GeneratR.Database.SqlServer
 
         public TableFunctionCodeModel GetTableFunction(string fullName)
         {
-            return TableFunctions?.FirstOrDefault(x => x.DbObject.FullName == fullName);
+            return TableFunctions.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
         public SqlServerSchemaCodeModels WithTableFunction(string fullName, Action<TableFunctionCodeModel> action)
@@ -127,7 +127,7 @@ namespace GeneratR.Database.SqlServer
 
         public StoredProcedureCodeModel GetStoredProcedure(string fullName)
         {
-            return StoredProcedures?.FirstOrDefault(x => x.DbObject.FullName == fullName);
+            return StoredProcedures.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
         public SqlServerSchemaCodeModels WithStoredProcedure(string fullName, Action<StoredProcedureCodeModel> action)
@@ -145,7 +145,7 @@ namespace GeneratR.Database.SqlServer
 
         public TableTypeCodeModel GetTableType(string fullName)
         {
-            return TableTypes?.FirstOrDefault(x => x.DbObject.FullName == fullName);
+            return TableTypes.FirstOrDefault(x => x.DbObject.FullName == fullName);
         }
 
         public SqlServerSchemaCodeModels WithTableType(string fullName, Action<TableTypeCodeModel> action)
