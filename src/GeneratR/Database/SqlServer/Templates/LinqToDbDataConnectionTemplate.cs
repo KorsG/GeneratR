@@ -91,7 +91,7 @@ namespace GeneratR.Database.SqlServer
             }
             t.WriteNamespaceEnd();
 
-            return base.ToString();
+            return t.ToString();
         }
 
         public virtual void WriteConstructors(DotNetTemplate writer)
