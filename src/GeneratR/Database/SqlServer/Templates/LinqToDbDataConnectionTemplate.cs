@@ -37,7 +37,7 @@ namespace GeneratR.Database.SqlServer
                     foreach (var item in _schemaModels.Tables)
                     {
                         t.WriteLine();
-                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
+                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => this.GetTable<{item.ClassName}>();");
                     }
                     t.WriteLine();
                     t.WriteLine("#endregion Tables");
@@ -48,7 +48,7 @@ namespace GeneratR.Database.SqlServer
                     foreach (var item in _schemaModels.Views)
                     {
                         t.WriteLine();
-                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => GetTable<{item.ClassName}>();");
+                        t.WriteLine($"public ITable<{item.ClassName}> {item.ClassName} => this.GetTable<{item.ClassName}>();");
                     }
                     t.WriteLine();
                     t.WriteLine("#endregion Views");
@@ -69,11 +69,11 @@ namespace GeneratR.Database.SqlServer
                             if (item.Parameters.Any())
                             {
                                 var argNames = item.Parameters.Select(x => Inflector.MakeInitialLowerCase(x.PropertyName));
-                                t.WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod(), {string.Join(",", argNames)});");
+                                t.WriteLine($"return this.GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod(), {string.Join(",", argNames)});");
                             }
                             else
                             {
-                                t.WriteLine($"return GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod());");
+                                t.WriteLine($"return this.GetTable<{item.ClassName}>(this, (MethodInfo)MethodBase.GetCurrentMethod());");
                             }
                         }
                         t.WriteLine("}");
