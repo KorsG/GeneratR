@@ -81,6 +81,39 @@ namespace GeneratR.Database.SqlServer
                     t.WriteLine();
                     t.WriteLine("#endregion TableFunctions");
 
+                    // TODO: Implement stored procedures.
+                    /*
+                    t.WriteLine();
+
+                    t.WriteLine("#region StoredProcedures");
+                    foreach (var item in schemaModels.StoredProcedures)
+                    {
+                        t.WriteLine();
+
+                        var args = item.Parameters.Select(x => $"{x.PropertyType} {Inflector.MakeInitialLowerCase(x.PropertyName)}");
+                        // TODO: Should return generated class and map potential returned table and/or output parameters.
+                        t.WriteLine($"public async Task<int> {item.ClassName} ({string.Join(", ", args)}, CancellationToken cancellationToken = default)");
+                        t.WriteLine("{");
+                        using (t.IndentScope())
+                        {
+                            if (item.Parameters.Any())
+                            {
+                                // TODO: Fully implement DataParameter (direction, linq2db datatype? etc.)
+                                var parameterArgs = item.Parameters.Select(x => $"new DataParameter(@{x.DbObject.Name}, {Inflector.MakeInitialLowerCase(x.PropertyName)}, {x.DbObject.DataType}");
+                                t.WriteLine(@$"return await this.ExecuteProcAsync(""{item.DbObject.FullName}"", cancellationToken, {string.Join(", ", parameterArgs)}).ConfigureAwait(false);");
+                            }
+                            else
+                            {
+                                t.WriteLine(@$"return await this.ExecuteProcAsync(""{item.DbObject.FullName}"", cancellationToken).ConfigureAwait(false);");
+                            }
+
+                        }
+                        t.WriteLine("}");
+                    }
+                    t.WriteLine();
+                    t.WriteLine("#endregion StoredProcedures");
+                    */
+
                     foreach (var p in Model.Properties)
                     {
                         t.WriteLine();
