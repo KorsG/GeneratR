@@ -19,12 +19,12 @@ namespace GeneratR.Database.SqlServer
         protected static readonly HashSet<string> _dateTimeTypesWithScale = new(StringComparer.OrdinalIgnoreCase) { "datetime2", "datetimeoffset", };
         protected static readonly HashSet<string> _rowVersionTypes = new(StringComparer.OrdinalIgnoreCase) { "timestamp", "rowversion", };
 
-        private readonly DotNetGenerator _dotNetGenerator;
-
         public SqlServerTypeMapper(DotNetGenerator dotNetGenerator)
         {
-            _dotNetGenerator = dotNetGenerator;
+            DotNetGenerator = dotNetGenerator;
         }
+
+        internal DotNetGenerator DotNetGenerator { get; }
 
         public virtual string ConvertDataTypeToDotNetType(string sqlDataType, bool nullable, bool isTableType = false)
         {
@@ -71,142 +71,142 @@ namespace GeneratR.Database.SqlServer
             switch (sqlDataType.ToLowerInvariant())
             {
                 case "char":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.AnsiStringFixedLength";
                     sqlDbType = "SqlDbType.Char";
                     break;
                 case "varchar":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.AnsiString";
                     sqlDbType = "SqlDbType.VarChar";
                     break;
                 case "text":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.AnsiString";
                     sqlDbType = "SqlDbType.VarChar";
                     break;
                 case "nchar":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.StringFixedLength";
                     sqlDbType = "SqlDbType.NChar";
                     break;
                 case "nvarchar":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.String";
                     sqlDbType = "SqlDbType.NVarChar";
                     break;
                 case "ntext":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.String";
                     sqlDbType = "SqlDbType.NVarChar";
                     break;
                 case "bigint":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(long?)) : _dotNetGenerator.GetTypeAsString(typeof(long));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(long?)) : DotNetGenerator.GetTypeAsString(typeof(long));
                     dbType = "DbType.Int64";
                     sqlDbType = "SqlDbType.BigInt";
                     break;
                 case "int":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(int?)) : _dotNetGenerator.GetTypeAsString(typeof(int));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(int?)) : DotNetGenerator.GetTypeAsString(typeof(int));
                     dbType = "DbType.Int32";
                     sqlDbType = "SqlDbType.Int";
                     break;
                 case "smallint":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(short?)) : _dotNetGenerator.GetTypeAsString(typeof(short));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(short?)) : DotNetGenerator.GetTypeAsString(typeof(short));
                     dbType = "DbType.Int16";
                     sqlDbType = "SqlDbType.SmallInt";
                     break;
                 case "tinyint":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(byte?)) : _dotNetGenerator.GetTypeAsString(typeof(byte));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(byte?)) : DotNetGenerator.GetTypeAsString(typeof(byte));
                     dbType = "DbType.Byte";
                     sqlDbType = "SqlDbType.TinyInt";
                     break;
                 case "uniqueidentifier":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(Guid?)) : _dotNetGenerator.GetTypeAsString(typeof(Guid));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(Guid?)) : DotNetGenerator.GetTypeAsString(typeof(Guid));
                     dbType = "DbType.Guid";
                     sqlDbType = "SqlDbType.UniqueIdentifier";
                     break;
                 case "smalldatetime":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(DateTime?)) : _dotNetGenerator.GetTypeAsString(typeof(DateTime));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
                     dbType = "DbType.DateTime";
                     sqlDbType = "SqlDbType.SmallDateTime";
                     break;
                 case "datetime":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(DateTime?)) : _dotNetGenerator.GetTypeAsString(typeof(DateTime));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
                     dbType = "DbType.DateTime";
                     sqlDbType = "SqlDbType.DateTime";
                     break;
                 case "datetime2":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(DateTime?)) : _dotNetGenerator.GetTypeAsString(typeof(DateTime));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
                     dbType = "DbType.DateTime2";
                     sqlDbType = "SqlDbType.DateTime2";
                     break;
                 case "date":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(DateTime?)) : _dotNetGenerator.GetTypeAsString(typeof(DateTime));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTime?)) : DotNetGenerator.GetTypeAsString(typeof(DateTime));
                     dbType = "DbType.Date";
                     sqlDbType = "SqlDbType.Date";
                     break;
                 case "time":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(TimeSpan?)) : _dotNetGenerator.GetTypeAsString(typeof(TimeSpan));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(TimeSpan?)) : DotNetGenerator.GetTypeAsString(typeof(TimeSpan));
                     dbType = "DbType.Time";
                     sqlDbType = "SqlDbType.Time";
                     break;
                 case "datetimeoffset":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(DateTimeOffset?)) : _dotNetGenerator.GetTypeAsString(typeof(DateTimeOffset));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(DateTimeOffset?)) : DotNetGenerator.GetTypeAsString(typeof(DateTimeOffset));
                     dbType = "DbType.DateTimeOffset";
                     sqlDbType = "SqlDbType.DateTimeOffset";
                     break;
                 case "float":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(double?)) : _dotNetGenerator.GetTypeAsString(typeof(double));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(double?)) : DotNetGenerator.GetTypeAsString(typeof(double));
                     dbType = "DbType.Double";
                     sqlDbType = "SqlDbType.Float";
                     break;
                 case "real":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(float?)) : _dotNetGenerator.GetTypeAsString(typeof(float));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(float?)) : DotNetGenerator.GetTypeAsString(typeof(float));
                     dbType = "DbType.Double";
                     sqlDbType = "SqlDbType.Real";
                     break;
                 case "numeric":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(decimal?)) : _dotNetGenerator.GetTypeAsString(typeof(decimal));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
                     dbType = "DbType.Decimal";
                     sqlDbType = "SqlDbType.Decimal";
                     break;
                 case "smallmoney":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(decimal?)) : _dotNetGenerator.GetTypeAsString(typeof(decimal));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
                     dbType = "DbType.Decimal";
                     sqlDbType = "SqlDbType.SmallMoney";
                     break;
                 case "decimal":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(decimal?)) : _dotNetGenerator.GetTypeAsString(typeof(decimal));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
                     dbType = "DbType.Decimal";
                     sqlDbType = "SqlDbType.Decimal";
                     break;
                 case "money":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(decimal?)) : _dotNetGenerator.GetTypeAsString(typeof(decimal));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(decimal?)) : DotNetGenerator.GetTypeAsString(typeof(decimal));
                     dbType = "DbType.Decimal";
                     sqlDbType = "SqlDbType.Money";
                     break;
                 case "bit":
-                    dotNetType = nullable ? _dotNetGenerator.GetTypeAsString(typeof(bool?)) : _dotNetGenerator.GetTypeAsString(typeof(bool));
+                    dotNetType = nullable ? DotNetGenerator.GetTypeAsString(typeof(bool?)) : DotNetGenerator.GetTypeAsString(typeof(bool));
                     dbType = "DbType.Boolean";
                     sqlDbType = "SqlDbType.Bit";
                     break;
                 case "image":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(byte[]));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
                     dbType = "DbType.Binary";
                     sqlDbType = "SqlDbType.Image";
                     break;
                 case "binary":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(byte[]));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
                     dbType = "DbType.Binary";
                     sqlDbType = "SqlDbType.Binary";
                     break;
                 case "varbinary":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(byte[]));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
                     dbType = "DbType.Binary";
                     sqlDbType = "SqlDbType.VarBinary";
                     break;
                 case "timestamp":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(byte[]));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(byte[]));
                     dbType = "DbType.Binary";
                     sqlDbType = "SqlDbType.Timestamp";
                     break;
@@ -221,17 +221,17 @@ namespace GeneratR.Database.SqlServer
                     sqlDbType = "SqlDbType.Udt";
                     break;
                 case "table type":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(object));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(object));
                     dbType = "DbType.Object";
                     sqlDbType = "SqlDbType.Structured";
                     break;
                 case "sysname":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.String";
                     sqlDbType = "SqlDbType.NVarChar";
                     break;
                 case "xml":
-                    dotNetType = _dotNetGenerator.GetTypeAsString(typeof(string));
+                    dotNetType = DotNetGenerator.GetTypeAsString(typeof(string));
                     dbType = "DbType.Xml";
                     sqlDbType = "SqlDbType.Xml";
                     break;

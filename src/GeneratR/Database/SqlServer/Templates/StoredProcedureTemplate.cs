@@ -66,7 +66,7 @@ namespace GeneratR.Database.SqlServer.Templates
 
                     if (generateResultSet)
                     {
-                        WriteLine("public IEnumerable<{0}> Result {{ get; set; }}", resultSetClassName);
+                        WriteLine("public IEnumerable<{0}> Results {{ get; set; }}", resultSetClassName);
                         WriteLine();
                     }
 

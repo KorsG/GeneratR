@@ -9,19 +9,21 @@ namespace GeneratR.Database.SqlServer
     public class LinqToDbSqlServerGenerator : SqlServerSchemaGenerator
     {
         public LinqToDbSqlServerGenerator(LinqToDbSqlServerGeneratorSettings settings, DotNetLanguageType dotNetLanguage = DotNetLanguageType.CS)
-            : base(settings, dotNetLanguage)
+            : base(settings, DotNetGenerator.Create(dotNetLanguage), new LinqToDbTypeMapper(DotNetGenerator.Create(dotNetLanguage)))
         {
         }
 
         public LinqToDbSqlServerGenerator(LinqToDbSqlServerGeneratorSettings settings, DotNetGenerator dotNetGenerator)
-            : base(settings, dotNetGenerator)
+            : base(settings, dotNetGenerator, new LinqToDbTypeMapper(dotNetGenerator))
         {
         }
 
 #if NET5_0_OR_GREATER
         public override LinqToDbSqlServerGeneratorSettings Settings => (LinqToDbSqlServerGeneratorSettings)base.Settings;
+        public override LinqToDbTypeMapper TypeMapper => (LinqToDbTypeMapper)base.TypeMapper;
 #else
         public new LinqToDbSqlServerGeneratorSettings Settings => (LinqToDbSqlServerGeneratorSettings)base.Settings;
+        public new LinqToDbTypeMapper TypeMapper => (LinqToDbTypeMapper)base.TypeMapper;
 #endif
 
         public override SqlServerSchema LoadSchema()
@@ -75,7 +77,7 @@ namespace GeneratR.Database.SqlServer
                 DotNetModifier = Settings.DataConnection.Modifiers,
             };
 
-            model.AddNamespaceImports("System", "System.Collections.Generic", "System.Reflection", "LinqToDB", "LinqToDB.Configuration", "LinqToDB.Data");
+            model.AddNamespaceImports("System", "System.Collections.Generic", "System.Reflection", "System.Threading", "System.Threading.Tasks", "LinqToDB", "LinqToDB.Configuration", "LinqToDB.Data");
             model.AddNamespaceImports(codeModels.GetNamespaces());
 
             return model;
@@ -88,7 +90,7 @@ namespace GeneratR.Database.SqlServer
             var code = GenerateDataConnectionCodeFunc?.Invoke(model);
             if (code == null)
             {
-                code = new LinqToDbDataConnectionTemplate(model, DotNetGenerator).Generate();
+                code = new LinqToDbDataConnectionTemplate(model, TypeMapper, DotNetGenerator).Generate();
             }
             return code;
         }
@@ -260,48 +262,7 @@ namespace GeneratR.Database.SqlServer
 
         public virtual string GetLinqToDbColumnDataType(Column column)
         {
-            var prefix = "LinqToDB.DataType.";
-
-            switch (column.DataType.ToLowerInvariant())
-            {
-                case "image": return prefix + "Image";
-                case "text": return prefix + "Text";
-                case "binary": return prefix + "Binary";
-                case "tinyint": return prefix + "Byte";
-                case "date": return prefix + "Date";
-                case "time": return prefix + "Time";
-                case "bit": return prefix + "Boolean";
-                case "smallint": return prefix + "Int16";
-                case "decimal": return prefix + "Decimal";
-                case "int": return prefix + "Int32";
-                case "smalldatetime": return prefix + "SmallDateTime";
-                case "real": return prefix + "Single";
-                case "money": return prefix + "Money";
-                case "datetime": return prefix + "DateTime";
-                case "float": return prefix + "Double";
-                case "numeric": return prefix + "Decimal";
-                case "smallmoney": return prefix + "SmallMoney";
-                case "datetime2": return prefix + "DateTime2";
-                case "bigint": return prefix + "Int64";
-                case "varbinary": return prefix + "VarBinary";
-                case "timestamp": return prefix + "Timestamp";
-                case "sysname": return prefix + "NVarChar";
-                case "nvarchar": return prefix + "NVarChar";
-                case "varchar": return prefix + "VarChar";
-                case "ntext": return prefix + "NText";
-                case "uniqueidentifier": return prefix + "Guid";
-                case "datetimeoffset": return prefix + "DateTimeOffset";
-                case "sql_variant": return prefix + "Variant";
-                case "xml": return prefix + "Xml";
-                case "char": return prefix + "Char";
-                case "nchar": return prefix + "NChar";
-                case "hierarchyid":
-                case "geography":
-                case "geometry": return prefix + "Udt";
-                case "table type": return prefix + "Structured";
-            }
-
-            return prefix + "Undefined";
+            return TypeMapper.GetLinqToDbColumnDataType(column.DataType);
         }
     }
 }

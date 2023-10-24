@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using GeneratR.DotNet;
 
 namespace GeneratR.Database.SqlServer
@@ -6,11 +7,13 @@ namespace GeneratR.Database.SqlServer
     public class LinqToDbDataConnectionTemplate
     {
         private readonly SqlServerSchemaCodeModels _schemaModels;
+        private readonly LinqToDbTypeMapper _typeMapper;
         private readonly DotNetGenerator _dotNetGenerator;
 
-        public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model, DotNetGenerator dotNetGenerator)
+        public LinqToDbDataConnectionTemplate(LinqToDbDataConnectionCodeModel model, LinqToDbTypeMapper typeMapper, DotNetGenerator dotNetGenerator)
         {
             Model = model;
+            _typeMapper = typeMapper;
             _dotNetGenerator = dotNetGenerator;
             _schemaModels = model.SchemaModels;
         }
@@ -81,38 +84,56 @@ namespace GeneratR.Database.SqlServer
                     t.WriteLine();
                     t.WriteLine("#endregion TableFunctions");
 
-                    // TODO: Implement stored procedures.
-                    /*
                     t.WriteLine();
 
                     t.WriteLine("#region StoredProcedures");
-                    foreach (var item in schemaModels.StoredProcedures)
+                    foreach (var item in _schemaModels.StoredProcedures)
                     {
                         t.WriteLine();
 
-                        var args = item.Parameters.Select(x => $"{x.PropertyType} {Inflector.MakeInitialLowerCase(x.PropertyName)}");
-                        // TODO: Should return generated class and map potential returned table and/or output parameters.
-                        t.WriteLine($"public async Task<int> {item.ClassName} ({string.Join(", ", args)}, CancellationToken cancellationToken = default)");
+                        var methodName = item.ClassName + "Async";
+                        var methodArgs = item.Parameters.Select(x => $"{x.PropertyType} {Inflector.MakeInitialLowerCase(x.PropertyName)}").ToList();
+                        methodArgs.Add("CancellationToken cancellationToken = default");
+
+                        t.WriteLine($"public async Task<{item.ClassName}> {methodName} ({string.Join(", ", methodArgs)})");
                         t.WriteLine("{");
                         using (t.IndentScope())
                         {
+                            // TODO: Should map potential returned table and/or output parameters.
+                            // this.QueryProcAsync/this.QueryProcMultipleAsync
+                            // if (item.ResultColumns.Any())) { } etc...
+
+                            t.WriteLine(@"var returnParam = new DataParameter() { Name = ""ReturnValue"", Direction = System.Data.ParameterDirection.ReturnValue, };");
+
+                            var procArgs = new List<string>() {
+                                "cancellationToken",
+                                "returnParam",
+                            };
+
                             if (item.Parameters.Any())
                             {
-                                // TODO: Fully implement DataParameter (direction, linq2db datatype? etc.)
-                                var parameterArgs = item.Parameters.Select(x => $"new DataParameter(@{x.DbObject.Name}, {Inflector.MakeInitialLowerCase(x.PropertyName)}, {x.DbObject.DataType}");
-                                t.WriteLine(@$"return await this.ExecuteProcAsync(""{item.DbObject.FullName}"", cancellationToken, {string.Join(", ", parameterArgs)}).ConfigureAwait(false);");
-                            }
-                            else
-                            {
-                                t.WriteLine(@$"return await this.ExecuteProcAsync(""{item.DbObject.FullName}"", cancellationToken).ConfigureAwait(false);");
+                                foreach (var param in item.Parameters)
+                                {
+                                    var valueArg = Inflector.MakeInitialLowerCase(param.PropertyName);
+                                    procArgs.Add(_typeMapper.GetLinqToDbDataParameter(param, valueArg));
+                                }
                             }
 
+                            t.WriteLine(@$"await this.ExecuteProcAsync(""{item.DbObject.FullName}"", {string.Join(", ", procArgs)}).ConfigureAwait(false);");
+
+                            t.WriteLine($"var result = new {item.ClassName}()");
+                            t.WriteLine("{");
+                            using (t.IndentScope())
+                            {
+                                t.WriteLine(@$"ReturnValue = ((int?)returnParam.Output?.Value) ?? 0,");
+                            }
+                            t.WriteLine("};");
+                            t.WriteLine("return result;");
                         }
                         t.WriteLine("}");
                     }
                     t.WriteLine();
                     t.WriteLine("#endregion StoredProcedures");
-                    */
 
                     foreach (var p in Model.Properties)
                     {

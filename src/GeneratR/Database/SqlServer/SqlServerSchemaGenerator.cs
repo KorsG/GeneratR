@@ -23,11 +23,11 @@ namespace GeneratR.Database.SqlServer
         {
         }
 
-        public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetGenerator dotNetGenerator)
+        public SqlServerSchemaGenerator(SqlServerSchemaGenerationSettings settings, DotNetGenerator dotNetGenerator, SqlServerTypeMapper typeMapper = null)
         {
             Settings = settings ?? throw new ArgumentNullException(nameof(settings));
             DotNetGenerator = dotNetGenerator;
-            TypeMapper = new SqlServerTypeMapper(DotNetGenerator);
+            TypeMapper = typeMapper ?? new SqlServerTypeMapper(DotNetGenerator);
             _connectionStringBuilder = new SqlConnectionStringBuilder(Settings.ConnectionString);
             if (!string.IsNullOrWhiteSpace(settings.DatabaseName))
             {
@@ -732,7 +732,7 @@ namespace GeneratR.Database.SqlServer
                     ImplementInterfaces = objSettings.ImplementInterfaces != null ? new List<string>(objSettings.ImplementInterfaces) : new List<string>(),
                 };
 
-                o.AddNamespaceImports("System", "System.Collections.Generic");
+                o.AddNamespaceImports("System", "System.Collections.Generic", "System.ComponentModel");
                 if (objSettings.AddDataAnnotationAttributes)
                 {
                     o.AddNamespaceImports(DataAnnotationNamespaces);
