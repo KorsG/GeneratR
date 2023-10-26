@@ -22,8 +22,6 @@ var projectsToPack = new List<FilePath> {
     Directory(sourceDir) + File("GeneratR/GeneratR.csproj"),
 };
 
-GitVersion gitVersionResult;
-
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,20 +30,6 @@ Setup((ctx) =>
 {
     // Executed BEFORE the first task.
     Information("Running tasks...");
-
-    Information("Retrieving gitversion...");
-    gitVersionResult = GitVersion(new GitVersionSettings {
-        OutputType = GitVersionOutput.Json,
-    });
-
-    Information("GitVersion.InformationalVersion {0}", gitVersionResult.InformationalVersion);
-    Information("GitVersion.AssemblySemVer {0}", gitVersionResult.AssemblySemVer);
-    Information("GitVersion.LegacySemVerPadded {0}", gitVersionResult.LegacySemVerPadded);
-    Information("GitVersion.SemVer {0}", gitVersionResult.SemVer);
-    Information("GitVersion.MajorMinorPatch {0}", gitVersionResult.MajorMinorPatch);
-    Information("GitVersion.NuGetVersion {0}", gitVersionResult.NuGetVersion);
-    Information("GitVersion.NuGetVersionV2 {0}", gitVersionResult.NuGetVersionV2);
-    Information("GitVersion.BranchName {0}", gitVersionResult.BranchName);   
 });
 
 Teardown((ctx) =>
@@ -90,13 +74,10 @@ Task("Build")
     .Does(() =>
 {
     // https://cakebuild.net/api/Cake.Common.Tools.DotNetCore.Build/DotNetCoreBuildSettings/
-    var versionArg = "/p:Version=" + gitVersionResult.NuGetVersion;
     var buildSettings = new DotNetCoreBuildSettings() {
         Configuration = configuration,
         NoRestore = true, // Already done by restore task.
-        Verbosity = Cake.Common.Tools.DotNetCore.DotNetCoreVerbosity.Minimal,
-		ArgumentCustomization = args => args.Append(versionArg),
-    };
+        Verbosity = Cake.Common.Tools.DotNetCore.DotNetCoreVerbosity.Minimal    };
 
     // Build all solutions.
     foreach(var solution in solutions)
@@ -111,14 +92,12 @@ Task("Pack")
     .Does(() =>
 {
     // https://cakebuild.net/api/Cake.Common.Tools.DotNetCore.Pack/DotNetCorePackSettings/
-    var versionArg = "/p:PackageVersion=" + gitVersionResult.NuGetVersion;
     var settings = new DotNetCorePackSettings
     {
         NoBuild = true, // Already done by build task.
         NoRestore = true, // Already done by restore task.
         Configuration = configuration,
-        OutputDirectory = $"{artifactsDir}",
-		ArgumentCustomization = args => args.Append(versionArg)
+        OutputDirectory = $"{artifactsDir}"
     };
 
     // Pack projects.
