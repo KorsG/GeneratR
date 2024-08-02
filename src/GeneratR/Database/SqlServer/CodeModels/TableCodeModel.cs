@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GeneratR.DotNet;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -43,6 +44,19 @@ namespace GeneratR.Database.SqlServer
                 }
             }
             return this;
+        }
+
+        public TableCodeModel Clone()
+        {
+            var clone = (TableCodeModel)MemberwiseClone();
+            clone.Attributes = Attributes.Clone();
+
+            clone.Columns = new List<ColumnCodeModel>(Columns.Select(x=> x.Clone()));
+            clone.ForeignKeys = new List<ForeignKeyCodeModel>(ForeignKeys.Select(x => x.Clone()));
+            clone.Properties = new List<PropertyCodeModel>(Properties.Select(x => x.Clone()));
+            clone.ImplementInterfaces = new List<string>(ImplementInterfaces);
+
+            return clone;
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿namespace GeneratR.Database.SqlServer
+﻿using GeneratR.DotNet;
+using System.Linq;
+
+namespace GeneratR.Database.SqlServer
 {
     public class ColumnCodeModel : DbObjectPropertyCodeModel<Schema.Column>
     {
@@ -9,6 +12,13 @@
             {
                 XmlDocumentation.AddSummaryLine(dbObject.Description.Trim());
             }
+        }
+
+        public new ColumnCodeModel Clone()
+        {
+            var clone = (ColumnCodeModel)MemberwiseClone();
+            clone.Attributes = Attributes.Clone();
+            return clone;
         }
     }
 }

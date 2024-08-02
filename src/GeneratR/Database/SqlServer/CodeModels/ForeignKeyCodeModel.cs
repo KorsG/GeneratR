@@ -8,5 +8,12 @@
         }
 
         public bool IsInverse { get; set; }
+
+        public new ForeignKeyCodeModel Clone()
+        {
+            var clone = (ForeignKeyCodeModel)MemberwiseClone();
+            clone.Attributes = Attributes.Clone();
+            return clone;
+        }
     }
 }

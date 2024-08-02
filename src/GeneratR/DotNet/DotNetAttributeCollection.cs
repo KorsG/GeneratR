@@ -100,5 +100,12 @@ namespace GeneratR.DotNet
 
             return string.Empty;
         }
+
+        public DotNetAttributeCollection Clone()
+        {
+            var clone = new DotNetAttributeCollection();
+            clone.AddRange(this.Select(x => x.Clone()));
+            return clone;
+        }
     }
 }

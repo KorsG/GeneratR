@@ -137,5 +137,10 @@ namespace GeneratR.DotNet
             }
         }
 
+        public DotNetAttribute Clone()
+        {
+            var clone = (DotNetAttribute)MemberwiseClone();
+            return clone;
+        }
     }
 }

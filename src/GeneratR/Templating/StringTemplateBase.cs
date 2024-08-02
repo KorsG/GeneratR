@@ -31,6 +31,9 @@ namespace GeneratR.Templating
         /// </summary>
         public string CurrentIndent { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// Build current template to string.
+        /// </summary>
         public override string ToString()
         {
             return TemplateBuilder.ToString();

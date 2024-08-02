@@ -57,5 +57,12 @@ namespace GeneratR.DotNet
             action?.Invoke(XmlDocumentation);
             return this;
         }
+
+        public PropertyCodeModel Clone()
+        {
+            var clone = (PropertyCodeModel)MemberwiseClone();
+            clone.Attributes = Attributes.Clone();
+            return clone;
+        }
     }
 }
