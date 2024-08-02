@@ -24,6 +24,8 @@ namespace GeneratR.DotNet
 
         public string SetterBody { get; set; }
 
+        public string DefaultValue { get; set; }
+
         public XmlDocumentationCodeModel XmlDocumentation { get; } = new XmlDocumentationCodeModel();
 
         ///<summary>

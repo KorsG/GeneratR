@@ -193,6 +193,11 @@ namespace GeneratR.DotNet
 
             sb.Append(" }");
 
+            if (!string.IsNullOrWhiteSpace(model.DefaultValue))
+            {
+                sb.Append($" = {model.DefaultValue};");
+            }
+
             return sb.ToString();
         }
 
