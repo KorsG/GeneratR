@@ -88,6 +88,18 @@ namespace GeneratR.Database.SqlServer
 
         public virtual SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
         {
+            var codeModels = BuildCodeModelInternal(schema);
+
+            OnCodeModelsLoadedFunc?.Invoke(codeModels);
+
+            return codeModels;
+        }
+
+        /// <summary>
+        /// Internal method that does not call OnCodeModelsLoadedFunc.
+        /// </summary>
+        protected virtual SqlServerSchemaCodeModels BuildCodeModelInternal(SqlServerSchema schema)
+        {
             var codeModels = new SqlServerSchemaCodeModels();
 
             // Tables.
@@ -120,8 +132,6 @@ namespace GeneratR.Database.SqlServer
                 codeModels.TableTypes.AddRange(BuildTableTypes(schema.TableTypes));
             }
 
-            OnCodeModelsLoadedFunc?.Invoke(codeModels);
-
             return codeModels;
         }
 
@@ -139,7 +149,10 @@ namespace GeneratR.Database.SqlServer
             return files;
         }
 
-        private IEnumerable<SourceCodeFile> GenerateCodeFilesInternal(SqlServerSchemaCodeModels codeModels)
+        /// <summary>
+        /// Internal method that does not call OnCodeFilesGeneratedFunc.
+        /// </summary>
+        protected IEnumerable<SourceCodeFile> GenerateCodeFilesInternal(SqlServerSchemaCodeModels codeModels)
         {
             // TODO: FileName generation should be configurable/overrideable (func?)
 

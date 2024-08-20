@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneratR.DotNet
 {
@@ -7,6 +8,7 @@ namespace GeneratR.DotNet
     {
         private readonly DotNetLanguageType _dotNetLanguage;
         private readonly List<string> _args = new List<string>();
+        private readonly Dictionary<string, string> _optionalArgs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public string Name { get; private set; }
 
@@ -98,25 +100,30 @@ namespace GeneratR.DotNet
         {
             if (wrapValueInQuotes)
             {
-                _args.Add($"{name}{OptionalAssignmentTag}\"{value}\"");
+                _optionalArgs[name] = $"\"{value}\"";
             }
             else if (value is bool valueAsBool)
             {
-
                 if (valueAsBool)
                 {
-                    _args.Add($"{name}{OptionalAssignmentTag}{TrueValue}");
+                    _optionalArgs[name] = TrueValue;
                 }
                 else
                 {
-                    _args.Add($"{name}{OptionalAssignmentTag}{FalseValue}");
+                    _optionalArgs[name] = FalseValue;
                 }
             }
             else
             {
-                _args.Add($"{name}{OptionalAssignmentTag}{value}");
+                _optionalArgs[name] = value.ToString();
             }
 
+            return this;
+        }
+
+        public DotNetAttribute RemoveOptionalArg(string name)
+        {
+            _optionalArgs.Remove(name);
             return this;
         }
 
@@ -127,13 +134,14 @@ namespace GeneratR.DotNet
 
         public string ToString(bool includeBeginAndEndTags = true)
         {
+            var args = string.Join(", ", _args.Union(_optionalArgs.Select(x => $"{x.Key}{OptionalAssignmentTag}{x.Value}")));
             if (includeBeginAndEndTags)
             {
-                return string.Format(@"{0}{1}({2}){3}", BeginTag, Name, string.Join(", ", _args), EndTag);
+                return $"{BeginTag}{Name}({args}){EndTag}";
             }
             else
             {
-                return string.Format(@"{0}({1})", Name, string.Join(", ", _args));
+                return $"{Name}({args})";
             }
         }
 

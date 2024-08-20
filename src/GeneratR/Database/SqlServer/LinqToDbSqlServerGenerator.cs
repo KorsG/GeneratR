@@ -34,30 +34,41 @@ namespace GeneratR.Database.SqlServer
 
         public override SqlServerSchemaCodeModels BuildCodeModel(SqlServerSchema schema)
         {
-            var codeModels = base.BuildCodeModel(schema);
+            var codeModels = base.BuildCodeModelInternal(schema);
+           
             EnrichCodeModel(codeModels);
+
+            OnCodeModelsLoadedFunc?.Invoke(codeModels);
+
             return codeModels;
         }
 
         public override IEnumerable<SourceCodeFile> GenerateCodeFiles(SqlServerSchemaCodeModels codeModels)
         {
-            var baseFiles = base.GenerateCodeFiles(codeModels);
+            var files = base.GenerateCodeFilesInternal(codeModels).ToList();
 
-            if (!Settings.DataConnection.Generate)
+            if (Settings.DataConnection.Generate)
             {
-                return baseFiles;
+                var codeModel = BuildDataConnectionCodeModel(codeModels);
+
+                var codeFile = new SourceCodeFile()
+                {
+                    FileName = $"{Settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
+                    FolderPath = BuildObjectOutputFolderPath(Settings.DataConnection),
+                    Code = GenerateDataConnectionCode(codeModel),
+                };
+
+                files.Add(codeFile);
             }
 
-            var codeModel = BuildDataConnectionCodeModel(codeModels);
-
-            var codeFile = new SourceCodeFile()
+            if (OnCodeFilesGeneratedFunc != null)
             {
-                FileName = $"{Settings.DataConnection.ClassName}.generated{DotNetGenerator.FileExtension}",
-                FolderPath = BuildObjectOutputFolderPath(Settings.DataConnection),
-                Code = GenerateDataConnectionCode(codeModel),
-            };
+                var context = new CodeFilesGeneratedContext(this, codeModels, files);
+                OnCodeFilesGeneratedFunc.Invoke(context);
+                return context.CodeFiles;
+            }
 
-            return baseFiles.Concat(new[] { codeFile });
+            return files;
         }
 
         public override void WriteCodeFiles(IEnumerable<SourceCodeFile> codeFiles)
