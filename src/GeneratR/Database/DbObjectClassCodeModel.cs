@@ -12,7 +12,7 @@ namespace GeneratR.Database
         /// <summary>
         /// The underlying database object.
         /// </summary>
-        public T DbObject { get; }
+        public T DbObject { get; protected internal set; }
 
         public new DbObjectClassCodeModel<T> AddProperty(PropertyCodeModel property)
         {

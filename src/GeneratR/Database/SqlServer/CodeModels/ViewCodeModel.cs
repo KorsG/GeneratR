@@ -34,5 +34,18 @@ namespace GeneratR.Database.SqlServer
             }
             return this;
         }
+
+        public new ViewCodeModel Clone()
+        {
+            var baseClone = base.Clone();
+            var clone = (ViewCodeModel)MemberwiseClone();
+            clone.Attributes = baseClone.Attributes;
+            clone.Properties = baseClone.Properties;
+            clone.ImplementInterfaces = baseClone.ImplementInterfaces;
+            clone.DbObject = DbObject.Clone();
+            clone.Columns = new List<ColumnCodeModel>(Columns.Select(x => x.Clone()));
+
+            return clone;
+        }
     }
 }

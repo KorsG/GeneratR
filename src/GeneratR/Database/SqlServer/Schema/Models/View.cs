@@ -22,5 +22,12 @@ namespace GeneratR.Database.SqlServer.Schema
         public List<Column> Columns { get; set; }
 
         public override string ToString() => $"{FullName}";
+
+        public View Clone()
+        {
+            var clone = (View)MemberwiseClone();
+            clone.Columns = new List<Column>(Columns.Select(x => x.Clone()));
+            return clone;
+        }
     }
 }

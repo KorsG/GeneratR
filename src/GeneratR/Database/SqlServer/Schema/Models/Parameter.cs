@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GeneratR.Database.SqlServer.Schema
+﻿namespace GeneratR.Database.SqlServer.Schema
 {
     public class Parameter
     {
@@ -41,5 +35,11 @@ namespace GeneratR.Database.SqlServer.Schema
         public ParameterDirection Direction { get; set; }
 
         public override string ToString() => $"{Name}";
+
+        public Parameter Clone()
+        {
+            var clone = (Parameter)MemberwiseClone();
+            return clone;
+        }
     }
 }

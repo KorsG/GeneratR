@@ -11,7 +11,7 @@ namespace GeneratR.DotNet
     {
         private readonly List<string> _summaryLines = new();
 
-        public XmlDocumentationCodeModel() 
+        public XmlDocumentationCodeModel()
         {
         }
 
@@ -28,7 +28,7 @@ namespace GeneratR.DotNet
         public string Build(DotNetGenerator dotNet)
         {
             var sb = new StringBuilder();
-            
+
             sb.AppendLine($"{dotNet.DocumentationOperator} <summary>");
             // TODO: Handle when a summaryline has linebreaks in the string.
             foreach (var item in _summaryLines)
@@ -38,6 +38,13 @@ namespace GeneratR.DotNet
             sb.Append($"{dotNet.DocumentationOperator} </summary>");
 
             return sb.ToString();
+        }
+
+        public XmlDocumentationCodeModel Clone()
+        {
+            var clone = new XmlDocumentationCodeModel();
+            clone._summaryLines.AddRange(_summaryLines);
+            return clone;
         }
     }
 }

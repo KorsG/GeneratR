@@ -26,7 +26,7 @@ namespace GeneratR.DotNet
 
         public string DefaultValue { get; set; }
 
-        public XmlDocumentationCodeModel XmlDocumentation { get; } = new XmlDocumentationCodeModel();
+        public XmlDocumentationCodeModel XmlDocumentation { get; protected set; } = new XmlDocumentationCodeModel();
 
         ///<summary>
         /// List of attributes added to the property.
@@ -63,6 +63,7 @@ namespace GeneratR.DotNet
         public PropertyCodeModel Clone()
         {
             var clone = (PropertyCodeModel)MemberwiseClone();
+            clone.XmlDocumentation = XmlDocumentation.Clone();
             clone.Attributes = Attributes.Clone();
             return clone;
         }

@@ -39,5 +39,12 @@ namespace GeneratR.Database.SqlServer.Schema
         public bool IsSelfReferencing => FromFullName.Equals(ToFullName, StringComparison.OrdinalIgnoreCase) ? true : false;
 
         public override string ToString() => $"{ForeignKeyName}";
+
+        public ForeignKey Clone()
+        {
+            // TODO: Clone From+ToColumns
+            var clone = (ForeignKey)MemberwiseClone();
+            return clone;
+        }
     }
 }

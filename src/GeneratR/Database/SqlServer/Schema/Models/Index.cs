@@ -59,5 +59,11 @@ namespace GeneratR.Database.SqlServer.Schema
         {
             return $"{IndexName}";
         }
+
+        public Index Clone()
+        {
+            var clone = (Index)MemberwiseClone();
+            return clone;
+        }
     }
 }

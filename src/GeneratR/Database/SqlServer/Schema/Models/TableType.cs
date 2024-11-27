@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GeneratR.Database.SqlServer.Schema
 {
@@ -23,5 +20,12 @@ namespace GeneratR.Database.SqlServer.Schema
         public List<Column> Columns { get; set; }
 
         public override string ToString() => $"{FullName}";
+
+        public TableType Clone()
+        {
+            var clone = (TableType)MemberwiseClone();
+            clone.Columns = new List<Column>(Columns.Select(x => x.Clone()));
+            return clone;
+        }
     }
 }

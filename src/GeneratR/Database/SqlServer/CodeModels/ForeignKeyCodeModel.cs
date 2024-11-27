@@ -11,8 +11,11 @@
 
         public new ForeignKeyCodeModel Clone()
         {
+            var baseClone = base.Clone();
             var clone = (ForeignKeyCodeModel)MemberwiseClone();
-            clone.Attributes = Attributes.Clone();
+            clone.DbObject = DbObject.Clone();
+            clone.Attributes = baseClone.Attributes;
+            clone.XmlDocumentation = baseClone.XmlDocumentation;
             return clone;
         }
     }

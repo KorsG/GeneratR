@@ -78,6 +78,16 @@ namespace GeneratR.DotNet
             return this;
         }
 
+        public ClassCodeModel Clone()
+        {
+            var clone = (ClassCodeModel)MemberwiseClone();
+            clone.Attributes = Attributes.Clone();
+            clone.ImplementInterfaces = new List<string>(ImplementInterfaces);
+            clone.Properties = new List<PropertyCodeModel>(Properties.Select(x => x.Clone()));
+            clone.NamespaceImports = new List<NamespaceImportCodeModel>(NamespaceImports.Select(x => x.Clone()));
+            return clone;
+        }
+
         /*
         public ClassGenerationConfiguration<T> IgnoreProperty(string propertyName)
         {

@@ -1,9 +1,4 @@
-﻿using GeneratR.ExtensionMethods;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace GeneratR.DotNet
 {
@@ -21,5 +16,11 @@ namespace GeneratR.DotNet
         public string Alias { get; }
 
         public bool HasAlias { get; }
+
+        public NamespaceImportCodeModel Clone()
+        {
+            var clone = (NamespaceImportCodeModel)MemberwiseClone();
+            return clone;
+        }
     }
 }

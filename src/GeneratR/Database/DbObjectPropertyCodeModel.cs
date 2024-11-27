@@ -10,6 +10,6 @@ namespace GeneratR.Database
             DbObject = dbObject;
         }
 
-        public T DbObject { get; }
+        public T DbObject { get; protected internal set; }
     }
 }

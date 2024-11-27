@@ -30,5 +30,11 @@
         public string Description { get; set; }
 
         public override string ToString() => $"{Name}";
+
+        public Column Clone()
+        {
+            var clone = (Column)MemberwiseClone();
+            return clone;
+        }
     }
 }

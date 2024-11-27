@@ -18,5 +18,11 @@
         public bool IsComputed { get; set; }
 
         public override string ToString() => $"{Name}";
+
+        public StoredProcedureResultColumn Clone()
+        {
+            var clone = (StoredProcedureResultColumn)MemberwiseClone();
+            return clone;
+        }
     }
 }
